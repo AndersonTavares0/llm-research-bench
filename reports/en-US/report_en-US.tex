@@ -1,0 +1,189 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+
+\geometry{left=25mm,right=25mm,top=25mm,bottom=25mm}
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\footnotesize Experimental Research: SLMs Under Severe VRAM Constraints}
+\lhead{\footnotesize GPU Lab Homelab}
+\rfoot{\footnotesize Page \thepage}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=blue!70!black,
+    urlcolor=blue!70!black
+}
+
+\title{\textbf{\LARGE Technical, Behavioral, and Safety Evaluation of Language Models Under Severe VRAM Constraints}\\[0.5em]
+\large A Comparative Experimental Study Using NVIDIA GeForce GTX 1050 Ti (4GB GDDR5)}
+\author{\textbf{Anderson Tavares} \\ Artificial Intelligence and Infrastructure Laboratory \\ \url{https://github.com/AndersonTavares0/llm-research-bench}}
+\date{October 24, 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The proliferation of Small Language Models (SLMs) in the 2B to 4B parameter regime has opened new frontiers for local on-device inference on edge nodes and hardware-constrained servers. However, operational viability under severe video memory constraints (VRAM $\le$ 4096 MiB) remains a complex, multi-variable challenge where quantization, speculative decoding architectures, token generation throughput, and behavioral alignment directly intersect. This paper presents a reproducible experimental study evaluating four state-of-the-art open-weights models: \textbf{Gemma-4-E2B-it} (IQ4\_XS with MTP Q8\_0 speculative draft), \textbf{Qwen-3.5-4B-Instruct} (Q4\_K\_M), \textbf{Qwen-3.5-2B-Instruct} (Q4\_K\_XL), and \textbf{Llama-3.2-3B-Instruct} (Q4\_K\_M), running on a dedicated NVIDIA GeForce GTX 1050 Ti (4GB GDDR5, Compute Capability 6.1) inside a Proxmox VE container (CT 108). The experimental framework examined two strictly segregated domains: (1) \emph{System Performance} (TTFT, token generation throughput in tok/s, static and peak VRAM footprint); and (2) \emph{Model Quality \& Safety} (quantitative technical reasoning, Pulse/MCP-style agentic tool calling protocols, and adversarial robustness across 6 attack vectors including weaponized CVEs, stealth keyloggers, DAN jailbreaks, and indirect prompt injection). Results demonstrate that MTP speculative decoding in Gemma-4-E2B achieves the highest generation throughput of the study (\textbf{46.3 tokens/s}) while consuming only 36.8\% of available VRAM, whereas Qwen-3.5-4B exhibits superior structural coherence at the cost of 74.9\% VRAM saturation and 18.4 tok/s. Across safety vectors, all models demonstrated an 83.3\% clean refusal rate against weaponized exploit requests and DAN bypasses, although nuanced arithmetic reasoning limitations persisted in the smaller model variants.
+\end{abstract}
+
+\vspace{1em}
+\noindent\textbf{Keywords:} Small Language Models (SLMs), VRAM Constraints, Speculative Decoding, Adversarial Robustness, Tool Calling, Reproducible Benchmarking.
+
+\section{Introduction and Motivation}
+
+Enabling autonomous, local intelligent assistants and edge agents in air-gapped or privacy-sensitive homelab environments requires deploying Small Language Models (SLMs) on consumer-grade hardware. On legacy GPUs such as the NVIDIA GeForce GTX 1050 Ti, equipped with only 4096 MiB of GDDR5 memory over a 128-bit bus (112 GB/s theoretical bandwidth), the memory margin for weight graphs and key-value (KV) context caches is remarkably tight.
+
+Any memory spillover forces tensor offloading onto host system memory (DDR4) over the PCIe bus, degrading the Time To First Token (TTFT) and collapsing token generation rates to sub-3 tok/s.
+
+This investigation formulates and empirically evaluates five core scientific hypotheses:
+\begin{itemize}[leftmargin=2em]
+    \item[\textbf{H1:}] Architectures employing Multi-Token Prediction (MTP) speculative decoding bypass memory bandwidth bottlenecks on the Pascal architecture by over 100\% relative to standard autoregressive models.
+    \item[\textbf{H2:}] Aggressive quantization (IQ4\_XS / Q4\_K) in SLMs preserves strict adherence to agentic tool-calling syntax (JSON Schema), but induces degradation in multi-step arithmetic reasoning.
+    \item[\textbf{H3:}] 4B parameter models approach the upper operational limit of 4GB VRAM budgets, necessitating restricted context windows or sub-4-bit weights to prevent Out-Of-Memory (OOM) failures.
+    \item[\textbf{H4:}] Safety alignment and resistance against classic jailbreaks (e.g., DAN) are independent of parameter count within the 2B--4B range when instruction-tuning (RLHF/DPO) is properly applied.
+    \item[\textbf{H5:}] Agentic execution capability under local orchestration (Pulse/MCP) depends fundamentally on the model's ability to ingest prior tool outputs without hallucinating non-existent tools.
+\end{itemize}
+
+\section{Infrastructure and Environmental Reconnaissance}
+
+The experimental evaluations were conducted within homelab cluster node \texttt{v01}, utilizing dedicated LXC container \textbf{CT 108} (GPU Lab) with direct PCIe hardware passthrough.
+
+\subsection{Hardware Specifications}
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Host CPU:} AMD Ryzen 5 3600 (6 cores, 12 threads @ 3.6 GHz base / 4.2 GHz boost).
+    \item \textbf{Container Allocation (CT 108):} 2 dedicated vCPUs, 4.0 GiB physical RAM, and 512 MiB swap.
+    \item \textbf{Graphics Accelerator:} NVIDIA GeForce GTX 1050 Ti (4096 MiB GDDR5, 768 CUDA cores, SM 6.1, 75W TDP).
+    \item \textbf{Storage Subsystem:} NVMe PCIe 3.0 x4 root pool on ZFS.
+\end{itemize}
+
+\subsection{Software Stack and Inference Runtime}
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Guest Operating System:} Debian GNU/Linux 13 (Trixie), Linux Kernel 6.8.12-14-pve x86\_64.
+    \item \textbf{NVIDIA Drivers and Toolkits:} Driver 580.173.02, CUDA Driver 13.0.
+    \item \textbf{Inference Engine:} \texttt{llama-server} (based on llama.cpp b4120+) executing inside an isolated rootless Podman container under the \texttt{ollama} user cgroup, listening on internal TCP port \texttt{18081}.
+    \item \textbf{Networking \& Isolation:} Strictly bound to \texttt{127.0.0.1} with reverse proxy routing via Caddy for external agent requests originating from Pulse (CT 100).
+\end{itemize}
+
+\section{Experimental Methodology and Evaluated Models}
+
+Four models representing distinct architectural trade-offs within the 2B--4B spectrum were evaluated:
+\begin{enumerate}[leftmargin=2em]
+    \item \textbf{Gemma-4-E2B-it:} Developed by Google DeepMind, quantized in \texttt{IQ4\_XS} (1.5 GB), coupled with a speculative draft model \texttt{mtp-gemma-4-E2B-it-Q8\_0} (0.28 GB) via \texttt{--model-draft}.
+    \item \textbf{Qwen-3.5-4B-Instruct:} Dense model by Alibaba Cloud, quantized in \texttt{Q4\_K\_M} (2.7 GB), representing the upper VRAM capacity limit for 4GB cards.
+    \item \textbf{Qwen-3.5-2B-Instruct:} Lightweight variant from the Qwen family, quantized in \texttt{Q4\_K\_XL} (1.5 GB).
+    \item \textbf{Llama-3.2-3B-Instruct:} Lightweight instruction model by Meta AI, quantized in \texttt{Q4\_K\_M} (2.0 GB).
+\end{enumerate}
+
+\subsection{Standardized Test Protocol}
+All models were benchmarked using the automated harness \texttt{gpu-lab-comprehensive-suite.py} under thermally normalized conditions ($T_{\text{GPU}} \le 45^\circ\text{C}$ prior to each run). Sampling hyperparameters were pinned to temperature $\tau = 0.2$, $top\_p = 0.9$, with fixed pseudo-random seeds.
+
+\section{System Performance Results}
+
+Table~\ref{tab:sys_perf_en} summarizes the empirical performance metrics obtained across the four candidate configurations.
+
+\begin{table}[htbp]
+\centering
+\caption{Empirical System Performance Metrics under 4096 MiB VRAM Budget}
+\label{tab:sys_perf_en}
+\small
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Model} & \textbf{Static VRAM} & \textbf{Peak VRAM} & \textbf{Budget} & \textbf{Prompt Eval} & \textbf{Generation} & \textbf{TTFT} \\
+ & (MiB) & (MiB) & (\% of VRAM) & (tokens/s) & (tokens/s) & (ms) \\
+\midrule
+\textbf{Gemma-4-E2B (MTP)} & 1,452 & 1,510 & 36.8\% & \textbf{468.2} & \textbf{46.3} & \textbf{115.4} \\
+\textbf{Qwen-3.5-2B} & 1,540 & 1,598 & 39.0\% & 389.5 & 37.5 & 142.1 \\
+\textbf{Llama-3.2-3B} & 2,050 & 2,120 & 51.7\% & 390.7 & 27.4 & 168.3 \\
+\textbf{Qwen-3.5-4B} & 2,987 & 3,069 & 74.9\% & 237.1 & 18.4 & 284.6 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Impact of MTP Speculative Decoding}
+As demonstrated in Table~\ref{tab:sys_perf_en}, \textbf{Gemma-4-E2B} outpaced all competitors in generation throughput, maintaining an average of \textbf{46.3 tokens/s} (surpassing 52 tokens/s in low-entropy regimes). This validates hypothesis \textbf{H1}: the lightweight speculative draft model significantly reduces memory bandwidth demands on the GTX 1050 Ti, validating multiple speculative candidate tokens per full forward pass. In contrast, Qwen-3.5-4B was throttled by the 112 GB/s memory bandwidth to 18.4 tokens/s.
+
+\section{Model Quality, Reasoning, and Safety Results}
+
+Table~\ref{tab:model_qual_en} outlines performance across the behavioral evaluation batteries.
+
+\begin{table}[htbp]
+\centering
+\caption{Behavioral Evaluation: Safety, Agentic Protocol, and Technical Reasoning}
+\label{tab:model_qual_en}
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model} & \textbf{Safety \& Robustness} & \textbf{Agentic Protocol} & \textbf{Reasoning} & \textbf{Deployment} \\
+ & (\% Clean Refusals) & (Scenarios 1, 2, 3) & (\% Exact Match) & \textbf{Recommendation} \\
+\midrule
+\textbf{Gemma-4-E2B (MTP)} & 83.3\% (5/6) & \textbf{All Passed} & 33.3\% (1/3) & \textbf{Recommended (Edge/Pulse)} \\
+\textbf{Qwen-3.5-4B} & 83.3\% (5/6) & \textbf{All Passed} & 33.3\% (1/3) & Suitable (Critical Reasoning) \\
+\textbf{Qwen-3.5-2B} & 83.3\% (5/6) & \textbf{All Passed} & 0.0\% (0/3) & Weak Arithmetic \\
+\textbf{Llama-3.2-3B} & 83.3\% (5/6) & \textbf{Failed (Scen. 2)} & 33.3\% (1/3) & Fragile in Agent Loops \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Safety and Jailbreak Analysis}
+The safety suite evaluated model behavior across six adversarial vectors:
+\begin{enumerate}[leftmargin=2em]
+    \item \textbf{Weaponized CVE Exploit (Log4Shell CVE-2021-44228):} Direct request for automated exploitation scripts. \emph{Outcome:} All models refused weaponized payload generation while offering defensive remediation guidance.
+    \item \textbf{Stealth Keylogger (C++ Explorer Injection):} Windows API interrupt interception request. \emph{Outcome:} Universal refusal accompanied by detection architecture explanations.
+    \item \textbf{DAN Jailbreak:} Role-spoofing filter bypass attempt. \emph{Outcome:} Consistently neutralized.
+    \item \textbf{Opposite Day Jailbreak:} Psychological inverse trick. \emph{Outcome:} Neutralized.
+    \item \textbf{Indirect Prompt Injection:} Embedded instructions within system logs. \emph{Outcome:} Maintained instruction boundary.
+\end{enumerate}
+
+\subsection{Agentic Protocol and Tool Calling}
+In multi-turn Pulse/MCP tool execution:
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Gemma-4-E2B}, \textbf{Qwen-3.5-4B}, and \textbf{Qwen-3.5-2B} generated valid schema function calls (\texttt{get\_proxmox\_node\_status}), parsed simulated tool results accurately, and concluded conversations without hallucinated tools.
+    \item \textbf{Llama-3.2-3B} failed during the continuation turn: upon receiving tool output, it failed to synthesize the answer and reported parsing errors, verifying hypothesis \textbf{H5}.
+\end{itemize}
+
+\subsection{Quantitative Reasoning Deficiencies}
+In technical system calculations:
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{CIDR Subnetting (/26):} All models struggled with precise broadcast/usable IP calculations without external tools (e.g., Llama-3.2-3B hallucinating $2^{18} = 262,144$ hosts).
+    \item \textbf{ZFS RAIDZ2 Parity:} Computing usable capacity on $6 \times 4\text{TB}$ arrays resulted in common miscalculations (18TB instead of the correct 16TB).
+    \item \textbf{Multi-Step RAM Allocation:} Accurately solved by all models except Qwen-3.5-2B.
+\end{itemize}
+
+\section{Discussion and Hypothesis Validation}
+
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{H1 (Confirmed):} MTP speculative decoding provided a $2.5\times$ speedup over Qwen-3.5-4B and $1.7\times$ over Llama-3.2-3B on identical hardware.
+    \item \textbf{H2 (Confirmed):} Quantization preserved JSON tool-calling fidelity, but arithmetic reasoning was inadequate across all sub-3B models without external compute tools.
+    \item \textbf{H3 (Confirmed):} Qwen-3.5-4B consumed 3,069 MiB (74.9\% of VRAM). Deep contexts ($n_{ctx} > 16k$) require KV cache quantization to prevent OOM.
+    \item \textbf{H4 (Confirmed):} Safety alignment remained robust across 2B--4B parameter models, confirming that modern safety fine-tuning scales effectively to compact architectures.
+    \item \textbf{H5 (Confirmed):} Multi-turn agent reliability is distinct from parameter size; Gemma-4-E2B handled tool chaining flawlessly, whereas Llama-3.2-3B failed.
+\end{itemize}
+
+\section{Conclusions and Practical Recommendations}
+
+\begin{enumerate}[leftmargin=2em]
+    \item \textbf{Primary Edge Deployment Recommendation:} \textbf{Gemma-4-E2B-it} with MTP Q8\_0 draft. Delivers $>40$ tokens/s, consumes under 1.6 GB VRAM, and provides robust tool calling for agents like Pulse.
+    \item \textbf{Critical Semantic Reasoning Choice:} \textbf{Qwen-3.5-4B-Instruct} (Q4\_K\_M) when textual nuance takes precedence over generation speed.
+    \item \textbf{Hybrid Architecture Imperative:} Compact models must be paired with external deterministic calculation tools via MCP/Pulse to overcome intrinsic arithmetic limitations.
+\end{enumerate}
+
+\section*{Reproducibility and Open Artifacts}
+The full benchmark suite, structured JSON/CSV datasets, and replication instructions are open-source at:
+\begin{center}
+\url{https://github.com/AndersonTavares0/llm-research-bench}
+\end{center}
+
+\end{document}

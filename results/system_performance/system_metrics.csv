@@ -1,0 +1,5 @@
+model,parameters_b,quantization,vram_static_mib,vram_peak_mib,vram_budget_pct,prompt_eval_tok_s,generation_tok_s,ttft_ms,speculative_decoding,context_window_tested
+gemma4:E2B,2.0,IQ4_XS + Q8_0 MTP,1452,1510,36.8,468.2,46.3,115.4,True,8192
+qwen3.5:4B,4.0,Q4_K_M,2987,3069,74.9,237.1,18.4,284.6,False,8192
+qwen3.5:2B,2.0,Q4_K_XL,1540,1598,39.0,389.5,37.5,142.1,False,8192
+llama3.2:3B,3.0,Q4_K_M,2050,2120,51.7,390.7,27.4,168.3,False,8192

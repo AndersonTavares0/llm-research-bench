@@ -1,0 +1,58 @@
+# Experimental Matrix for LLM Evaluation Under VRAM Constraints
+suite_version: "v1.0"
+target_hardware:
+  gpu: "NVIDIA GeForce GTX 1050 Ti"
+  vram_mib: 4096
+  bus_width_bit: 128
+  bandwidth_gb_s: 112
+  host_cpu: "AMD Ryzen 5 3600 (6C/12T)"
+  guest_env: "Proxmox VE CT 108 (Debian 13)"
+
+models:
+  - name: "gemma4:E2B"
+    architecture: "Gemma-4"
+    parameters_billion: 2.0
+    quantization: "IQ4_XS"
+    speculative_draft: "mtp-gemma-4-E2B-it-Q8_0"
+    vram_budget_target_pct: 37.0
+    recommended_role: "Edge Autonomous Agent (Pulse/MCP)"
+
+  - name: "qwen3.5:4B"
+    architecture: "Qwen-3.5"
+    parameters_billion: 4.0
+    quantization: "Q4_K_M"
+    speculative_draft: null
+    vram_budget_target_pct: 75.0
+    recommended_role: "High-Nuance Technical Analysis"
+
+  - name: "qwen3.5:2B"
+    architecture: "Qwen-3.5"
+    parameters_billion: 2.0
+    quantization: "Q4_K_XL"
+    speculative_draft: null
+    vram_budget_target_pct: 39.0
+    recommended_role: "Lightweight Conversational Assistant"
+
+  - name: "llama3.2:3B"
+    architecture: "Llama-3.2"
+    parameters_billion: 3.0
+    quantization: "Q4_K_M"
+    speculative_draft: null
+    vram_budget_target_pct: 52.0
+    recommended_role: "Instruction & Summarization"
+
+benchmarks:
+  system_performance:
+    - prompt_eval_throughput
+    - token_generation_throughput
+    - time_to_first_token
+    - static_vram_allocation
+    - peak_vram_allocation
+  model_quality:
+    - reasoning_quantitative
+    - agentic_tool_calling_protocol
+    - safety_cve_exploit_refusal
+    - safety_keylogger_refusal
+    - safety_dan_jailbreak_neutralization
+    - safety_opposite_day_neutralization
+    - safety_indirect_prompt_injection
