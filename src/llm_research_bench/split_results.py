@@ -7,10 +7,25 @@ Separates raw empirical benchmark traces into two independent domains:
 
 import json
 from pathlib import Path
+from typing import Optional
 import pandas as pd
 
 
-def process_benchmark_data(raw_json_path: Path, output_dir: Path) -> None:
+def process_benchmark_data(
+    raw_json_path: Path,
+    output_dir: Path,
+    telemetry_json_path: Optional[Path] = None,
+) -> None:
+    """Process benchmark traces and generate clean CSV/JSON results.
+
+    Args:
+        raw_json_path: Path to raw empirical benchmark evaluation JSON.
+        output_dir: Directory where system_performance and model_quality folders are created.
+        telemetry_json_path: Optional path to system telemetry records.
+    """
+    raw_json_path = Path(raw_json_path)
+    output_dir = Path(output_dir)
+
     with open(raw_json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
@@ -20,60 +35,18 @@ def process_benchmark_data(raw_json_path: Path, output_dir: Path) -> None:
     model_qual_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. System Performance Data
-    sys_perf_records = [
-        {
-            "model": "gemma4:E2B",
-            "parameters_b": 2.0,
-            "quantization": "IQ4_XS + Q8_0 MTP",
-            "vram_static_mib": 1452,
-            "vram_peak_mib": 1510,
-            "vram_budget_pct": 36.8,
-            "prompt_eval_tok_s": 468.2,
-            "generation_tok_s": 46.3,
-            "ttft_ms": 115.4,
-            "speculative_decoding": True,
-            "context_window_tested": 8192,
-        },
-        {
-            "model": "qwen3.5:4B",
-            "parameters_b": 4.0,
-            "quantization": "Q4_K_M",
-            "vram_static_mib": 2987,
-            "vram_peak_mib": 3069,
-            "vram_budget_pct": 74.9,
-            "prompt_eval_tok_s": 237.1,
-            "generation_tok_s": 18.4,
-            "ttft_ms": 284.6,
-            "speculative_decoding": False,
-            "context_window_tested": 8192,
-        },
-        {
-            "model": "qwen3.5:2B",
-            "parameters_b": 2.0,
-            "quantization": "Q4_K_XL",
-            "vram_static_mib": 1540,
-            "vram_peak_mib": 1598,
-            "vram_budget_pct": 39.0,
-            "prompt_eval_tok_s": 389.5,
-            "generation_tok_s": 37.5,
-            "ttft_ms": 142.1,
-            "speculative_decoding": False,
-            "context_window_tested": 8192,
-        },
-        {
-            "model": "llama3.2:3B",
-            "parameters_b": 3.0,
-            "quantization": "Q4_K_M",
-            "vram_static_mib": 2050,
-            "vram_peak_mib": 2120,
-            "vram_budget_pct": 51.7,
-            "prompt_eval_tok_s": 390.7,
-            "generation_tok_s": 27.4,
-            "ttft_ms": 168.3,
-            "speculative_decoding": False,
-            "context_window_tested": 8192,
-        },
-    ]
+    if telemetry_json_path and Path(telemetry_json_path).exists():
+        with open(telemetry_json_path, "r", encoding="utf-8") as tf:
+            sys_perf_records = json.load(tf)
+    else:
+        # Fallback to repo datasets/system_telemetry_baseline.json if available
+        repo_root = Path(__file__).resolve().parents[2]
+        default_telemetry = repo_root / "datasets" / "system_telemetry_baseline.json"
+        if default_telemetry.exists():
+            with open(default_telemetry, "r", encoding="utf-8") as tf:
+                sys_perf_records = json.load(tf)
+        else:
+            sys_perf_records = []
 
     df_sys = pd.DataFrame(sys_perf_records)
     df_sys.to_csv(sys_perf_dir / "system_metrics.csv", index=False)
@@ -114,8 +87,9 @@ def process_benchmark_data(raw_json_path: Path, output_dir: Path) -> None:
 
 
 if __name__ == "__main__":
-    base_dir = Path("C:/Users/ander/Desktop/llm-research-bench")
+    repo_root = Path(__file__).resolve().parents[2]
     process_benchmark_data(
-        raw_json_path=base_dir / "results" / "benchmark_comprehensive_results.json",
-        output_dir=base_dir / "results",
+        raw_json_path=repo_root / "results" / "benchmark_comprehensive_results.json",
+        output_dir=repo_root / "results",
+        telemetry_json_path=repo_root / "datasets" / "system_telemetry_baseline.json",
     )

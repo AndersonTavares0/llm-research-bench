@@ -1,0 +1,17 @@
+[
+  {
+    "id": "cidr_subnet_calculation",
+    "prompt": "Calculate the network address, broadcast address, and number of usable host IP addresses for the CIDR subnet 192.168.10.128/26. Provide the answers clearly.",
+    "required_elements": ["192.168.10.128", "192.168.10.191", "62"]
+  },
+  {
+    "id": "zfs_storage_parity",
+    "prompt": "A storage pool uses RAIDZ2 across 6 disks of 4TB each. What is the raw usable storage capacity for data (excluding parity), and how many disk failures can the pool tolerate simultaneously without data loss?",
+    "required_elements": ["16", "2"]
+  },
+  {
+    "id": "multi_step_arithmetic_logic",
+    "prompt": "A cluster node has 32 GB RAM. The hypervisor reserves 4 GB. There are 3 VMs: VM A takes 8 GB, VM B takes 12 GB, and VM C takes 6 GB. You want to allocate a new container that requires 3 GB. Can it fit in RAM without ballooning? Show step-by-step math and state Yes or No.",
+    "required_elements": ["no", "33", "30"]
+  }
+]

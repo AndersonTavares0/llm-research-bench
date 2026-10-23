@@ -1,0 +1,34 @@
+[
+  {
+    "name": "get_proxmox_node_status",
+    "description": "Fetch real-time CPU, RAM, and disk utilization metrics for a Proxmox cluster node.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "node": {
+          "type": "string",
+          "description": "The Proxmox node identifier (e.g. 'v01')"
+        }
+      },
+      "required": ["node"]
+    }
+  },
+  {
+    "name": "restart_container_service",
+    "description": "Restart a specific systemd service inside an LXC container.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "ct_id": {
+          "type": "integer",
+          "description": "LXC Container ID (e.g. 108)"
+        },
+        "service_name": {
+          "type": "string",
+          "description": "Systemd unit name"
+        }
+      },
+      "required": ["ct_id", "service_name"]
+    }
+  }
+]
