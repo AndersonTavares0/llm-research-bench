@@ -51,9 +51,9 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
     mtp_trials = [t["decode_tok_per_sec"] for t in empirical_data.get("gemma4:E2B", {}).get("perf_trials", [])] or [43.35] * 10
 
     # -------------------------------------------------------------
-    # Figure 1: MTP Controlled Factorial Ablation (Mean ± 95% CI)
+    # Figure 1: MTP Controlled Ablation (Mean ± 95% CI)
     # -------------------------------------------------------------
-    fig, ax = plt.subplots(figsize=(5.5, 3.2), dpi=300)
+    fig, ax = plt.subplots(figsize=(5.5, 3.4), dpi=300)
     models = [
         "Q4_K_M Base\n(No MTP)",
         "IQ4_XS Base\n(Quant Ablation)",
@@ -67,26 +67,32 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
         return 2.262 * (s / math.sqrt(len(arr)))
 
     ci_margins = [calc_ci(q4km_trials), calc_ci(iq4_trials), calc_ci(mtp_trials)]
-    colors = ["#7f7f7f", "#1f77b4", "#2ca02c"]
+    colors = ["#5a6b7c", "#1f77b4", "#2ca02c"]
 
     x = np.arange(len(models))
-    bars = ax.bar(x, means, width=0.48, yerr=ci_margins, capsize=5, color=colors, alpha=0.85)
+    bars = ax.bar(x, means, width=0.45, yerr=ci_margins, capsize=5, color=colors, alpha=0.9, edgecolor="black", linewidth=0.6)
 
-    ax.set_ylabel("Generation Throughput (tokens/s)")
-    ax.set_title("Factorial MTP Speculative & Quantization Ablation (N=10)")
+    ax.set_ylabel("Generation Throughput (tokens/s)", fontsize=10)
+    ax.set_title("Quantization and MTP Ablation (N=10)", fontsize=11, fontweight="bold", pad=12)
     ax.set_xticks(x)
-    ax.set_xticklabels(models)
-    ax.set_ylim(0, 55)
+    ax.set_xticklabels(models, fontsize=9)
+    ax.set_ylim(0, 58)
     ax.grid(axis="y", linestyle="--", alpha=0.5)
 
     for bar, m_val in zip(bars, means):
-        ax.text(bar.get_x() + bar.get_width() / 2.0, m_val + 2.0, f"{m_val:.2f} tok/s", ha="center", va="bottom", fontsize=8.5, fontweight="bold")
+        ax.text(bar.get_x() + bar.get_width() / 2.0, m_val + 1.8, f"{m_val:.2f} tok/s", ha="center", va="bottom", fontsize=8.5, fontweight="bold")
 
-    # Annotate speedup deltas
-    ax.annotate("+28.2% (Quant)", xy=(0, means[0]), xytext=(0.7, 30.0),
-                arrowprops=dict(arrowstyle="->", color="#1f77b4", lw=1.2), fontsize=8, color="#1f77b4", fontweight="bold")
-    ax.annotate("+25.6% (MTP)", xy=(1, means[1]), xytext=(1.7, 39.0),
-                arrowprops=dict(arrowstyle="->", color="#2ca02c", lw=1.2), fontsize=8, color="#2ca02c", fontweight="bold")
+    # Step bracket for Quantization effect (0 to 1) placed in clear space above bars
+    y_quant = 48.5
+    ax.plot([0, 0, 1, 1], [y_quant - 1.2, y_quant, y_quant, y_quant - 1.2], color="#1f77b4", lw=1.3)
+    ax.text(0.5, y_quant + 0.6, "+28.2% (Quantization)", ha="center", va="bottom", fontsize=8, color="#1f77b4", fontweight="bold",
+            bbox=dict(boxstyle="round,pad=0.2", facecolor="white", edgecolor="#1f77b4", alpha=0.95, lw=0.8))
+
+    # Step bracket for MTP speculative effect (1 to 2) placed in clear space above bars
+    y_mtp = 53.2
+    ax.plot([1, 1, 2, 2], [y_mtp - 1.2, y_mtp, y_mtp, y_mtp - 1.2], color="#2ca02c", lw=1.3)
+    ax.text(1.5, y_mtp + 0.6, "+25.6% (MTP Mechanism)", ha="center", va="bottom", fontsize=8, color="#2ca02c", fontweight="bold",
+            bbox=dict(boxstyle="round,pad=0.2", facecolor="white", edgecolor="#2ca02c", alpha=0.95, lw=0.8))
 
     fig.savefig(output_dir / "mtp_ablation_ci.pdf", bbox_inches="tight")
     plt.close(fig)
@@ -278,7 +284,7 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
     bars = ax.bar(x, mean_quant, width=0.45, color=["#3b528b", "#21918c", "#5ec962"], alpha=0.85)
 
     ax.set_ylabel("Generation Throughput (tokens/s)")
-    ax.set_title("Factorial Speedup Decomposition (Gemma-4-E2B)")
+    ax.set_title("Controlled Speedup Decomposition (Gemma-4-E2B)")
     ax.set_xticks(x)
     ax.set_xticklabels(quant_labels)
     ax.set_ylim(0, 52)
