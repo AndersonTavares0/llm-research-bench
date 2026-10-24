@@ -1,0 +1,86 @@
+{
+  "timestamp": "2026-10-23T23:49:38Z",
+  "experiment": "controlled_mtp_ablation",
+  "speedup_ratio": 1.31,
+  "delta_throughput_pct": 30.9,
+  "models": {
+    "gemma4:E2B": {
+      "name": "Gemma-4-E2B (With MTP Speculative Draft)",
+      "model_id": "gemma4:E2B",
+      "repetitions": 5,
+      "total_queries": 15,
+      "stats_tok_s": {
+        "mean": 42.21,
+        "std_dev": 10.82,
+        "ci_95_margin": 7.18,
+        "ci_low": 35.03,
+        "ci_high": 49.39,
+        "n": 15
+      },
+      "hardware_telemetry": {
+        "vram_static_mib": 74,
+        "vram_peak_mib": 2038,
+        "vram_min_mib": 74,
+        "avg_temp_c": 50.5,
+        "max_temp_c": 67,
+        "total_samples": 587
+      },
+      "individual_runs_tok_s": [
+        3.82,
+        45.64,
+        41.51,
+        45.84,
+        47.31,
+        42.59,
+        45.85,
+        47.27,
+        42.62,
+        45.56,
+        47.18,
+        42.45,
+        45.8,
+        47.14,
+        42.59
+      ]
+    },
+    "gemma4:MTP": {
+      "name": "Gemma-4-E2B (Without MTP - Baseline)",
+      "model_id": "gemma4:MTP",
+      "repetitions": 5,
+      "total_queries": 15,
+      "stats_tok_s": {
+        "mean": 32.25,
+        "std_dev": 5.83,
+        "ci_95_margin": 3.87,
+        "ci_low": 28.38,
+        "ci_high": 36.12,
+        "n": 15
+      },
+      "hardware_telemetry": {
+        "vram_static_mib": 2038,
+        "vram_peak_mib": 2038,
+        "vram_min_mib": 74,
+        "avg_temp_c": 68.1,
+        "max_temp_c": 72,
+        "total_samples": 516
+      },
+      "individual_runs_tok_s": [
+        11.22,
+        33.04,
+        32.64,
+        33.98,
+        34.07,
+        33.84,
+        33.93,
+        34.08,
+        33.94,
+        34.09,
+        33.88,
+        33.66,
+        33.84,
+        33.84,
+        33.73
+      ]
+    }
+  }
+}

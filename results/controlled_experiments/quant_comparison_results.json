@@ -1,0 +1,56 @@
+{
+  "gemma4:E2B": {
+    "quantization": "IQ4_XS (with MTP)",
+    "stats_tok_s": {
+      "mean": 36.22,
+      "std_dev": 14.02,
+      "ci_95_margin": 14.71,
+      "ci_low": 21.51,
+      "ci_high": 50.93,
+      "n": 6
+    },
+    "hardware": {
+      "vram_static_mib": 1802,
+      "vram_peak_mib": 2036,
+      "vram_min_mib": 74,
+      "avg_temp_c": 58.5,
+      "max_temp_c": 65,
+      "total_samples": 128
+    },
+    "runs": [
+      7.69,
+      40.89,
+      40.91,
+      41.77,
+      42.32,
+      43.73
+    ]
+  },
+  "gemma4:Q4KM": {
+    "quantization": "Q4_K_M (standard)",
+    "stats_tok_s": {
+      "mean": 22.72,
+      "std_dev": 8.87,
+      "ci_95_margin": 9.31,
+      "ci_low": 13.42,
+      "ci_high": 32.03,
+      "n": 6
+    },
+    "hardware": {
+      "vram_static_mib": 2036,
+      "vram_peak_mib": 2036,
+      "vram_min_mib": 74,
+      "avg_temp_c": 60.4,
+      "max_temp_c": 67,
+      "total_samples": 208
+    },
+    "runs": [
+      4.65,
+      25.45,
+      26.69,
+      26.61,
+      26.46,
+      26.49
+    ]
+  }
+}
