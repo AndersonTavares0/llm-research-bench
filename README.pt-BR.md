@@ -19,140 +19,126 @@
 
 > [!NOTE]
 > **Natureza do Projeto e Aviso Legal**<br/>
-> Este é um projeto pessoal independente desenvolvido para aprendizado, experimentação e engenharia exploratória. Embora aplique benchmarks estruturados, temporização monotônica e cálculos estatísticos, **não se trata de uma publicação acadêmica revisada por pares**. Os resultados refletem o comportamento observado em uma bancada de testes física com GPU única e estão sujeitos a revisão contínua. Consulte [Limitações e Trabalho em Andamento](#limitações-e-trabalho-em-andamento) e a [Issue #2](https://github.com/AndersonTavares0/llm-research-bench/issues/2).
+> Este é um projeto pessoal independente desenvolvido para aprendizado, experimentação e engenharia exploratória. Embora aplique benchmarks estruturados, temporização monotônica e cálculos estatísticos, **não se trata de uma publicação acadêmica revisada por pares**. Os resultados refletem o comportamento observado em uma bancada de testes física com GPU única e estão sujeitos a revisão contínua. Consulte [Limitações e Trabalho em Andamento](#5-metodologia-limitações-e-evolução) e a [Issue #2](https://github.com/AndersonTavares0/llm-research-bench/issues/2).
 
 ---
 
 ## Sumário
 
-- [Visão Geral](#visão-geral)
-- [Por Que Este Projeto?](#por-que-este-projeto)
-- [O Que é Avaliado?](#o-que-é-avaliado)
-- [Como Funciona](#como-funciona)
-- [Hardware e Ambiente Experimental](#hardware-e-ambiente-experimental)
-- [Modelos e Configurações Avaliadas](#modelos-e-configurações-avaliadas)
-- [Principais Resultados Empíricos](#principais-resultados-empíricos)
-- [Como Começar](#como-começar)
-- [Reprodutibilidade dos Experimentos](#reprodutibilidade-dos-experimentos)
-- [Estrutura do Repositório](#estrutura-do-repositório)
-- [Limitações e Trabalho em Andamento](#limitações-e-trabalho-em-andamento)
-- [Status do Projeto e Roadmap](#status-do-projeto-e-roadmap)
-- [Documentação Completa](#documentação-completa)
-- [Licença e Agradecimentos](#licença-e-agradecimentos)
+- [1. Visão Geral e Motivação](#1-visão-geral-e-motivação)
+- [2. Arquitetura do Sistema e Fluxo](#2-arquitetura-do-sistema-e-fluxo)
+- [3. Resultados Empíricos e Benchmarks](#3-resultados-empíricos-e-benchmarks)
+- [4. Como Começar e Uso Prático](#4-como-começar-e-uso-prático)
+- [5. Metodologia, Limitações e Evolução](#5-metodologia-limitações-e-evolução)
 
 ---
 
-## Visão Geral
+## 1. Visão Geral e Motivação
 
-Modelos de Linguagem Pequenos (*Small Language Models* - SLMs)—com parâmetros entre **0,5B e 4B**—tornam viável a geração de texto local, privada e determinística em hardware convencional. No entanto, executar esses modelos em aceleradores com limites físicos rígidos ($\le 4096\text{ MiB}$ VRAM) impõe desafios severos de engenharia:
+### O Que É Este Projeto?
 
-- Os tensores de pesos do modelo consomem sozinhos entre 40% e 75% da memória de vídeo disponível.
-- A expansão dinâmica do cache Key-Value (KV) durante conversas mais longas gera risco iminente de encerramento forçado por falta de memória (*Out-of-Memory* - OOM).
-- Microarquiteturas mais antigas (como a NVIDIA Pascal GP107) não possuem Tensor Cores dedicados, fazendo com que a geração autorregressiva de tokens fique estritamente limitada pela largura de banda do barramento GDDR5.
+O **LLM Research Bench** é uma bancada prática de experimentação e conjunto automatizado de ferramentas de medição projetado para avaliar **Modelos de Linguagem Pequenos (SLMs, com parâmetros entre 0,5B e 4B)** executados localmente em aceleradores físicos de consumo sob limites severos de memória ($\le 4096\text{ MiB}$ VRAM).
 
-O **LLM Research Bench** fornece um conjunto automatizado de testes em Python, coletor assíncrono de telemetria via NVML, motor de análise estatística e pipeline de relatórios reprodutíveis para mensurar e compreender esses gargalos na prática.
+### Por Que Avaliar em uma GTX 1050 Ti de 4 GB?
 
----
+Enquanto a pesquisa de ponta em IA foca majoritariamente em aceleradores corporativos de centros de dados (A100, H100), bilhões de dispositivos de borda e sistemas computacionais acessíveis dependem de hardware de consumo. A **NVIDIA GeForce GTX 1050 Ti (Pascal GP107, 4 GB GDDR5, 75W TDP)** serve como um rigoroso ambiente de teste de estresse físico porque:
 
-## Por Que Este Projeto?
+1. **Limite Físico Rígido:** Um teto inflexível de 4096 MiB não deixa margem para sobrecarga de memória; os pesos estáticos consomem sozinhos de 40% a 76% do total de VRAM, restringindo drasticamente a expansão do cache Key-Value (KV).
+2. **Zero Aceleração Tensorial:** A microarquitetura GP107 não possui Tensor Cores. O processamento em FP16 opera à taxa restrita de 1:64, tornando a geração autorregressiva de tokens estritamente limitada pela largura de banda do barramento GDDR5 ($112,0\text{ GB/s}$).
+3. **Condições Reais de Borda:** Demonstra como técnicas de quantização não homogênea (`IQ4_XS`) e predição de múltiplos tokens (`MTP`) operam na prática em silício doméstico sem descarregamento para nuvens hiperdimensionadas.
 
-1. **Acessibilidade Prática:** A maioria dos benchmarks de inteligência artificial de ponta é executada em GPUs corporativas (A100, H100). Este projeto investiga o que realmente acontece em hardware doméstico de baixo consumo (GTX 1050 Ti de 4 GB, TDP de 75W).
-2. **Além de Promessas Teóricas:** Em vez de depender apenas de números genéricos de tokens/s, o projeto monitora de forma contínua alocações reais de memória física (MiB), temperatura da GPU, latência até o primeiro token (TTFT) e velocidades de processamento de contexto (*prefill*) versus geração (*decode*).
-3. **Entendimento de Técnicas de Aceleração:** Avalia se abordagens como quantização por matriz de importância (`IQ4_XS`) e decodificação especulativa nativa (*Multi-Token Prediction* - `MTP`) trazem ganhos reais em hardware desprovido de aceleração tensorial nativa em INT4.
+### Escopo da Pesquisa e Perguntas Centrais
 
----
-
-## O Que é Avaliado?
-
-O benchmark investiga tanto o desempenho operacional do sistema quanto o comportamento do modelo:
-
-| Dimensão de Avaliação | Métrica / Alvo | Metodologia de Coleta |
-| :--- | :--- | :--- |
-| **Vazão de Geração (Decode)** | Tokens/s gerados | Temporização por relógio monotônico em passagens sequenciais ($\tau = 0,0$, amostragem gulosa) |
-| **Processamento de Contexto (Prefill)** | Tokens/s processados | Taxa de avaliação do lote de entrada antes da emissão do primeiro token gerado |
-| **Latência e TTFT** | Tempo até o primeiro token (ms) | Atraso percebido pelo cliente, documentando cold-start no primeiro ensaio vs. regime estável |
-| **Alocação Física de VRAM** | Pico de memória na GPU (MiB) | Telemetria contínua via C-bindings nativos com NVML amostrada a cada 250 ms (4 Hz) |
-| **Proxy Analítico de Largura de Banda** | Demanda calculada de DRAM (GB/s) | Estimativa analítica ($B_{\text{demanda}} = S_{\text{pesos}} \times \text{Vazão}_{\text{decode}}$) frente ao barramento de 112 GB/s |
-| **Quantização e Especulação MTP** | Diferenciais de vazão e memória | Comparações observacionais controladas na arquitetura fixa do Gemma-4-E2B |
-| **Tokenização Multilíngue** | Fertilidade de tokens (tokens/palavra) | Análise paralela sobre 12 pares de textos em inglês, português e mandarim |
-| **Segurança Defensiva Exploratória** | Taxa de sucesso (ASR) e FPR | 10 sondas canárias de turno único com intervalos de confiança exatos de Clopper-Pearson a 95% |
+- **Impacto da Quantização:** Como quantizações baseadas em matriz de importância (`IQ4_XS`) se comparam a quantizações em bloco convencionais (`Q4_K_M`) em vazão de decode e pegada de VRAM?
+- **Amortização Especulativa:** A predição de múltiplos tokens (MTP) confere ganhos práticos de velocidade em hardware limitado por memória sem necessidade de modelos auxiliares dedicados?
+- **Sobretaxa Multilíngue:** Em que grau vocabulários compactos de tokenizadores penalizam a capacidade de contexto e a velocidade de resposta em idiomas não ingleses (português e mandarim)?
+- **Robustez Defensiva:** Modelos compactos conseguem isolar confiavelmente contextos de ferramentas externas contra ataques de injeção de prompt em fluxos locais?
 
 ---
 
-## Como Funciona
+## 2. Arquitetura do Sistema e Fluxo
 
-A suíte de benchmark orquestra a leitura de configurações, testes de prontidão do serviço, telemetria em segundo plano, envio dos prompts e exportação estatística em um fluxo determinístico:
+A suíte de testes organiza a leitura de configurações, checagens de prontidão, telemetria em segundo plano, envio de prompts e exportação estatística em um ciclo de quatro etapas:
 
 ```mermaid
 flowchart TD
-    A["Camada de Configuração<br/>(models.ini / Argumentos CLI)"] --> B["Verificação do Runtime<br/>(llama.cpp server / API)"]
-    B --> C["Daemon de Telemetria NVML<br/>(libnvidia-ml.so / 250 ms)"]
-    C --> D["Despachante de Testes<br/>(Prompts / Datasets)"]
-    D --> E["Execução da Inferência<br/>(Passos de Prefill e Decode)"]
-    E --> F["Sincronização de Telemetria<br/>(Pico de VRAM, Clocks e Temp)"]
-    F --> G["Armazenamento de Dados Brutos<br/>(Registros em JSON e CSV)"]
-    G --> H["Motor Estatístico<br/>(SciPy, CIs e Clopper-Pearson)"]
-    H --> I["Geração de Artefatos<br/>(Gráficos Matplotlib e PDFs)"]
+    subgraph S1["1. Configuração e Runtime"]
+        direction TB
+        CFG["Configurações e Modelos<br/>(models.ini / CLI)"] --> RUN["Servidor de Inferência<br/>(llama.cpp runtime)"]
+    end
+
+    subgraph S2["2. Execução e Telemetria"]
+        direction TB
+        DISP["Despachante de Prompts<br/>(Segurança e Raciocínio)"] --> EXEC["Motor de Inferência<br/>(Passos de Prefill e Decode)"]
+        EXEC <-->|Amostragem Concorrente a 4 Hz| NVML["Daemon de Telemetria NVML<br/>(libnvidia-ml.so)"]
+    end
+
+    subgraph S3["3. Persistência de Traces"]
+        direction TB
+        EXEC --> STORE["Armazenamento de Microdados<br/>(Traces em JSON e CSV)"]
+        NVML --> STORE
+    end
+
+    subgraph S4["4. Análise e Artefatos"]
+        direction TB
+        STORE --> STAT["Motor Estatístico<br/>(CIs e Clopper-Pearson)"]
+        STAT --> OUT["Artefatos Visuais<br/>(Figuras PNG e PDFs LaTeX)"]
+    end
+
+    S1 ==> S2
+    S2 ==> S3
+    S3 ==> S4
 ```
 
-### Componentes em Python (`src/llm_research_bench/`)
+### Componentes Principais do Pipeline
 
-- [`benchmark_suite.py`](src/llm_research_bench/benchmark_suite.py): Orquestrador central que implementa um protocolo padronizado em 3 níveis (Nível A Smoke Test, Nível B Comparativo Intercalado e Nível C Estresse Térmico), perfis de tempo monotônicos e guardiões de proteção térmica.
-- [`telemetry_collector.py`](src/llm_research_bench/telemetry_collector.py): Thread dedicada que consulta a biblioteca de gerenciamento da NVIDIA (`libnvidia-ml.so.1`) para registrar picos reais de VRAM e temperatura.
+- [`benchmark_suite.py`](src/llm_research_bench/benchmark_suite.py): Orquestrador central com protocolo padronizado em 3 níveis (Nível A Smoke Test, Nível B Comparativo Intercalado, Nível C Estresse Térmico), perfis de tempo monotônicos e guardrails de temperatura.
+- [`telemetry_collector.py`](src/llm_research_bench/telemetry_collector.py): Thread dedicada que consulta a biblioteca de gerenciamento da NVIDIA (`libnvidia-ml.so.1`) para registrar picos reais de VRAM, clocks do núcleo e temperatura da junção a 250 ms (4 Hz).
 - [`statistical_engine.py`](src/llm_research_bench/statistical_engine.py): Módulo matemático para cálculo de intervalos de confiança Student-$t$ e intervalos binomiais exatos de Clopper-Pearson.
-- [`generate_figures.py`](src/llm_research_bench/generate_figures.py) e [`generate_readme_figures.py`](src/llm_research_bench/generate_readme_figures.py): Scripts para geração automatizada de figuras vetoriais para os relatórios LaTeX e imagens PNG para documentação web.
+- [`generate_readme_figures.py`](src/llm_research_bench/generate_readme_figures.py): Gerador automatizado de gráficos PNG de alta resolução gerados diretamente a partir dos resultados experimentais.
 
 ---
 
-## Hardware e Ambiente Experimental
+## 3. Resultados Empíricos e Benchmarks
 
-Todos os resultados empíricos apresentados neste repositório foram coletados em uma bancada de testes física de referência:
+### Bancada Experimental de Referência
 
-| Componente | Especificação | Contexto Operacional |
-| :--- | :--- | :--- |
-| **GPU** | NVIDIA GeForce GTX 1050 Ti (Pascal GP107) | 4096 MiB GDDR5, barramento de 128 bits, 112,0 GB/s de banda, 768 núcleos CUDA, CC 6.1, TDP de 75W |
-| **Aceleração Tensorial** | **Ausente** (Sem Tensor Cores) | Operações em FP16 rodam a uma taxa de 1:64; inferência processada via núcleos CUDA FP32/INT8 padrão |
-| **Processador (CPU)** | AMD Ryzen 5 3600 (6 Núcleos / 12 Threads @ 3.6 GHz base) | Processador do sistema hospedeiro |
-| **Memória RAM** | 16 GiB DDR4 @ 3200 MT/s | Memória RAM do host |
-| **Ambiente Isolado** | Container Debian 12 minimal dedicado | Passthrough PCI direto; sem interface gráfica (X11) ou compositores disputando VRAM |
-| **Motor de Inferência** | `llama-server` (llama.cpp build b4120+) | Descarregamento cuBLAS, carregador nativo GGUF |
+Todas as medições empíricas foram coletadas na bancada física dedicada:
+- **GPU:** NVIDIA GeForce GTX 1050 Ti (4096 MiB GDDR5, barramento de 128 bits, 112,0 GB/s de banda, 768 núcleos CUDA, arquitetura Pascal GP107).
+- **CPU e Memória Host:** AMD Ryzen 5 3600 (6C/12T @ 3.6 GHz base), 16 GiB DDR4 3200 MT/s.
+- **Ambiente Isolado:** Container Debian 12 minimal com passthrough PCI direto (modo headless, sem X11 disputando VRAM).
+- **Motor de Inferência:** `llama-server` (commit b4120+) com descarregamento cuBLAS e quantização GGUF.
 
----
-
-## Modelos e Configurações Avaliadas
+### Tabela Comparativa Mestra (Configurações Avaliadas)
 
 > [!IMPORTANT]
-> **Modelos Distintos vs. Configurações Experimentais**<br/>
+> **Modelos Fundacionais vs. Configurações Operacionais:**<br/>
 > O benchmark avaliou **6 modelos fundacionais distintos** distribuídos em **8 configurações operacionais experimentais** (incluindo variações de quantização e variantes com decodificação especulativa MTP).
 
-| Identificador | Modelo Fundacional | Formato de Quantização | Especulação MTP | Parâmetros Nominais | Pico de VRAM na GPU | % da VRAM (4 GiB) |
-| :--- | :--- | :--- | :---: | :---: | :---: | :---: |
-| `qwen2.5:0.5b` | **Qwen-2.5-0.5B** | `Q4_K_M` | Não | 0,49B | 620,7 MiB | 15,2% |
-| `smollm2:1.7b` | **SmolLM2-1.7B** | `Q4_K_M` | Não | 1,71B | 2902,7 MiB | 70,9% |
-| `gemma4:C1` | **Gemma-4-E2B** | `Q4_K_M` (Base) | Não | 2,00B | 1996,7 MiB | 48,7% |
-| `gemma4:C2` | **Gemma-4-E2B** | `IQ4_XS` (Base) | Não | 2,00B | 1800,7 MiB | 44,0% |
-| `gemma4:C3` | **Gemma-4-E2B** | `IQ4_XS` | **Sim (MTP)** | 2,00B (2,30B header)* | 2036,7 MiB | 49,7% |
-| `qwen3.5:2b` | **Qwen-3.5-2B** | `Q4_K_XL` | Não | 1,95B | 1580,7 MiB | 38,6% |
-| `llama3.2:3b` | **Llama-3.2-3B** | `Q4_K_M` | Não | 3,21B | 3074,7 MiB | 75,1% |
-| `qwen3.5:4b` | **Qwen-3.5-4B** | `Q4_K_M` | Não | 4,02B | 3140,7 MiB | 76,7% |
+| Ponto | Modelo e Configuração Operacional | Arquitetura Fundacional | Formato / Quantização | Pico de VRAM (MiB) | % de 4 GiB | Vazão Decode (tok/s) | TTFT Estável (ms) | Demanda Analítica de Banda |
+| :---: | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| **[1]** | **Qwen-2.5-0.5B** | Qwen2.5 (0,49B) | `Q4_K_M` | **620,7** | 15,2% | **97,47 ± 0,60** | **12,1** | 45,7 GB/s (40,8%) |
+| **[2]** | **Qwen-3.5-2B** | Qwen (1,95B) | `Q4_K_XL` | 1580,7 | 38,6% | 37,60 ± 0,10 | 49,9 | 52,5 GB/s (46,9%) |
+| **[3]** | **Gemma-4-E2B [C2]** | Gemma 2 (2,00B) | `IQ4_XS` Base | 1800,7 | 44,0% | 34,51 ± 0,29 | 88,0 | 60,0 GB/s (53,6%) |
+| **[4]** | **Gemma-4-E2B [C1]** | Gemma 2 (2,00B) | `Q4_K_M` Base | 1996,7 | 48,7% | 26,92 ± 0,23 | 116,1 | 53,7 GB/s (47,9%) |
+| **[5]** | **Gemma-4-E2B [C3]** | Gemma 2 (2,00B) | `IQ4_XS` + **MTP** | 2036,7 | 49,7% | **43,35 ± 0,57** | 73,5* | **75,3 GB/s (67,2%)** |
+| **[6]** | **SmolLM2-1.7B** | LLaMA (1,71B) | `Q4_K_M` | 2902,7 | 70,9% | 47,80 ± 0,10 | 25,5 | 50,6 GB/s (45,2%) |
+| **[7]** | **Llama-3.2-3B** | Llama 3.2 (3,21B) | `Q4_K_M` | 3074,7 | 75,1% | 27,59 ± 0,04 | 43,5 | 55,7 GB/s (49,7%) |
+| **[8]** | **Qwen-3.5-4B** | Qwen (4,02B) | `Q4_K_M` | 3140,7 | 76,7% | 18,55 ± 0,10 | 129,8 | 47,8 GB/s (42,7%) |
 
-*\* Nota: O Gemma-4-E2B com MTP relata 2,30B parâmetros totais no cabeçalho de seu arquivo GGUF porque as camadas preditivas auxiliares (quantizadas em Q8_0) estão embutidas diretamente no artefato de pesos.*
+*\* Nota sobre Inicialização a Frio (Cold-Start):* No primeiro ensaio sem aquecimento prévio, o Gemma-4-E2B apresentou latência de cold-start de 4142,2 ms decorrente da compilação JIT de kernels CUDA e alocação de buffers. Em regime estabilizado, a mediana caiu para 73,5 ms (p95: 2311,4 ms).
 
----
+### Relação Vazão vs. Alocação de VRAM
 
-## Principais Resultados Empíricos
+O gráfico abaixo apresenta a vazão de geração (*decode* guloso, tokens/s) em relação ao pico de memória física de vídeo medido na GPU (MiB via NVML). Os pontos **[1] a [8]** correspondem diretamente à Tabela Comparativa Mestra acima:
 
-### 1. Relação Vazão vs. Alocação de VRAM (Fronteira Empírica)
+![Vazão vs. VRAM na GTX 1050 Ti](docs/images/pareto_frontier.png)
 
-O gráfico abaixo apresenta a vazão de geração (*decode*) em relação ao pico de memória física de vídeo medido na GPU. A linha tracejada vermelha delimita o teto de 4096 MiB da GTX 1050 Ti.
+> [!NOTE]
+> **Critérios de Dominância e Compromissos de Engenharia:**<br/>
+> Sob uma avaliação estritamente restrita à tupla bivariada `(min VRAM, max Vazão)`, o Ponto **[1] (Qwen-0.5B)** domina todos os demais pontos nesta bancada de testes. Entretanto, a seleção prática de modelos exige equilibrar velocidade com a escala de parâmetros e margem de memória para retenção de contexto. Os Pontos **[2]**, **[5]** e **[6]** representam configurações balanceadas para a escala de 2B parâmetros, enquanto modelos de 3B--4B (**[7]**, **[8]**) demandam mais de 75% da VRAM apenas para a carga estática dos tensores de pesos.
 
-![Trade-off de Pareto: Vazão vs VRAM](docs/images/pareto_frontier.png)
-
-- **Alta Eficiência em Modelos Sub-1B:** O Qwen-2.5-0.5B opera com folga expressiva (620,7 MiB, apenas 15,2% do orçamento), atingindo 97,47 tok/s.
-- **Ponto de Equilíbrio Intermediário:** O Gemma-4-E2B em IQ4_XS com MTP oferece equilíbrio sólido (43,35 tok/s consumindo 2036,7 MiB, ~50% da VRAM), preservando margem para alocação do cache de contexto.
-- **Fronteira de Capacidade:** Modelos de 3B a 4B (Llama-3.2-3B, Qwen-3.5-4B) demandam mais de 75% da VRAM apenas para carga estática de pesos, restringindo a janela de contexto útil sob cache KV em FP16.
-
-### 2. Comparações Observacionais Controladas: Quantização e MTP
+### Comparações Observacionais Controladas: Quantização e MTP
 
 Para observar separadamente os efeitos da quantização e da decodificação especulativa, realizamos comparações controladas na mesma arquitetura base (**Gemma-4-E2B**) ao longo de 10 ensaios sequenciais ($\tau = 0,0$):
 
@@ -163,24 +149,9 @@ Para observar separadamente os efeitos da quantização e da decodificação esp
 - **Diferença Composta de Configuração (C3 vs. C1):** O ganho acumulado entre a linha de base e a configuração otimizada alcançou **+61,0%** ($26,92 \to 43,35\text{ tok/s}$). Como a economia de 196 MiB da quantização absorveu 83% da pegada das cabeças de MTP, a variação líquida de memória foi de apenas **+40,0 MiB** ($1996,7 \to 2036,7\text{ MiB}$).
 
 > [!NOTE]
-> *Ressalva Metodológica:* Trata-se de uma comparação observacional controlada sobre uma arquitetura específica em ambiente físico fixo, não constituindo demonstração causal generalizável para outros tipos de aceleradores.
+> *Escopo Metodológico:* Trata-se de uma comparação observacional controlada sobre uma arquitetura específica em ambiente físico fixo, não constituindo demonstração causal generalizável para outros tipos de aceleradores.
 
-### 3. Tabela Comparativa Consolidada
-
-| Configuração | Vazão Média Decode (tok/s) | TTFT Estável (ms) | Prefill (tok/s) | Demanda Analítica de Banda | Eficiência de Memória (tok/s/GiB) |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Qwen-2.5-0.5B** (`Q4_K_M`) | **97,47 ± 0,60** | **12,1** | 237,1 | 45,7 GB/s (40,8%) | **160,8** |
-| **SmolLM2-1.7B** (`Q4_K_M`) | 47,80 ± 0,10 | 25,5 | 103,3 | 50,6 GB/s (45,2%) | 16,9 |
-| **Gemma-4-E2B** (`IQ4_XS + MTP`) | 43,35 ± 0,57 | 73,5* | 62,2 | **75,3 GB/s (67,2%)** | 21,8 |
-| **Qwen-3.5-2B** (`Q4_K_XL`) | 37,60 ± 0,10 | 49,9 | 126,5 | 52,5 GB/s (46,9%) | 24,4 |
-| **Gemma-4-E2B** (`IQ4_XS Base`) | 34,51 ± 0,29 | 88,0 | 79,2 | 60,0 GB/s (53,6%) | 19,6 |
-| **Llama-3.2-3B** (`Q4_K_M`) | 27,59 ± 0,04 | 43,5 | 59,6 | 55,7 GB/s (49,7%) | 9,2 |
-| **Gemma-4-E2B** (`Q4_K_M Base`) | 26,92 ± 0,23 | 116,1 | 65,5 | 53,7 GB/s (47,9%) | 13,8 |
-| **Qwen-3.5-4B** (`Q4_K_M`) | 18,55 ± 0,10 | 129,8 | 49,3 | 47,8 GB/s (42,7%) | 6,1 |
-
-*\* Nota sobre Inicialização a Frio (Cold-Start):* No primeiro ensaio sem aquecimento prévio, o Gemma-4-E2B apresentou latência de cold-start de 4142,2 ms decorrente da compilação JIT de kernels CUDA e alocação de buffers. Em regime estabilizado, a mediana caiu para 73,5 ms (p95: 2311,4 ms).
-
-### 4. Segurança Defensiva e Tokenização Multilíngue
+### Destaques de Segurança Defensiva e Tokenização Multilíngue
 
 - **Recusa Indevida em Prompts Benignos:** Em 4 prompts técnicos com termos de segurança da informação, todos os modelos testados obtiveram 0% de recusa indevida ($0/4$, $\text{FPR} = 0,0\%$, intervalo de confiança exato de Clopper-Pearson a 95% $[0,0\%, 60,2\%]$).
 - **Injeções Indiretas de Prompt:** Modelos abaixo de 2B parâmetros exibiram vulnerabilidade acentuada a escapes de delimitadores embutidos no contexto ($\text{ASR} \approx 50\%\text{--}100\%$).
@@ -189,15 +160,13 @@ Para observar separadamente os efeitos da quantização e da decodificação esp
 
 ---
 
-## Como Começar
+## 4. Como Começar e Uso Prático
 
-### Pré-requisitos
+### Pré-requisitos e Configuração do Ambiente
 
 - **Sistema:** Linux (Ubuntu 22.04 / Debian 12 recomendado) ou Windows 10/11 com Python 3.10+
 - **GPU (Opcional para análise de dados):** GPU NVIDIA com driver proprietário instalado (para telemetria via NVML). Os scripts de benchmark suportam execução simulada sem GPU dedicada.
 - **Git**
-
-### Instalação
 
 ```bash
 # Clone o repositório
@@ -208,22 +177,22 @@ cd llm-research-bench
 python -m venv .venv
 source .venv/bin/activate  # No Windows: .venv\Scripts\activate
 
-# Instale as dependências em modo editável
+# Instale o pacote em modo editável
 pip install -e .
 ```
 
-### Execução dos Testes Automatizados
+### Execução dos Testes Automatizados de Software
 
 A base de código inclui suíte completa de testes unitários que valida motores estatísticos, parsers de telemetria, cálculos de Clopper-Pearson e guardrails de segurança:
 
 ```bash
-# Executa todos os 64 testes unitários (~0,2s de execução)
+# Executa todos os 64 testes unitários (execução verificada: conclui em ~0,2s)
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
-### Execução de um Teste Rápido (Nível A Smoke Test)
+### Execução de uma Passagem de Benchmark Ponta a Ponta
 
-Para executar uma passagem de benchmark de ponta a ponta conectando-se a um servidor de inferência local ativo (ex.: `llama-server` em `http://127.0.0.1:18081`):
+Para executar uma passagem de benchmark conectando-se a um servidor de inferência local ativo (ex.: `llama-server` em `http://127.0.0.1:18081`):
 
 ```bash
 # Definindo o PYTHONPATH para src, ou instalando via pip install -e .
@@ -232,47 +201,35 @@ python src/llm_research_bench/benchmark_suite.py --base-url http://127.0.0.1:180
 
 *(Nota: Requer um endpoint ativo compatível com a API OpenAI ou llama.cpp. Em ambientes offline sem servidor em execução, utilize a suíte de testes automatizados acima para verificar todos os componentes e proteções.)*
 
-### Regeneração de Gráficos e Imagens
+### Regeneração de Gráficos e Figuras (PNG / PDF)
 
 Todos os gráficos vetoriais em PDF e figuras PNG da documentação podem ser gerados diretamente a partir dos dados experimentais registrados:
 
 ```bash
-# Gera imagens PNG para documentação (docs/images/)
+# Gera imagens PNG para documentação (docs/images/) - execução verificada
 python src/llm_research_bench/generate_readme_figures.py
 
-# Gera figuras vetoriais PDF para os relatórios acadêmicos (reports/figures/)
+# Gera figuras vetoriais PDF para os relatórios acadêmicos (reports/figures/) - execução verificada
 python src/llm_research_bench/generate_figures.py
 ```
 
-### Compilação dos Relatórios Técnicos
+### Compilação dos Relatórios Técnicos (Tectonic)
 
 As monografias científicas aprofundadas (20 e 30 páginas) podem ser compiladas via [Tectonic](https://tectonic-typesetting.github.io/):
 
 ```bash
-# Compilação do relatório em português
-tectonic reports/pt-BR/report_pt-BR.tex --outdir reports/pt-BR
-
-# Compilação do relatório em inglês
+# Compilação do relatório em inglês (reports/en-US/report_en-US.pdf) - execução verificada
 tectonic reports/en-US/report_en-US.tex --outdir reports/en-US
+
+# Compilação do relatório em português (reports/pt-BR/report_pt-BR.pdf) - execução verificada
+tectonic reports/pt-BR/report_pt-BR.tex --outdir reports/pt-BR
 ```
 
 ---
 
-## Reprodutibilidade dos Experimentos
+## 5. Metodologia, Limitações e Evolução
 
-Para permitir auditoria rigorosa, cada execução experimental armazena:
-
-1. **Proveniência do Modelo:** Tamanho do arquivo GGUF, número de camadas, contexto configurado e hash criptográfico SHA-256 verificado (consulte [datasets/model_provenance.json](datasets/model_provenance.json)).
-2. **Amostragem Determinística:** Inferência estritamente gulosa ($\tau = 0,0$) com semente fixa (`seed=42`).
-3. **Telemetria de Execução:** Temporização por relógio monotônico em cada requisição, acompanhada por amostras NVML do hardware.
-4. **Isolamento de Dados:** Dados de telemetria de sistema ficam em [`results/system_performance/`](results/system_performance/) e avaliações comportamentais em [`results/model_quality/`](results/model_quality/).
-
-> [!WARNING]
-> *Reprodutibilidade em Outros Hardwares:* Vazão em tokens/s e latências em milissegundos dependem do acelerador, versão do driver, temporizações de memória e temperatura ambiente. A execução em placas de vídeo diferentes apresentará valores numéricos distintos.
-
----
-
-## Estrutura do Repositório
+### Estrutura do Repositório
 
 ```
 llm-research-bench/
@@ -313,11 +270,20 @@ llm-research-bench/
 └── README.pt-BR.md                      # Documentação principal em português
 ```
 
----
+### Reprodutibilidade e Proveniência
 
-## Limitações e Trabalho em Andamento
+Para permitir auditoria rigorosa, cada execução experimental armazena:
+1. **Proveniência do Modelo:** Tamanho do arquivo GGUF, número de camadas, contexto configurado e hash criptográfico SHA-256 verificado (consulte [datasets/model_provenance.json](datasets/model_provenance.json)).
+2. **Amostragem Determinística:** Inferência estritamente gulosa ($\tau = 0,0$) com semente fixa (`seed=42`).
+3. **Telemetria de Execução:** Temporização por relógio monotônico em cada requisição, acompanhada por amostras NVML do hardware.
+4. **Isolamento de Dados:** Dados de telemetria de sistema ficam em [`results/system_performance/`](results/system_performance/) e avaliações comportamentais em [`results/model_quality/`](results/model_quality/).
 
-Em conformidade com a prática científica aberta, o projeto documenta explicitamente suas limitações metodológicas e os pontos em aberto:
+> [!WARNING]
+> *Reprodutibilidade em Outros Hardwares:* Vazão em tokens/s e latências em milissegundos dependem do acelerador, versão do driver, temporizações de memória e temperatura ambiente. A execução em placas de vídeo diferentes apresentará valores numéricos distintos.
+
+### Limitações Metodológicas Conhecidas
+
+Em conformidade com a prática científica aberta, o projeto documenta explicitamente suas limitações metodológicas:
 
 - **GPU Física Única (Pseudorreplicação):** Todas as repetições empíricas foram realizadas no mesmo nó físico com a GTX 1050 Ti. Os altos valores de significância estatística ($t$-test) refletem consistência interna estrita entre ensaios na mesma máquina, mas não capturam a variabilidade entre diferentes placas físicas (*Hurlbert, 1984*).
 - **Amostras Canárias de Segurança Reduzidas ($N=10$):** Os testes de segurança defensiva e interceptação de ferramentas são sondas exploratórias de turno único para diagnosticar modos de falha. Não representam uma avaliação psicométrica exaustiva.
@@ -325,24 +291,7 @@ Em conformidade com a prática científica aberta, o projeto documenta explicita
 - **Deriva Térmica em Execuções Contínuas:** Em baterias ininterruptas, a temperatura da GPU subiu de $44^\circ\text{C}$ para $74^\circ\text{C}$, ativando o escalonamento dinâmico do NVIDIA GPU Boost 3.0 ($1695 \to 1607\text{ MHz}$, variação de $-5,2\%$). O protocolo de 3 níveis foi concebido para mitigar esse efeito em rodadas futuras.
 - **Acompanhamento de Questões Abertas:** As discussões metodológicas e o planejamento das próximas etapas estão documentados na **[Issue #2: Pesquisa em andamento: revisão metodológica e novos experimentos](https://github.com/AndersonTavares0/llm-research-bench/issues/2)**.
 
----
-
-## Status do Projeto e Roadmap
-
-| Funcionalidade / Marco | Status Atual | Detalhes |
-| :--- | :---: | :--- |
-| **Pipeline de Telemetria NVML** | ✅ Implementado | Amostragem assíncrona a 250 ms via ctypes |
-| **Protocolo Padronizado em 3 Níveis** | ✅ Implementado | Nível A (smoke), Nível B (intercalado), Nível C (estresse térmico) |
-| **Motor Estatístico e CIs** | ✅ Implementado | Intervalos Student-$t$ e Clopper-Pearson exatos a 95% |
-| **Testes Automatizados de Software** | ✅ Implementado | 64 testes unitários com aprovação out-of-the-box |
-| **Monografias Acadêmicas Detalhadas** | ✅ Implementado | Artigos de 20 e 30 páginas compilados via Tectonic |
-| **Validação em Múltiplos Nós de Hardware** | ⏳ Planejado | Expansão para GPUs secundárias (ex.: RTX 3050 de 6 GB) |
-| **Campanha Prolongada de Estresse Térmico** | ⏳ Planejado | Execução de baterias sustentadas Nível C ($N \ge 50$, 30 min) |
-| **Sondas Geopolíticas Expandidas** | ⏳ Planejado | Execução da suíte de temas sensíveis definida nos datasets |
-
----
-
-## Documentação Completa
+### Relatórios Técnicos Completos e Citação
 
 Para aprofundamento nas derivações teóricas (matemática da atenção de Vaswani et al., equações de escala de GQA, embeddings rotacionais RoPE e curvas de intensidade aritmética Roofline), consulte os relatórios técnicos integrais:
 
@@ -351,6 +300,18 @@ Para aprofundamento nas derivações teóricas (matemática da atenção de Vasw
 - 🛡️ **[Política de Segurança](SECURITY.md)**: Orientações para relato de vulnerabilidades e testes defensivos.
 - 🤝 **[Diretrizes de Contribuição](CONTRIBUTING.md)**: Instruções para envio de melhorias ao projeto.
 - 🏛️ **[Governança do Projeto](docs/GOVERNANCE.md)**: Princípios e padrões de revisão do repositório.
+
+Se você utilizar esta metodologia ou o conjunto de dados empíricos em sua pesquisa, cite conforme:
+
+```bibtex
+@article{tavares2026slmbench,
+  title   = {Avaliação Reproduzível de Modelos de Linguagem Compactos sob Restrições Severas de Memória e Computação: Dinâmica Arquitetural, Fronteiras de Quantização, Decodificação Especulativa e Vulnerabilidades Adversariais em Bancada Experimental de Referência},
+  author  = {Tavares, Anderson},
+  journal = {Relatório Técnico e Monografia Aberta de Benchmark},
+  year    = {2026},
+  url     = {https://github.com/AndersonTavares0/llm-research-bench}
+}
+```
 
 ---
 
