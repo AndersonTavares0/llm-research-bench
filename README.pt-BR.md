@@ -132,7 +132,7 @@ Todas as medições empíricas foram coletadas na bancada física dedicada:
 
 O gráfico abaixo apresenta a vazão de geração (*decode* guloso, tokens/s) em relação ao pico de memória física de vídeo medido na GPU (MiB via NVML). Os pontos **[1] a [8]** correspondem diretamente à Tabela Comparativa Mestra acima:
 
-![Vazão vs. VRAM na GTX 1050 Ti](docs/images/pareto_frontier.png)
+![Vazão vs. VRAM na GTX 1050 Ti](docs/images/pareto_frontier.svg)
 
 > [!NOTE]
 > **Critérios de Dominância e Compromissos de Engenharia:**<br/>
@@ -142,7 +142,7 @@ O gráfico abaixo apresenta a vazão de geração (*decode* guloso, tokens/s) em
 
 Para observar separadamente os efeitos da quantização e da decodificação especulativa, realizamos comparações controladas na mesma arquitetura base (**Gemma-4-E2B**) ao longo de 10 ensaios sequenciais ($\tau = 0,0$):
 
-![Comparações Observacionais: Gemma-4-E2B](docs/images/mtp_ablation.png)
+![Comparações Observacionais: Gemma-4-E2B](docs/images/mtp_ablation.svg)
 
 - **Mudança de Quantização (C2 vs. C1):** A transição do formato `Q4_K_M` para `IQ4_XS` (ambos sem especulação MTP) esteve associada a um **ganho de +28,2% na vazão** ($26,92 \to 34,51\text{ tok/s}$) e a uma **redução de 196,0 MiB** na VRAM de pico ($1996,7 \to 1800,7\text{ MiB}$).
 - **Efeito Especulativo do MTP (C3 vs. C2):** Sob quantização constante em `IQ4_XS`, ativar as cabeças preditivas de MTP conferiu **+25,6% de vazão** adicional ($34,51 \to 43,35\text{ tok/s}$) com uma alocação de **+236,0 MiB** em tempo de execução para as estruturas de rascunho e verificação.

@@ -1,200 +1,138 @@
-"""Generate polished, publication-clarity PNG figures specifically for README documentation.
+"""Regenerate the two README charts from the documented benchmark summary.
 
-Adheres strictly to methodological guidelines:
-1. Figure 1 (Throughput vs. VRAM Trade-off):
-   - Numbered markers [1] through [8] positioned cleanly with zero label collisions.
-   - Distinct markers and high-contrast color palette.
-   - Categorized strictly by parameter scale tiers (Sub-1B, 1.5B--2.5B, 3B--4B), WITHOUT making
-     unsupported assumptions about reasoning capability or quality based solely on parameter count.
-   - Physical VRAM ceiling (4096 MiB) clearly marked with dashed line and exceedance boundary.
-   - Clean margins, professional proportions, high DPI (160), readable on mobile and desktop without zoom.
-   - Mathematical note clarifying that Point [1] dominates under pure bivariate (VRAM, throughput),
-     and that model selection balances speed, context retention, and parameter footprint.
+Values below were transcribed from the README comparison table. They are not
+fresh GPU measurements and are not independently checked against raw traces.
+Check these figures against canonical results before merging.
 
-2. Figure 2 (Controlled Observational Comparisons: Gemma-4-E2B):
-   - Clean grouped comparison across configurations C1 (Q4_K_M Base), C2 (IQ4_XS Base), and C3 (IQ4_XS + MTP).
-   - Absolute throughput (tok/s) on bars, physical VRAM footprint (MiB) annotated clearly.
-   - Discrete delta annotations for quantization (+28.2%) and MTP speculative decoding (+25.6%).
-   - Transparent methodological note clarifying that these are controlled observations on a physical GTX 1050 Ti,
-     not a universal causal claim.
+Outputs: docs/images/pareto_frontier.{png,svg} and mtp_ablation.{png,svg}.
+The legacy pareto_frontier filename is retained for compatibility; the figure
+does not claim to depict a multi-model Pareto frontier.
 """
-
-import json
 from pathlib import Path
+
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+OUT = Path(__file__).resolve().parents[2] / "docs" / "images"
+COLORS = {"Qwen": "#3873A5", "Gemma": "#CF793F", "SmolLM2": "#5C8D77", "Llama": "#806AAB"}
+MARKERS = {"Qwen": "o", "Gemma": "s", "SmolLM2": "D", "Llama": "^"}
+INK, MUTED, GRID = "#263444", "#5D6C7C", "#E5EBEF"
+
+DATA = [
+    (1, "Qwen 2.5 · 0.5B", "Qwen", 620.7, 97.47),
+    (2, "Qwen 3.5 · 2B", "Qwen", 1580.7, 37.60),
+    (3, "Gemma · IQ4", "Gemma", 1800.7, 34.51),
+    (4, "Gemma · Q4", "Gemma", 1996.7, 26.92),
+    (5, "Gemma · IQ4 + MTP", "Gemma", 2036.7, 43.35),
+    (6, "SmolLM2 · 1.7B", "SmolLM2", 2902.7, 47.80),
+    (7, "Llama 3.2 · 3B", "Llama", 3074.7, 27.59),
+    (8, "Qwen 3.5 · 4B", "Qwen", 3140.7, 18.55),
+]
+
 
 def generate_readme_figures():
-    repo_root = Path(__file__).resolve().parents[2]
-    data_dir = repo_root / "results"
-    output_dir = repo_root / "docs" / "images"
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    # Clean sans-serif styling for web/mobile readability
+    OUT.mkdir(parents=True, exist_ok=True)
     plt.rcParams.update({
-        "font.family": "sans-serif",
-        "font.sans-serif": ["Segoe UI", "DejaVu Sans", "Helvetica", "Arial"],
-        "font.size": 9.5,
-        "axes.labelsize": 10,
-        "axes.titlesize": 11,
-        "xtick.labelsize": 9,
-        "ytick.labelsize": 9,
-        "figure.autolayout": False,
+        "font.family": "DejaVu Sans",
+        "font.size": 11,
+        "axes.titlesize": 16,
+        "axes.labelsize": 11,
+        "axes.titleweight": "bold",
+        "axes.labelcolor": INK,
+        "text.color": INK,
+        "xtick.color": MUTED,
+        "ytick.color": MUTED,
+        "axes.edgecolor": "#CDD6DE",
+        "axes.linewidth": 0.9,
+        "savefig.facecolor": "white",
+        "figure.facecolor": "white",
+        "svg.fonttype": "none",
     })
 
-    # =========================================================================
-    # 1. Figure: Generation Throughput vs. Peak VRAM Allocation
-    # =========================================================================
-    # 6 foundational models across 8 operational configurations
-    points = [
-        {"id": 1, "model": "Qwen-2.5-0.5B", "cfg": "Q4_K_M", "vram": 620.7, "tok": 97.47, "color": "#27ae60", "marker": "o", "tier": "Sub-1B Scale"},
-        {"id": 2, "model": "Qwen-3.5-2B", "cfg": "Q4_K_XL", "vram": 1580.7, "tok": 37.60, "color": "#16a085", "marker": "s", "tier": "1.5B--2.5B Scale"},
-        {"id": 3, "model": "Gemma-4-E2B", "cfg": "IQ4_XS Base (C2)", "vram": 1800.7, "tok": 34.51, "color": "#e67e22", "marker": "^", "tier": "1.5B--2.5B Scale"},
-        {"id": 4, "model": "Gemma-4-E2B", "cfg": "Q4_K_M Base (C1)", "vram": 1996.7, "tok": 26.92, "color": "#d35400", "marker": "v", "tier": "1.5B--2.5B Scale"},
-        {"id": 5, "model": "Gemma-4-E2B", "cfg": "IQ4_XS + MTP (C3)", "vram": 2036.7, "tok": 43.35, "color": "#c0392b", "marker": "D", "tier": "1.5B--2.5B Scale"},
-        {"id": 6, "model": "SmolLM2-1.7B", "cfg": "Q4_K_M", "vram": 2902.7, "tok": 47.80, "color": "#2980b9", "marker": "p", "tier": "1.5B--2.5B Scale"},
-        {"id": 7, "model": "Llama-3.2-3B", "cfg": "Q4_K_M", "vram": 3074.7, "tok": 27.59, "color": "#8e44ad", "marker": "h", "tier": "3B--4B Scale"},
-        {"id": 8, "model": "Qwen-3.5-4B", "cfg": "Q4_K_M", "vram": 3140.7, "tok": 18.55, "color": "#7f8c8d", "marker": "X", "tier": "3B--4B Scale"},
-    ]
+    def export(fig, stem):
+        fig.savefig(OUT / f"{stem}.png", dpi=220, facecolor="white")
+        fig.savefig(OUT / f"{stem}.svg", facecolor="white")
+        plt.close(fig)
 
-    fig, ax = plt.subplots(figsize=(9.0, 5.2), dpi=160)
-
-    # Offset dictionary to position ID badges cleanly without any collision
+    fig, ax = plt.subplots(figsize=(12.4, 6.4))
+    fig.subplots_adjust(left=.09, right=.965, top=.78, bottom=.18)
+    ax.set_xlim(250, 4270)
+    ax.set_ylim(8, 110)
+    ax.set_xticks([500, 1000, 1500, 2000, 2500, 3000, 3500, 4000])
+    ax.set_yticks([20, 40, 60, 80, 100])
+    ax.grid(axis="both", color=GRID, linewidth=.85, zorder=0)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.set_xlabel("Peak GPU memory allocated (MiB)")
+    ax.set_ylabel("Generation throughput (tokens/s)")
+    for i, name, family, vram, speed in DATA:
+        ax.scatter(vram, speed, s=150, marker=MARKERS[family],
+                   facecolor=COLORS[family], edgecolor="white", linewidth=1.6, zorder=5)
     offsets = {
-        1: (8, 6),     # Qwen 0.5B
-        2: (8, 6),     # Qwen 2B
-        3: (-24, 6),   # Gemma IQ4XS base
-        4: (-24, -14), # Gemma Q4KM base
-        5: (8, 6),     # Gemma MTP
-        6: (8, 6),     # SmolLM2
-        7: (8, -14),   # Llama 3.2 3B
-        8: (8, 6),     # Qwen 4B
+        1: (14, -15), 2: (-6, 18), 3: (-6, -19), 4: (10, -17),
+        5: (12, 14), 6: (-4, 28), 7: (12, 9), 8: (12, -11),
     }
+    for i, name, family, vram, speed in DATA:
+        dx, dy = offsets[i]
+        ax.annotate(f"[{i}] {name}", xy=(vram, speed), xytext=(dx, dy),
+                    textcoords="offset points", ha="left" if dx > 0 else "right",
+                    va="center", fontsize=9.6, color=INK, fontweight="medium",
+                    bbox=dict(boxstyle="round,pad=.20", facecolor="white",
+                              edgecolor="none", alpha=.92), zorder=6)
+    ax.axvline(4096, linestyle=(0, (4, 4)), color=MUTED, linewidth=1.45, zorder=2)
+    ax.text(4068, 103, "4 GiB GPU limit", rotation=90, ha="right",
+            va="top", color=MUTED, fontsize=9)
+    fig.text(.09, .935, "Throughput vs. GPU memory",
+             fontsize=19, fontweight="bold", color=INK)
+    fig.text(.09, .877,
+             "8 measured configurations · GTX 1050 Ti (4 GiB) · higher is faster, farther left uses less VRAM",
+             fontsize=11, color=MUTED)
+    fig.text(.09, .068,
+             "Point IDs match the README comparison table. Model quality is not measured on these axes.",
+             fontsize=9.4, color=MUTED)
+    export(fig, "pareto_frontier")
 
-    for p in points:
-        ax.scatter(p["vram"], p["tok"], color=p["color"], marker=p["marker"], s=100, zorder=5, edgecolor="#2c3e50", linewidth=0.9)
-        ox, oy = offsets[p["id"]]
-        ax.annotate(
-            f"[{p['id']}]",
-            (p["vram"], p["tok"]),
-            textcoords="offset points",
-            xytext=(ox, oy),
-            fontsize=8.5,
-            fontweight="bold",
-            color=p["color"],
-            zorder=6
-        )
-
-    # 4096 MiB physical boundary
-    ax.axvline(4096, color="#c0392b", linestyle="--", linewidth=1.6, zorder=3, label="Physical VRAM Ceiling: 4096 MiB (GTX 1050 Ti)")
-    ax.axvspan(4096, 4400, color="#c0392b", alpha=0.08, label="Physical OOM Exceedance Area")
-
-    # Light background tinting for parameter scale tiers (purely architectural, without quality claims)
-    ax.axvspan(400, 1000, color="#27ae60", alpha=0.03)
-    ax.axvspan(1000, 3000, color="#2980b9", alpha=0.03)
-    ax.axvspan(3000, 4096, color="#8e44ad", alpha=0.03)
-
-    # Scale tier annotations at top
-    ax.text(700, 103, "Sub-1B Parameter Scale", fontsize=8.0, color="#27ae60", ha="center", style="italic", fontweight="bold")
-    ax.text(2000, 103, "1.5B--2.5B Parameter Scale", fontsize=8.0, color="#2980b9", ha="center", style="italic", fontweight="bold")
-    ax.text(3550, 103, "3B--4B Scale", fontsize=8.0, color="#8e44ad", ha="center", style="italic", fontweight="bold")
-
-    ax.set_xlabel("Peak Device VRAM Allocation (MiB, binary $1024^2$ via NVML)", fontweight="bold")
-    ax.set_ylabel("Generation Throughput (tokens/s, greedy $\\tau=0$)", fontweight="bold")
-    ax.set_title("Empirical Generation Throughput vs. VRAM Allocation on NVIDIA GTX 1050 Ti (4 GB)", pad=14, fontweight="bold")
-    ax.set_xlim(400, 4350)
-    ax.set_ylim(10, 109)
-    ax.grid(True, linestyle=":", alpha=0.55, color="#bdc3c7")
-
-    # Legend for physical boundary
-    ax.legend(loc="upper right", fontsize=8.0, framealpha=0.92)
-
-    # Bottom explanatory caption
-    caption_text = (
-        "* Points [1] through [8] represent empirically measured configurations. Under a pure (VRAM, throughput) criterion, Point [1]\n"
-        "  strictly dominates all others; in engineering practice, selection represents a multi-objective trade-off between parameter scale,\n"
-        "  memory headroom for context expansion, and throughput. Points are mapped in the companion table in the documentation."
-    )
-    plt.figtext(0.06, -0.05, caption_text, fontsize=7.2, color="#444444", va="top")
-
-    pareto_path = output_dir / "pareto_frontier.png"
-    plt.savefig(pareto_path, bbox_inches="tight", dpi=160)
-    plt.close()
-    print(f"Generated: {pareto_path}")
-
-    # =========================================================================
-    # 2. Figure: Controlled Observational Comparisons (Gemma-4-E2B)
-    # =========================================================================
-    fig, ax = plt.subplots(figsize=(8.0, 4.5), dpi=160)
-
-    configs = [
-        "[C1] Q4_K_M Base\n(Standard Block Quant)",
-        "[C2] IQ4_XS Base\n(Importance Matrix Quant)",
-        "[C3] IQ4_XS + MTP\n(Speculative Prediction)",
-    ]
-    means = [26.92, 34.51, 43.35]
-    stds = [0.23, 0.29, 0.57]
-    vrams = [1996.7, 1800.7, 2036.7]
-    bar_colors = ["#7f8c8d", "#e67e22", "#27ae60"]
-
-    x = np.arange(len(configs))
-    width = 0.42
-
-    bars = ax.bar(x, means, width, yerr=stds, capsize=5, color=bar_colors, alpha=0.90, edgecolor="#2c3e50", linewidth=0.9)
-
-    for bar, m, v in zip(bars, means, vrams):
-        ax.text(
-            bar.get_x() + bar.get_width() / 2.0,
-            m + 1.2,
-            f"{m:.2f} tok/s\n({v:.0f} MiB)",
-            ha="center",
-            va="bottom",
-            fontsize=8.5,
-            fontweight="bold"
-        )
-
-    # Clear annotations with clean spacing
-    ax.annotate(
-        "Quantization Shift:\n+28.2% tok/s (-196 MiB VRAM)",
-        xy=(0.5, 30.5),
-        xytext=(0.5, 37.5),
-        ha="center",
-        fontsize=8.0,
-        color="#d35400",
-        fontweight="bold",
-        arrowprops=dict(arrowstyle="->", color="#d35400", lw=1.2)
-    )
-
-    ax.annotate(
-        "MTP Speculation Shift:\n+25.6% tok/s (+236 MiB VRAM)",
-        xy=(1.5, 38.5),
-        xytext=(1.5, 45.0),
-        ha="center",
-        fontsize=8.0,
-        color="#1e8449",
-        fontweight="bold",
-        arrowprops=dict(arrowstyle="->", color="#1e8449", lw=1.2)
-    )
-
-    ax.set_ylabel("Generation Throughput (tokens/s, mean $\\pm$ std, N=10)", fontweight="bold")
-    ax.set_title("Controlled Observational Comparisons: Quantization & MTP on Gemma-4-E2B", pad=12, fontweight="bold")
-    ax.set_xticks(x)
-    ax.set_xticklabels(configs, fontsize=8.5)
-    ax.set_ylim(0, 52)
-    ax.grid(True, linestyle=":", alpha=0.55, axis="y", color="#bdc3c7")
-
-    caption_mtp = (
-        "* Controlled observational comparisons holding model architecture constant on physical GTX 1050 Ti.\n"
-        "  C2 vs C1 observes the effect of tensor quantization; C3 vs C2 observes the addition of MTP speculative draft heads.\n"
-        "  Net compound configuration difference: +61.0% throughput with only +40.0 MiB net VRAM increase."
-    )
-    plt.figtext(0.06, -0.05, caption_mtp, fontsize=7.2, color="#444444", va="top")
-
-    mtp_path = output_dir / "mtp_ablation.png"
-    plt.savefig(mtp_path, bbox_inches="tight", dpi=160)
-    plt.close()
-    print(f"Generated: {mtp_path}")
+    fig, ax = plt.subplots(figsize=(11.5, 6.1))
+    fig.subplots_adjust(left=.095, right=.965, top=.75, bottom=.235)
+    values, std, vrams = [26.92, 34.51, 43.35], [.23, .29, .57], [1996.7, 1800.7, 2036.7]
+    labels = ["C1 · Q4_K_M", "C2 · IQ4_XS", "C3 · IQ4_XS + MTP"]
+    colors = ["#8897A2", "#5387B5", "#4D967D"]
+    x = np.arange(3)
+    bars = ax.bar(x, values, width=.48, color=colors,
+                  edgecolor="white", linewidth=1.2, zorder=3)
+    ax.errorbar(x, values, yerr=std, fmt="none", ecolor=INK,
+                elinewidth=1.25, capsize=4, zorder=5)
+    ax.set_ylim(0, 53)
+    ax.set_xlim(-.65, 2.65)
+    ax.set_yticks([0, 10, 20, 30, 40, 50])
+    ax.set_ylabel("Generation throughput (tokens/s)")
+    ax.set_xticks(x, labels, fontsize=10.5)
+    ax.tick_params(axis="x", pad=13, length=0)
+    ax.grid(axis="y", color=GRID, linewidth=.9, zorder=0)
+    ax.spines[["top", "right", "bottom"]].set_visible(False)
+    for b, v, s in zip(bars, values, std):
+        ax.text(b.get_x() + b.get_width() / 2, v + 1.7,
+                f"{v:.2f} ± {s:.2f}", ha="center", va="bottom",
+                fontsize=11.5, fontweight="bold", color=INK)
+    for xi, mem in zip(x, vrams):
+        ax.text(xi, -.18, f"{mem:,.0f} MiB VRAM",
+                transform=ax.get_xaxis_transform(), ha="center",
+                va="top", fontsize=10, color=MUTED)
+    fig.text(.095, .935, "Quantization and MTP · observed configurations",
+             fontsize=18.5, fontweight="bold", color=INK)
+    fig.text(.095, .875,
+             "Gemma-4-E2B · 10 sequential iterations per configuration · GTX 1050 Ti",
+             fontsize=10.8, color=MUTED)
+    fig.text(.095, .810, "C1 → C2:  +28.2% throughput  /  −196 MiB",
+             fontsize=11, color="#3873A5", fontweight="bold")
+    fig.text(.545, .810, "C2 → C3:  +25.6% throughput  /  +236 MiB",
+             fontsize=11, color="#4D967D", fontweight="bold")
+    fig.text(.095, .047,
+             "Means ± reported SD. Observational comparison on one GPU; not a full factorial experiment.",
+             fontsize=9.4, color=MUTED)
+    export(fig, "mtp_ablation")
 
 
 if __name__ == "__main__":

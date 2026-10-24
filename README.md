@@ -132,7 +132,7 @@ All empirical measurements were collected on a dedicated, physical testbed:
 
 The figure below plots observed generation throughput (greedy decode, tokens/s) against measured peak device memory (MiB via NVML). Points **[1] through [8]** map directly to the Master Comparison Table above:
 
-![Throughput vs. VRAM on GTX 1050 Ti](docs/images/pareto_frontier.png)
+![Throughput vs. VRAM on GTX 1050 Ti](docs/images/pareto_frontier.svg)
 
 > [!NOTE]
 > **Dominance Criteria & Engineering Trade-offs:**<br/>
@@ -142,7 +142,7 @@ The figure below plots observed generation throughput (greedy decode, tokens/s) 
 
 To examine the separate effects of tensor quantization and speculative execution, we conducted controlled observations on a fixed architecture (**Gemma-4-E2B**) across 10 sequential iterations ($\tau = 0.0$):
 
-![Controlled Observational Comparisons: Gemma-4-E2B](docs/images/mtp_ablation.png)
+![Controlled Observational Comparisons: Gemma-4-E2B](docs/images/mtp_ablation.svg)
 
 - **Quantization Shift (C2 vs. C1):** Moving from standard `Q4_K_M` to importance-matrix `IQ4_XS` without speculative decoding yielded a **+28.2% throughput increase** ($26.92 \to 34.51\text{ tok/s}$) while reducing physical VRAM by **196.0 MiB** ($1996.7 \to 1800.7\text{ MiB}$).
 - **Speculative MTP Shift (C3 vs. C2):** Under constant `IQ4_XS` quantization, enabling Multi-Token Prediction (MTP) draft heads added **+25.6% throughput** ($34.51 \to 43.35\text{ tok/s}$) with an observed runtime memory allocation of **+236.0 MiB** for draft heads and speculative buffers.
