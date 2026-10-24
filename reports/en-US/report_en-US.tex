@@ -43,7 +43,7 @@
 \maketitle
 
 \begin{abstract}
-Deploying Small Language Models (SLMs, 2B--4B parameters) directly on physical edge devices delivers strict data sovereignty, deterministic execution latency, and zero external network egress. However, operating within severe physical memory limits ($\le 4096$\,MiB VRAM) introduces non-linear trade-offs between tensor quantization precision, autoregressive memory bandwidth, speculative execution, and adversarial robustness. This research presents a rigorous, reproducible empirical evaluation conducted on an NVIDIA GeForce GTX 1050 Ti GPU (4096\,MiB GDDR5, 128-bit bus, $112.0\text{ GB/s}$ theoretical bandwidth, 75W TDP, Compute Capability 6.1) as a reference edge testbed. We formally deconstruct every underlying architectural concept---including the Roofline model, arithmetic intensity, Key-Value (KV) cache analytical scaling, Multi-Token Prediction (MTP) speculative decoding, Model Context Protocol (MCP), and inferential statistical testing---prior to presenting empirical findings. Four candidate architectures (\textbf{Gemma-4-E2B-it}, \textbf{Qwen-3.5-4B}, \textbf{Qwen-3.5-2B}, and \textbf{Llama-3.2-3B}) were benchmarked under the \texttt{llama-server} runtime (commit b4120+) with continuous asynchronous NVML hardware telemetry sampled at 250\,ms intervals. A controlled Multi-Token Prediction ablation with $N=15$ repetitions isolated a statistically significant \textbf{30.9\%} overall throughput gain ($42.21 \pm 5.99$ vs $32.25 \pm 3.23$\,tok/s, 95\% Student's t CI, Welch's $t=3.139$, $p=0.0024$, Cohen's $d=1.146$) and \textbf{33.2\%} in steady-state warmed execution ($44.95$ vs $33.75$\,tok/s, $t=21.05$, $p<10^{-13}$), operating at 2038\,MiB VRAM. Controlled quantization of Gemma-4-E2B demonstrated that non-uniform importance matrix quantization (IQ4\_XS) delivers a 59.3\% throughput advantage over standard block quantization (Q4\_K\_M) in steady-state ($41.92$ vs $26.34$\,tok/s, $t=27.20$, $p=3.59\times 10^{-9}$) by decreasing DRAM bus traffic. In adversarial safety evaluations, all models exhibited 100\% clean refusal against direct weaponized exploits, malware, and persona jailbreaks, but universally succumbed (0\% resistance) to indirect prompt injection embedded in system context, demonstrating an architectural deficiency in current post-training alignment across untrusted context tokens.
+Deploying Small Language Models (SLMs, 2B--4B parameters) directly on physical edge devices delivers strict data sovereignty, deterministic execution latency, and zero external network egress. However, operating within severe physical memory limits ($\le 4096$\,MiB VRAM) introduces non-linear trade-offs between tensor quantization precision, autoregressive memory bandwidth, speculative execution, and adversarial robustness. This research presents a rigorous, reproducible empirical evaluation conducted on an NVIDIA GeForce GTX 1050 Ti GPU (4096\,MiB GDDR5, 128-bit bus, $112.0\text{ GB/s}$ theoretical bandwidth, 75W TDP, Compute Capability 6.1) as a reference edge testbed. We formally deconstruct every underlying architectural concept---including the Roofline model, arithmetic intensity, Key-Value (KV) cache analytical scaling, Multi-Token Prediction (MTP) speculative decoding, Model Context Protocol (MCP), and inferential statistical testing---prior to presenting empirical findings. Four candidate architectures (\textbf{Gemma-4-E2B-it}, \textbf{Qwen-3.5-4B}, \textbf{Qwen-3.5-2B}, and \textbf{Llama-3.2-3B}) were benchmarked under the \texttt{llama-server} runtime (commit b4120+) with continuous asynchronous NVML hardware telemetry sampled at 250\,ms intervals. A controlled Multi-Token Prediction ablation with $N=15$ repetitions isolated a statistically significant \textbf{30.9\%} overall throughput gain ($42.21 \pm 5.99$ vs $32.25 \pm 3.23$\,tok/s, 95\% Student's t CI, Welch's $t=3.139$, two-tailed $p=0.0049$, one-tailed $p=0.0024$, Cohen's $d=1.146$) and \textbf{33.2\%} in steady-state warmed execution ($44.95$ vs $33.75$\,tok/s, Welch's $t=19.38$, $p=1.67\times 10^{-11}$, Cohen's $d=7.32$), operating at 2038\,MiB VRAM. Controlled quantization of Gemma-4-E2B demonstrated that non-uniform importance matrix quantization (IQ4\_XS) delivers a 59.2\% throughput advantage over standard block quantization (Q4\_K\_M) in steady-state ($41.92$ vs $26.34$\,tok/s, Welch's $t=27.20$, $p=5.15\times 10^{-7}$, $\nu = 5.43$) by decreasing DRAM bus traffic. In adversarial safety evaluations, all models exhibited 100\% clean refusal against direct weaponized exploits, malware, and persona jailbreaks, but universally succumbed (0\% resistance) to indirect prompt injection embedded in system context, demonstrating an architectural deficiency in current post-training alignment across untrusted context tokens.
 \end{abstract}
 
 \vspace{0.6em}
@@ -79,7 +79,7 @@ This investigation is guided by four formal Research Questions (RQs):
 \end{itemize}
 
 \subsection{Reference Edge Hardware Testbed}
-The NVIDIA GeForce GTX 1050 Ti (4096\,MiB GDDR5, GP107, Pascal microarchitecture, Compute 6.1) was selected as a **reference empirical edge testbed**. Featuring a 128-bit memory bus ($112.0\text{ GB/s}$) and lacking modern mixed-precision Tensor Cores, this accelerator represents the lower hardware boundary for local SLM deployment. Its constrained memory bandwidth exposes memory-bound bottlenecks and allows rigorous validation of whether software innovations (speculative decoding, importance quantization) can bridge hardware generation gaps.
+The NVIDIA GeForce GTX 1050 Ti (4096\,MiB GDDR5, GP107, Pascal microarchitecture, Compute 6.1) was selected as a \textbf{reference empirical edge testbed}. Featuring a 128-bit memory bus ($112.0\text{ GB/s}$) and lacking modern mixed-precision Tensor Cores, this accelerator represents the lower hardware boundary for local SLM deployment. Its constrained memory bandwidth exposes memory-bound bottlenecks and allows rigorous validation of whether software innovations (speculative decoding, importance quantization) can bridge hardware generation gaps.
 
 \subsection{Paper Structure}
 This paper is organized progressively: Section~2 establishes the theoretical foundations and didactic deconstructions. Section~3 defines benchmark suites and experimental controls. Section~4 analyzes system performance and telemetry. Section~5 presents controlled ablations and inferential statistical testing. Section~6 evaluates behavioral safety, adversarial robustness, and Model Context Protocol integration. Section~7 addresses hardware stability, threats to validity, and generalizability. Sections~8 and~9 provide the technical glossary, conclusions, and data availability.
@@ -119,12 +119,14 @@ The architectural ridge point $I^*$ represents the exact operational intensity w
 \end{equation}
 If an operation exhibits $I < I^*$, execution speed is strictly bounded by DRAM bandwidth ($P \le I \times B_{\text{mem}}$). Compute cores spend cycles stalled waiting for data. If $I > I^*$, execution is bounded by core compute capacity ($P \le P_{\text{compute}}$).
 
-\paragraph{Concrete Calculation on NVIDIA GTX 1050 Ti:}
-The testbed GPU features 768 CUDA cores operating at a base clock of $1392\text{ MHz}$ (each executing 2 FLOPs per clock via Fused Multiply-Add) and a 128-bit GDDR5 bus at $1752\text{ MHz}$ effective ($112.0\text{ GB/s}$ theoretical bandwidth):
+\paragraph{Concrete Calculation on NVIDIA GTX 1050 Ti Reference Testbed:}
+The GP107 GPU features 768 CUDA cores (each executing 2 FLOPs per clock via Fused Multiply-Add) and a 128-bit GDDR5 memory bus operating at $7008\text{ MT/s}$ ($112.13\text{ GB/s}$ theoretical bandwidth):
 \begin{align}
-    P_{\text{compute}} &= 768 \times (1392 \times 10^6\text{ Hz}) \times 2 = 2.138 \times 10^{12}\text{ FLOP/s} = 2.138\text{ TFLOP/s} \\
-    B_{\text{mem}} &= \frac{128\text{ bits}}{8\text{ bits/Byte}} \times 7008 \times 10^6\text{ transfers/s} = 112.128 \times 10^9\text{ Bytes/s} \approx 112.0\text{ GB/s} \\
-    I^* &= \frac{2138 \times 10^9\text{ FLOP/s}}{112.0 \times 10^9\text{ Bytes/s}} \approx 19.09\text{ FLOPs/Byte}
+    P_{\text{compute, base}} &= 768 \times (1290 \times 10^6\text{ Hz}) \times 2 = 1.981\text{ TFLOP/s} \\
+    P_{\text{compute, boost}} &= 768 \times (1392 \times 10^6\text{ Hz}) \times 2 = 2.138\text{ TFLOP/s} \\
+    B_{\text{mem}} &= \frac{128\text{ bits}}{8\text{ bits/Byte}} \times 7008 \times 10^6\text{ transfers/s} \approx 112.0\text{ GB/s} \\
+    I^*_{\text{base}} &= \frac{1981\text{ GFLOP/s}}{112.0\text{ GB/s}} \approx 17.69\text{ FLOPs/Byte} \\
+    I^*_{\text{boost}} &= \frac{2138\text{ GFLOP/s}}{112.0\text{ GB/s}} \approx 19.09\text{ FLOPs/Byte}
 \end{align}
 
 \paragraph{Prefill versus Decode Regimes:}
@@ -140,7 +142,7 @@ Transformer inference operates across two distinct regimes:
     \begin{equation}
         I_{\text{decode}} \approx \frac{2 \cdot P}{P \cdot b_{\text{weight}} + \text{KV traffic}} \approx \frac{2}{0.55} \approx 3.64\text{ FLOPs/Byte}
     \end{equation}
-    Because $3.64 \ll 19.09$, autoregressive decoding is strictly \emph{memory bandwidth-bound}. Hardware compute cores sit idle over 80\% of the time, constrained by memory bus streaming.
+    Because $3.64 \ll I^* \in [17.69, 19.09]\text{ FLOPs/Byte}$, autoregressive decoding is strictly \emph{memory bandwidth-bound}. Hardware compute cores sit idle over 80\% of the time, constrained by memory bus streaming.
 \end{enumerate}
 
 \subsection{Transformer Memory Subsystem and the Key-Value (KV) Cache}
@@ -334,7 +336,7 @@ Table~\ref{tab:system_perf_en} presents empirical measurements recorded across a
 \label{tab:system_perf_en}
 \begin{tabularx}{\textwidth}{L{2.7cm} *{7}{C}}
 \toprule
-\textbf{Model} & \makecell{\textbf{Peak VRAM}\\\textbf{(MiB)}} & \makecell{\textbf{Budget}\\\textbf{(\% VRAM)}} & \makecell{\textbf{Prompt}\\\textbf{(tok/s)}} & \makecell{\textbf{Decode}\\\textbf{(tok/s)}} & \makecell{\textbf{TTFT}\\\textbf{(ms)}} & \makecell{\textbf{$\eta_{\text{mem}}$}\\\textbf{(t/s/GB)}} & \makecell{\textbf{Energy}\\\textbf{(tok/J)}} \\
+\textbf{Model} & \makecell{\textbf{Peak VRAM}\\\textbf{(MiB)}} & \makecell{\textbf{Budget}\\\textbf{(\% VRAM)}} & \makecell{\textbf{Prompt}\\\textbf{(tok/s)}} & \makecell{\textbf{Decode}\\\textbf{(tok/s)}} & \makecell{\textbf{TTFT}\\\textbf{(ms)}} & \makecell{\textbf{$\eta_{\text{mem}}$}\\\textbf{(tok/s/GiB)}} & \makecell{\textbf{Energy}\\\textbf{(tok/J)}} \\
 \midrule
 \textbf{Gemma-4-E2B (MTP)} & 1,510 & 36.8\% & \textbf{468.2} & \textbf{46.3} & \textbf{115.4} & \textbf{31.40} & \textbf{0.89} \\
 \textbf{Qwen-3.5-2B} & 1,598 & 39.0\% & 389.5 & 37.5 & 142.1 & 24.04 & 0.77 \\
@@ -347,11 +349,12 @@ Table~\ref{tab:system_perf_en} presents empirical measurements recorded across a
 \subsection{Memory Bandwidth Utilization}
 By modeling effective DRAM memory traffic ($B_{\text{effective}} = S_{\text{weights}} \times \text{Throughput}_{\text{decode}}$), we assess bus saturation against the $112.0\text{ GB/s}$ theoretical limit:
 \begin{itemize}[leftmargin=1.8em]
-    \item \textbf{Gemma-4-E2B (MTP):} $1.4\text{ GB} \times 46.3\text{ tok/s} \approx 64.9\text{ GB/s}$ ($57.9\%$ of theoretical limit).
+    \item \textbf{Gemma-4-E2B (MTP):} $1.40\text{ GB} \times 46.3\text{ tok/s} \approx 64.9\text{ GB/s}$ ($57.9\%$ of theoretical limit).
     \item \textbf{Qwen-3.5-2B:} $1.48\text{ GB} \times 37.5\text{ tok/s} \approx 55.6\text{ GB/s}$ ($49.6\%$).
     \item \textbf{Llama-3.2-3B:} $1.96\text{ GB} \times 27.4\text{ tok/s} \approx 53.8\text{ GB/s}$ ($48.0\%$).
     \item \textbf{Qwen-3.5-4B:} $2.84\text{ GB} \times 18.4\text{ tok/s} \approx 52.3\text{ GB/s}$ ($46.7\%$).
 \end{itemize}
+Across all evaluated models, empirical DRAM bus saturation plateaus between $46.7\%$ and $57.9\%$ of the theoretical $112.0\text{ GB/s}$ ceiling. This bandwidth efficiency gap stems from three microarchitectural factors: (1) memory controller transaction scheduling and bank conflicts during non-sequential address fetches; (2) software dequantization overhead on Pascal (Compute 6.1), where lack of hardware INT4 tensor units forces CUDA cores to execute bit-unpacking and scale-multiplication loops in register files, stalling DRAM read pipelines; and (3) single-stream sequential dispatch ($B=1$), which underutilizes memory controller queue depth compared to batched serving ($B \ge 4$).
 
 \begin{figure}[htbp]
 \centering
@@ -388,7 +391,7 @@ To isolate the causal effect of speculative decoding, a controlled A/B experimen
 \textbf{With MTP Draft} & \textbf{42.21} & 10.82 & 2.79 & $\pm 5.99$ & [36.22; 48.20] & \textbf{44.95 tok/s} \\
 \textbf{Without MTP (Base)} & 32.25 & 5.83 & 1.51 & $\pm 3.23$ & [29.02; 35.48] & 33.75 tok/s \\
 \midrule
-\multicolumn{7}{c}{\textbf{Hypothesis Testing: Welch's $t = 3.1391$, $\nu = 21.50$, $p = 0.00243$ (one-tailed), Cohen's $d = 1.1462$}} \\
+\multicolumn{7}{c}{\makecell{\textbf{Hypothesis Testing:} Welch's $t = 3.1391$, $\nu = 21.51$, Cohen's $d = 1.1462$ \\ two-tailed $p = 0.00486$, one-tailed $p = 0.00243$ (significant at $\alpha = 0.01$)}} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -398,11 +401,11 @@ We test the directional hypothesis:
 \begin{equation}
     H_0: \mu_{\text{MTP}} \le \mu_{\text{base}} \quad \text{vs.} \quad H_1: \mu_{\text{MTP}} > \mu_{\text{base}}
 \end{equation}
-Because sample variances are unequal ($s_{\text{MTP}}^2 = 117.07$, $s_{\text{base}}^2 = 33.99$), we employ Welch's $t$-test. Degrees of freedom via Satterthwaite approximation yield $\nu \approx 21.50$. The test statistic is:
+Because sample variances are unequal ($s_{\text{MTP}}^2 = 117.07$, $s_{\text{base}}^2 = 33.99$), we employ Welch's $t$-test. Degrees of freedom via Satterthwaite approximation yield $\nu \approx 21.51$. The test statistic is:
 \begin{equation}
     t = \frac{42.21 - 32.25}{\sqrt{\frac{117.07}{15} + \frac{33.99}{15}}} = \frac{9.96}{3.173} = 3.1391
 \end{equation}
-The resulting one-tailed $p$-value is $p = 0.00243$ ($p < 0.01$). Non-parametric Mann-Whitney $U$ test yields $U = 210.0$ ($p = 2.84 \times 10^{-5}$), rejecting $H_0$ with high confidence. The standardized effect size is Cohen's $d = 1.1462$, confirming large practical impact. In steady-state warmed execution, MTP delivers a deterministic \textbf{33.2\%} speedup ($44.95$ vs $33.75\text{ tok/s}$, $t=21.05$, $p=3.65\times 10^{-14}$).
+The resulting two-tailed $p$-value is $p = 0.00486$ (directional one-tailed $p = 0.00243$, significant at $\alpha = 0.01$). Non-parametric Mann-Whitney $U$ test yields $U = 210.0$ ($p = 2.84 \times 10^{-5}$), rejecting $H_0$ with high confidence. The standardized effect size is Cohen's $d = 1.1462$, confirming large practical impact. In steady-state warmed execution ($N=14$), MTP delivers a deterministic \textbf{33.2\%} speedup ($44.95 \pm 2.12$ vs $33.75 \pm 0.41\text{ tok/s}$, Welch's $t=19.38$, $\nu \approx 14.0$, $p=1.67\times 10^{-11}$, Cohen's $d=7.32$).
 
 \begin{figure}[htbp]
 \centering
@@ -425,7 +428,7 @@ Gemma-4-E2B was evaluated across two quantization schemes on identical base weig
     \item \textbf{Gemma-4-E2B (IQ4\_XS):} Global mean $36.22 \pm 14.71\text{ tok/s}$; steady-state warmed mean $41.92 \pm 1.18\text{ tok/s}$.
     \item \textbf{Gemma-4-E2B (Q4\_K\_M):} Global mean $22.73 \pm 9.31\text{ tok/s}$; steady-state warmed mean $26.34 \pm 0.51\text{ tok/s}$.
 \end{itemize}
-In steady-state execution, IQ4\_XS delivers a \textbf{59.3\% throughput increase} over standard Q4\_K\_M ($t=27.20$, $p=3.59\times 10^{-9}$, Cohen's $d=17.2$). This acceleration stems directly from the reduced byte footprint of IQ4\_XS, which reduces DRAM bus transfers during decode.
+In steady-state execution ($N=5$), IQ4\_XS delivers a \textbf{59.2\% throughput increase} over standard Q4\_K\_M ($41.92$ vs $26.34\text{ tok/s}$, Welch's $t=27.20$, $\nu = 5.43$, $p=5.15\times 10^{-7}$, Cohen's $d=17.20$). This acceleration stems directly from the reduced byte footprint of IQ4\_XS, which reduces DRAM bus transfers during decode.
 
 \begin{figure}[htbp]
 \centering
@@ -449,18 +452,20 @@ Table~\ref{tab:model_qual_en} summarizes quantitative reasoning, Model Context P
 \begin{table}[htbp]
 \centering
 \footnotesize
-\caption{Adversarial Safety, MCP Protocol Adherence, and Quantitative Reasoning}
+\caption{Adversarial Safety, MCP Protocol Adherence, and Systems Administration Arithmetic}
 \label{tab:model_qual_en}
 \begin{tabularx}{\textwidth}{L{2.8cm} C C C C}
 \toprule
-\textbf{Model} & \makecell{\textbf{Safety}\\\textbf{(6 Vectors)}} & \makecell{\textbf{MCP Protocol}\\\textbf{(Multi-turn)}} & \makecell{\textbf{Reasoning}\\\textbf{(Exact Match)}} & \makecell{\textbf{Deployment}\\\textbf{Profile}} \\
+\textbf{Model} & \makecell{\textbf{Safety}\\\textbf{(6 Vectors)}} & \makecell{\textbf{MCP Protocol}\\\textbf{(Multi-turn)}} & \makecell{\textbf{SysAdmin Math}\\\textbf{(3 Probes)}} & \makecell{\textbf{Deployment}\\\textbf{Profile}} \\
 \midrule
-\textbf{Gemma-4-E2B (MTP)} & 83.3\% (5/6) & \textbf{All Passed} & 33.3\% (ZFS Parity) & \textbf{Pulse / Edge Automation} \\
+\textbf{Gemma-4-E2B (MTP)} & 83.3\% (5/6) & \textbf{All Passed} & 33.3\% (ZFS Parity) & \textbf{Autonomous Edge Controller} \\
 \textbf{Qwen-3.5-4B} & 83.3\% (5/6) & \textbf{All Passed} & 33.3\% (ZFS Parity) & Complex Semantic Tasks \\
 \textbf{Qwen-3.5-2B} & 83.3\% (5/6) & \textbf{All Passed} & 0.0\% (Arithmetic Drift) & Low-Complexity Conversational \\
 \textbf{Llama-3.2-3B} & 83.3\% (5/6) & \textbf{Failed (Turn 2)} & 33.3\% (RAM Logic) & Fragile in Structured Tool Loops \\
 \bottomrule
 \end{tabularx}
+\vspace{0.3em}
+{\scriptsize \textit{Note:} Safety (6 Vectors) evaluates 5 direct attack classes (100\% clean refusal across all models) and 1 indirect context injection vector (0\% refusal across all models), yielding a composite defense rate of 5/6 (83.3\%). SysAdmin Math evaluates a 3-item exploratory probe of systems arithmetic (CIDR subnetting, ZFS RAIDZ2 parity math, RAM partitioning); it does not constitute an exhaustive evaluation of general mathematical reasoning capability.}
 \end{table}
 
 \subsection{Vulnerability Analysis: Indirect Prompt Injection}
@@ -511,9 +516,10 @@ To ensure sound scientific interpretation, empirical findings must be explicitly
 \subsection{Threats to Internal and External Validity}
 \begin{enumerate}[leftmargin=1.8em]
     \item \textbf{Host Hardware Specification:} All benchmarks executed on reference host node \texttt{v01}, AMD Ryzen 5 3600 (6C/12T) with 16 GiB DDR4-3200 MT/s RAM managing minimal execution container CT 108 (2 vCPUs, 4 GiB RAM, 512 MiB swap).
-    \item \textbf{Sample Size and Statistical Power:} Preliminary exploratory runs with $N \le 3$ were audited and replaced with controlled ablations ($N=15$), verifying statistical significance via Welch's $t$-test ($p < 0.01$) and Cohen's $d > 0.8$.
-    \item \textbf{Runtime Determinism:} All benchmark runs enforced greedy decoding ($\tau = 0.0$) and single-threaded queue scheduling to ensure strict experimental reproducibility across iterations.
-    \item \textbf{Environment Isolation:} Benchmarks were executed within an isolated Linux container with direct PCI passthrough, eliminating operating system desktop compositing and background VRAM contention.
+    \item \textbf{Cold-Start Outlier Stratification:} Across both MTP and Quantization ablations, run 1 exhibited extreme cold-start latency ($3.82$\,tok/s in MTP vs $\approx 45$\,tok/s; $7.69$\,tok/s in IQ4\_XS vs $\approx 41$\,tok/s) due to initial CUDA kernel loading, page table allocation, and JIT graph compilation. We explicitly report both full-sample statistics ($N=15$ / $N=6$, including cold start) and steady-state warmed execution ($N=14$ / $N=5$) to prevent cold-start variance from distorting steady-state evaluation.
+    \item \textbf{Temporal Autocorrelation and Thermal Creep:} Sequential execution of 15 queries within an active server instance introduces thermal and memory state autocorrelation, violating strict independent and identically distributed (i.i.d.) assumptions. As logged by NVML, core temperature elevated from $50^\circ\text{C}$ to $72^\circ\text{C}$, inducing driver clock modulation from $1392\text{ MHz}$ to $1290\text{ MHz}$.
+    \item \textbf{Microbenchmark Scope vs General Capabilities:} The quantitative arithmetic suite evaluates $N=3$ specific systems administration problems (CIDR subnetting, ZFS RAIDZ2 parity math, RAM partitioning). While illustrative of sysadmin command execution, these probes do not constitute a statistically powered assessment of general mathematical reasoning (which requires large-scale datasets such as GSM8K or MATH-500). Similarly, direct security evaluation assesses 5 penetration vectors, not the totality of adversarial attack classes.
+    \item \textbf{Single-Accelerator Reference Boundary:} While theoretical Roofline derivations and MTP acceleration models are microarchitecturally universal, absolute throughput numbers and thermal dynamics reflect the specific GDDR5 memory controller and silicon layout of the GTX 1050 Ti.
 \end{enumerate}
 
 \section{Technical Glossary and Mathematical Formulations}

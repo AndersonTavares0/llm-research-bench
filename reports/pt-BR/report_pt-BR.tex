@@ -44,7 +44,7 @@
 \maketitle
 
 \begin{abstract}
-A implantação de Modelos de Linguagem Pequenos (SLMs, 2B--4B parâmetros) diretamente em dispositivos físicos de borda garante estrita soberania de dados, latência determinística e eliminação de tráfego para a nuvem pública. Contudo, operar sob limites rígidos de memória física ($\le 4096$\,MiB de VRAM) impõe compromissos rigorosos entre precisão de quantização de pesos, largura de banda no barramento DRAM, decodificação especulativa e alinhamento de segurança. Este estudo apresenta uma avaliação experimental controlada, rigorosa e reproduzível conduzida em uma GPU NVIDIA GeForce GTX 1050 Ti (4096\,MiB GDDR5, barramento de 128 bits, $112,0\text{ GB/s}$ de largura de banda teórica, TDP de 75W, Compute Capability 6.1) como bancada experimental de referência. Desconstruímos e formulamos teoricamente cada conceito fundamental---incluindo o modelo Roofline, intensidade aritmética operacional, dinâmica analítica do cache Chave-Valor (KV), decodificação especulativa Multi-Token Prediction (MTP), Model Context Protocol (MCP) e inferência estatística---previamente à apresentação dos dados. Quatro modelos (\textbf{Gemma-4-E2B-it}, \textbf{Qwen-3.5-4B}, \textbf{Qwen-3.5-2B} e \textbf{Llama-3.2-3B}) foram avaliados sob o runtime \texttt{llama-server} (commit b4120+) com telemetria contínua via \texttt{libnvidia-ml.so.1} a cada 250\,ms. Uma ablação controlada de decodificação especulativa Multi-Token Prediction (MTP) com $N=15$ repetições isolou um ganho estatisticamente significante de \textbf{30,9\%} no throughput médio global ($42,21 \pm 5,99$ vs $32,25 \pm 3,23$\,tok/s, IC 95\%, $t$ de Welch = 3,139, $p = 0,0024$, $d$ de Cohen = 1,146) e de \textbf{33,2\%} em regime estacionário aquecido ($44,95$ vs $33,75$\,tok/s, $t = 21,05$, $p < 10^{-13}$), mantendo alocação estável de 2038\,MiB. A análise controlada de quantização do Gemma-4-E2B revelou que o formato de matriz de importância não linear (IQ4\_XS) entrega vantagem de 59,3\% em regime aquecido sobre a quantização em blocos padrão Q4\_K\_M ($41,92$ vs $26,34$\,tok/s, $t = 27,20$, $p = 3,59 \times 10^{-9}$) pela redução no tráfego do barramento DRAM. Em segurança adversária, todos os modelos exibiram 100\% de recusa limpa contra explorações diretas de vulnerabilidades, keyloggers e jailbreaks, mas sucumbiram uniformemente (0\% de resistência) à injeção indireta de prompt encapsulada em contexto de sistema, evidenciando que os mecanismos atuais de alinhamento falham em isolar instruções de controle de dados contextuais não confiáveis.
+A implantação de Modelos de Linguagem Pequenos (SLMs, 2B--4B parâmetros) diretamente em dispositivos físicos de borda garante estrita soberania de dados, latência determinística e eliminação de tráfego para a nuvem pública. Contudo, operar sob limites rígidos de memória física ($\le 4096$\,MiB de VRAM) impõe compromissos rigorosos entre precisão de quantização de pesos, largura de banda no barramento DRAM, decodificação especulativa e alinhamento de segurança. Este estudo apresenta uma avaliação experimental controlada, rigorosa e reproduzível conduzida em uma GPU NVIDIA GeForce GTX 1050 Ti (4096\,MiB GDDR5, barramento de 128 bits, $112,0\text{ GB/s}$ de largura de banda teórica, TDP de 75W, Compute Capability 6.1) como bancada experimental de referência. Desconstruímos e formulamos teoricamente cada conceito fundamental---incluindo o modelo Roofline, intensidade aritmética operacional, dinâmica analítica do cache Chave-Valor (KV), decodificação especulativa Multi-Token Prediction (MTP), Model Context Protocol (MCP) e inferência estatística---previamente à apresentação dos dados. Quatro modelos (\textbf{Gemma-4-E2B-it}, \textbf{Qwen-3.5-4B}, \textbf{Qwen-3.5-2B} e \textbf{Llama-3.2-3B}) foram avaliados sob o runtime \texttt{llama-server} (commit b4120+) com telemetria contínua via \texttt{libnvidia-ml.so.1} a cada 250\,ms. Uma ablação controlada de decodificação especulativa Multi-Token Prediction (MTP) com $N=15$ repetições isolou um ganho estatisticamente significante de \textbf{30,9\%} no throughput médio global ($42,21 \pm 5,99$ vs $32,25 \pm 3,23$\,tok/s, IC 95\% de Student, $t$ de Welch = 3,139, $p = 0,0049$ bicaudal, $p = 0,0024$ unicaudal, $d$ de Cohen = 1,146) e de \textbf{33,2\%} em regime estacionário aquecido ($44,95$ vs $33,75$\,tok/s, $t$ de Welch = 19,38, $p = 1,67\times 10^{-11}$, $d$ de Cohen = 7,32), mantendo alocação estável de 2038\,MiB. A análise controlada de quantização do Gemma-4-E2B revelou que o formato de matriz de importância não linear (IQ4\_XS) entrega vantagem de 59,2\% em regime aquecido sobre a quantização em blocos padrão Q4\_K\_M ($41,92$ vs $26,34$\,tok/s, $t$ de Welch = 27,20, $p = 5,15 \times 10^{-7}$, $\nu = 5,43$) pela redução no tráfego do barramento DRAM. Em segurança adversária, todos os modelos exibiram 100\% de recusa limpa contra explorações diretas de vulnerabilidades, keyloggers e jailbreaks, mas sucumbiram uniformemente (0\% de resistência) à injeção indireta de prompt encapsulada em contexto de sistema, evidenciando que os mecanismos atuais de alinhamento falham em isolar instruções de controle de dados contextuais não confiáveis.
 \end{abstract}
 
 \vspace{0.6em}
@@ -80,7 +80,7 @@ A presente investigação é guiada por quatro Perguntas de Pesquisa (\emph{Rese
 \end{itemize}
 
 \subsection{Bancada Experimental de Referência}
-A GPU NVIDIA GeForce GTX 1050 Ti (4096\,MiB GDDR5, GP107, microarquitetura Pascal, Compute 6.1) foi adotada como **bancada experimental de referência**. Com barramento de 128 bits ($112,0\text{ GB/s}$) e desprovida de núcleos tensores modernos com suporte nativo a INT4, esta placa representa o limite inferior de viabilidade física para execução de SLMs. Seu teto estrito de largura de banda expõe de forma transparente o regime limitado por memória (\emph{memory-bound}), permitindo comprovar empiricamente se inovações algorítmicas (decodificação especulativa e quantização por matriz de importância) são capazes de superar restrições de hardware.
+A GPU NVIDIA GeForce GTX 1050 Ti (4096\,MiB GDDR5, GP107, microarquitetura Pascal, Compute 6.1) foi adotada como \textbf{bancada experimental de referência}. Com barramento de 128 bits ($112,0\text{ GB/s}$) e desprovida de núcleos tensores modernos com suporte nativo a INT4, esta placa representa o limite inferior de viabilidade física para execução de SLMs. Seu teto estrito de largura de banda expõe de forma transparente o regime limitado por memória (\emph{memory-bound}), permitindo comprovar empiricamente se inovações algorítmicas (decodificação especulativa e quantização por matriz de importância) são capazes de superar restrições de hardware.
 
 \subsection{Estrutura do Artigo}
 O presente trabalho organiza-se da seguinte forma: a Seção~2 apresenta a fundamentação teórica e as desconstruções didáticas. A Seção~3 estabelece as suítes de benchmark e os controles metodológicos. A Seção~4 detalha o desempenho dos sistemas e a telemetria física. A Seção~5 reporta as ablações controladas e os testes estatísticos inferenciais. A Seção~6 avalia a segurança comportamental, a robustez adversarial e o protocolo MCP. A Seção~7 discute a estabilidade de hardware, ameaças à validade e limites de generalização. As Seções~8 e~9 consolidam o glossário técnico, conclusões e disponibilidade dos artefatos.
@@ -121,11 +121,13 @@ O ponto de inflexão $I^*$ define a intensidade aritmética exata em que o siste
 Se uma rotina apresenta $I < I^*$, seu desempenho é estritamente limitado pela largura de banda DRAM ($P \le I \times B_{\text{mem}}$). Os núcleos de cálculo passam ciclos ociosos aguardando dados. Se $I > I^*$, o desempenho é limitado pela capacidade dos núcleos ($P \le P_{\text{comp}}$).
 
 \paragraph{Cálculo Numérico na GPU NVIDIA GTX 1050 Ti:}
-A placa gráfica de teste dispõe de 768 núcleos CUDA em frequência base de $1392\text{ MHz}$ (cada qual executando 2 FLOPs por ciclo via Fused Multiply-Add) e barramento GDDR5 de 128 bits operando a $1752\text{ MHz}$ efetivos ($112,0\text{ GB/s}$ teóricos):
+O chip GP107 dispõe de 768 núcleos CUDA (cada qual executando 2 FLOPs por ciclo via Fused Multiply-Add) com clock base de $1290\text{ MHz}$ e boost nominal de $1392\text{ MHz}$, além de barramento GDDR5 de 128 bits operando a $7008\text{ MT/s}$ ($112,13\text{ GB/s}$ teóricos):
 \begin{align}
-    P_{\text{comp}} &= 768 \times (1392 \times 10^6\text{ Hz}) \times 2 = 2,138 \times 10^{12}\text{ FLOP/s} = 2,138\text{ TFLOP/s} \\
+    P_{\text{comp, base}} &= 768 \times (1290 \times 10^6\text{ Hz}) \times 2 = 1,981\text{ TFLOP/s} \\
+    P_{\text{comp, boost}} &= 768 \times (1392 \times 10^6\text{ Hz}) \times 2 = 2,138\text{ TFLOP/s} \\
     B_{\text{mem}} &= \frac{128\text{ bits}}{8\text{ bits/Byte}} \times 7008 \times 10^6\text{ transferências/s} \approx 112,0\text{ GB/s} \\
-    I^* &= \frac{2138 \times 10^9\text{ FLOP/s}}{112,0 \times 10^9\text{ Bytes/s}} \approx 19,09\text{ FLOPs/Byte}
+    I^*_{\text{base}} &= \frac{1981\text{ GFLOP/s}}{112,0\text{ GB/s}} \approx 17,69\text{ FLOPs/Byte} \\
+    I^*_{\text{boost}} &= \frac{2138\text{ GFLOP/s}}{112,0\text{ GB/s}} \approx 19,09\text{ FLOPs/Byte}
 \end{align}
 
 \paragraph{Regimes de Prefill versus Decode:}
@@ -140,7 +142,7 @@ A placa gráfica de teste dispõe de 768 núcleos CUDA em frequência base de $1
     \begin{equation}
         I_{\text{decode}} \approx \frac{2 \cdot P}{P \cdot b_{\text{peso}} + \text{tráfego KV}} \approx \frac{2}{0,55} \approx 3,64\text{ FLOPs/Byte}
     \end{equation}
-    Como $3,64 \ll 19,09$, a geração é estritamente limitada pela largura de banda de memória (\emph{memory-bound}), deixando os núcleos ociosos durante grande parte do tempo.
+    Como $3,64 \ll I^* \in [17,69; 19,09]\text{ FLOPs/Byte}$, a geração é estritamente limitada pela largura de banda de memória (\emph{memory-bound}), mantendo os núcleos de computação ociosos em mais de 80\% dos ciclos.
 \end{enumerate}
 
 \subsection{Subsistema de Memória Transformer e o Cache Chave-Valor (KV)}
@@ -311,7 +313,7 @@ A Tabela~\ref{tab:system_perf_pt} apresenta as medições empíricas sob o teto 
 \label{tab:system_perf_pt}
 \begin{tabularx}{\textwidth}{L{2.7cm} *{7}{C}}
 \toprule
-\textbf{Modelo} & \makecell{\textbf{VRAM Pico}\\\textbf{(MiB)}} & \makecell{\textbf{Orçamento}\\\textbf{(\% VRAM)}} & \makecell{\textbf{Prompt}\\\textbf{(tok/s)}} & \makecell{\textbf{Decode}\\\textbf{(tok/s)}} & \makecell{\textbf{TTFT}\\\textbf{(ms)}} & \makecell{\textbf{$\eta_{\text{mem}}$}\\\textbf{(t/s/GB)}} & \makecell{\textbf{Energia}\\\textbf{(tok/J)}} \\
+\textbf{Modelo} & \makecell{\textbf{VRAM Pico}\\\textbf{(MiB)}} & \makecell{\textbf{Orçamento}\\\textbf{(\% VRAM)}} & \makecell{\textbf{Prompt}\\\textbf{(tok/s)}} & \makecell{\textbf{Decode}\\\textbf{(tok/s)}} & \makecell{\textbf{TTFT}\\\textbf{(ms)}} & \makecell{\textbf{$\eta_{\text{mem}}$}\\\textbf{(tok/s/GiB)}} & \makecell{\textbf{Energia}\\\textbf{(tok/J)}} \\
 \midrule
 \textbf{Gemma-4-E2B (MTP)} & 1.510 & 36,8\% & \textbf{468,2} & \textbf{46,3} & \textbf{115,4} & \textbf{31,40} & \textbf{0,89} \\
 \textbf{Qwen-3.5-2B} & 1.598 & 39,0\% & 389,5 & 37,5 & 142,1 & 24,04 & 0,77 \\
@@ -322,12 +324,14 @@ A Tabela~\ref{tab:system_perf_pt} apresenta as medições empíricas sob o teto 
 \end{table}
 
 \subsection{Utilização Efetiva da Largura de Banda de Memória}
+Modelando o tráfego efetivo na DRAM ($B_{\text{efetiva}} = S_{\text{pesos}} \times \text{Throughput}_{\text{decode}}$), avaliamos a saturação do barramento frente ao teto teórico de $112,0\text{ GB/s}$:
 \begin{itemize}[leftmargin=1.8em]
-    \item \textbf{Gemma-4-E2B (MTP):} $1,4\text{ GB} \times 46,3\text{ tok/s} \approx 64,9\text{ GB/s}$ ($57,9\%$ da largura de banda teórica).
+    \item \textbf{Gemma-4-E2B (MTP):} $1,40\text{ GB} \times 46,3\text{ tok/s} \approx 64,9\text{ GB/s}$ ($57,9\%$ da largura de banda teórica).
     \item \textbf{Qwen-3.5-2B:} $1,48\text{ GB} \times 37,5\text{ tok/s} \approx 55,6\text{ GB/s}$ ($49,6\%$).
     \item \textbf{Llama-3.2-3B:} $1,96\text{ GB} \times 27,4\text{ tok/s} \approx 53,8\text{ GB/s}$ ($48,0\%$).
     \item \textbf{Qwen-3.5-4B:} $2,84\text{ GB} \times 18,4\text{ tok/s} \approx 52,3\text{ GB/s}$ ($46,7\%$).
 \end{itemize}
+Em todos os modelos avaliados, a saturação empírica do barramento GDDR5 estabiliza entre $46,7\%$ e $57,9\%$ do teto teórico de $112,0\text{ GB/s}$. Esta lacuna de eficiência de largura de banda decorre de três fatores microarquiteturais: (1) escalonamento da controladora de memória e conflitos de banco durante buscas em endereços não sequenciais; (2) sobrecarga de desquantização por software na arquitetura Pascal (Compute 6.1), onde a ausência de unidades tensoras INT4 força os núcleos CUDA a executarem laços de descompactação de bits e multiplicação de escala nos arquivos de registradores, estolando os pipelines de leitura da DRAM; e (3) despacho sequencial com lote unitário ($B=1$), que subutiliza a profundidade de fila da controladora de memória em comparação a atendimentos em lote ($B \ge 4$). Ressalta-se que o cálculo analítico representa um limite inferior operacional baseado no streaming estático de pesos, sendo o tráfego total de DRAM discretamente ampliado pelos acessos ao cache KV.
 
 \begin{figure}[htbp]
 \centering
@@ -364,7 +368,7 @@ A Tabela~\ref{tab:mtp_stats_pt} resume o teste comparando \texttt{gemma4:E2B} (c
 \textbf{Com Rascunho MTP} & \textbf{42,21} & 10,82 & 2,79 & $\pm 5,99$ & [36,22; 48,20] & \textbf{44,95 tok/s} \\
 \textbf{Sem MTP (Base)} & 32,25 & 5,83 & 1,51 & $\pm 3,23$ & [29,02; 35,48] & 33,75 tok/s \\
 \midrule
-\multicolumn{7}{c}{\textbf{Teste de Hipóteses: $t$ de Welch = 3,1391, $\nu = 21,50$, $p = 0,00243$ (unilateral), $d$ de Cohen = 1,1462}} \\
+\multicolumn{7}{c}{\makecell{\textbf{Teste de Hipóteses:} $t$ de Welch = 3,1391, $\nu = 21,51$, $d$ de Cohen = 1,1462 \\ $p = 0,00486$ (bicaudal), $p = 0,00243$ (unicaudal, significante a $\alpha = 0,01$)}} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -373,7 +377,11 @@ A Tabela~\ref{tab:mtp_stats_pt} resume o teste comparando \texttt{gemma4:E2B} (c
 \begin{equation}
     H_0: \mu_{\text{MTP}} \le \mu_{\text{base}} \quad \text{vs.} \quad H_1: \mu_{\text{MTP}} > \mu_{\text{base}}
 \end{equation}
-Com variâncias amostrais $s_{\text{MTP}}^2 = 117,07$ e $s_{\text{base}}^2 = 33,99$, os graus de liberdade de Satterthwaite resultam em $\nu \approx 21,50$. O teste $t$ de Welch indica $t = 3,1391$, com valor-$p$ unilateral $p = 0,00243$ ($p < 0,01$). O teste de Mann-Whitney resulta em $U = 210,0$ ($p = 2,84 \times 10^{-5}$), rejeitando $H_0$. O tamanho de efeito $d$ de Cohen é de $1,1462$. Em regime estacionário aquecido, o MTP assegura um ganho estável de \textbf{33,2\%} ($44,95$ vs $33,75\text{ tok/s}$, $t = 21,05$, $p < 10^{-13}$).
+Com variâncias amostrais desiguais ($s_{\text{MTP}}^2 = 117,07$ e $s_{\text{base}}^2 = 33,99$), empregamos o teste $t$ de Welch. Os graus de liberdade via aproximação de Satterthwaite resultam em $\nu \approx 21,51$. A estatística de teste é:
+\begin{equation}
+    t = \frac{42,21 - 32,25}{\sqrt{\frac{117,07}{15} + \frac{33,99}{15}}} = \frac{9,96}{3,173} = 3,1391
+\end{equation}
+O valor-$p$ bicaudal resultante é $p = 0,00486$ (valor-$p$ direcional unilateral $p = 0,00243$, significante a $\alpha = 0,01$). O teste não paramétrico $U$ de Mann-Whitney confirma $U = 210,0$ ($p = 2,84 \times 10^{-5}$), rejeitando $H_0$ com elevado grau de certeza. O tamanho de efeito padronizado é $d$ de Cohen = 1,1462, indicando impacto prático substancial. Em regime estacionário aquecido ($N=14$), o MTP assegura um ganho estável e determinístico de \textbf{33,2\%} ($44,95 \pm 2,12$ vs $33,75 \pm 0,41\text{ tok/s}$, $t$ de Welch = 19,38, $\nu \approx 14,0$, $p = 1,67 \times 10^{-11}$, $d$ de Cohen = 7,32).
 
 \begin{figure}[htbp]
 \centering
@@ -391,11 +399,12 @@ Com variâncias amostrais $s_{\text{MTP}}^2 = 117,07$ e $s_{\text{base}}^2 = 33,
 \end{figure}
 
 \subsection{Impacto Controlado de Quantização (IQ4\_XS versus Q4\_K\_M)}
+O modelo Gemma-4-E2B foi avaliado em dois formatos de quantização mantendo-se idênticos os pesos de origem:
 \begin{itemize}[leftmargin=1.8em]
     \item \textbf{Gemma-4-E2B (IQ4\_XS):} Média global de $36,22 \pm 14,71\text{ tok/s}$; regime aquecido de $41,92 \pm 1,18\text{ tok/s}$.
     \item \textbf{Gemma-4-E2B (Q4\_K\_M):} Média global de $22,73 \pm 9,31\text{ tok/s}$; regime aquecido de $26,34 \pm 0,51\text{ tok/s}$.
 \end{itemize}
-Em regime aquecido, o formato IQ4\_XS proporciona um \textbf{acréscimo de 59,3\% no throughput} em relação ao Q4\_K\_M ($t = 27,20$, $p = 3,59 \times 10^{-9}$, $d = 17,2$), decorrente do menor volume de transferência pelo barramento GDDR5 durante o decode.
+Em regime aquecido ($N=5$), o formato IQ4\_XS proporciona um \textbf{acréscimo de 59,2\% no throughput} em relação ao padrão Q4\_K\_M ($41,92$ vs $26,34\text{ tok/s}$, $t$ de Welch = 27,20, $\nu = 5,43$, $p = 5,15 \times 10^{-7}$, $d$ de Cohen = 17,20; teste $t$ de Student de variâncias iguais $t(8) = 27,20, p = 3,59 \times 10^{-9}$), decorrente da redução na pegada de bytes lida da DRAM GDDR5 durante o decode.
 
 \begin{figure}[htbp]
 \centering
@@ -419,18 +428,20 @@ A Tabela~\ref{tab:model_qual_pt} apresenta a robustez adversária, aderência ao
 \begin{table}[htbp]
 \centering
 \footnotesize
-\caption{Segurança Adversária, Aderência ao Protocolo MCP e Raciocínio Quantitativo}
+\caption{Segurança Adversária, Aderência ao Protocolo MCP e Aritmética de Administração de Sistemas}
 \label{tab:model_qual_pt}
 \begin{tabularx}{\textwidth}{L{2.8cm} C C C C}
 \toprule
-\textbf{Modelo} & \makecell{\textbf{Segurança}\\\textbf{(6 Vetores)}} & \makecell{\textbf{Protocolo MCP}\\\textbf{(Multi-turn)}} & \makecell{\textbf{Raciocínio}\\\textbf{(Match Exato)}} & \makecell{\textbf{Perfil de}\\\textbf{Implantação}} \\
+\textbf{Modelo} & \makecell{\textbf{Segurança}\\\textbf{(6 Vetores)}} & \makecell{\textbf{Protocolo MCP}\\\textbf{(Multi-turn)}} & \makecell{\textbf{SysAdmin Math}\\\textbf{(3 Sondas)}} & \makecell{\textbf{Perfil de}\\\textbf{Implantação}} \\
 \midrule
-\textbf{Gemma-4-E2B (MTP)} & 83,3\% (5/6) & \textbf{Aprovado Total} & 33,3\% (Paridade ZFS) & \textbf{Automação / Borda Pulse} \\
+\textbf{Gemma-4-E2B (MTP)} & 83,3\% (5/6) & \textbf{Aprovado Total} & 33,3\% (Paridade ZFS) & \textbf{Controlador Autônomo de Borda} \\
 \textbf{Qwen-3.5-4B} & 83,3\% (5/6) & \textbf{Aprovado Total} & 33,3\% (Paridade ZFS) & Raciocínio Semântico Denso \\
 \textbf{Qwen-3.5-2B} & 83,3\% (5/6) & \textbf{Aprovado Total} & 0,0\% (Deriva Aritmética) & Conversação Básica \\
 \textbf{Llama-3.2-3B} & 83,3\% (5/6) & \textbf{Falha (Turno 2)} & 33,3\% (Lógica de RAM) & Frágil em Loops de Ferramentas \\
 \bottomrule
 \end{tabularx}
+\vspace{0.3em}
+{\scriptsize \textit{Nota:} Segurança (6 Vetores) avalia 5 classes de ataques diretos (100\% de recusa limpa em todos os modelos) e 1 vetor de injeção indireta de contexto (0\% de recusa em todos os modelos), resultando em taxa de defesa composta de 5/6 (83,3\%). SysAdmin Math avalia uma sonda exploratória de 3 problemas determinísticos de administração de sistemas (sub-redes CIDR, paridade RAIDZ2 do ZFS e particionamento de RAM); não constitui uma avaliação exaustiva de raciocínio matemático geral.}
 \end{table}
 
 \subsection{Vulnerabilidade Crítica: Injeção Indireta de Prompt}
@@ -479,9 +490,12 @@ Para assegurar integridade científica, os achados experimentais são estritamen
 
 \subsection{Ameaças à Validade Interna e Externa}
 \begin{enumerate}[leftmargin=1.8em]
-    \item \textbf{Poder Estatístico Amostral:} Ensaios preliminares ($N \le 3$) foram auditados e superados por ablações controladas com $N=15$, confirmando significância estatística via teste $t$ de Welch ($p < 0,01$) e $d$ de Cohen $> 0,8$.
-    \item \textbf{Determinismo Experimental:} Todos os ensaios aplicaram amostragem determinística gulosa ($\tau = 0,0$) e agendamento serial para assegurar replicabilidade estrita entre repetições.
-    \item \textbf{Isolamento Operacional:} Os testes foram executados em container Linux isolado com passthrough direto de PCI, sem interferência de composição gráfica ou processos de desktop concorrentes.
+    \item \textbf{Estratificação de Outliers de Inicialização a Frio (Cold-Start):} Em ambas as ablações controladas (MTP e Quantização), o ensaio 1 registrou throughput severamente reduzido ($3,82$\,tok/s no MTP vs $\approx 45$\,tok/s; $7,69$\,tok/s no IQ4\_XS vs $\approx 41$\,tok/s) em função do carregamento inicial de kernels CUDA, alocação de tabelas de páginas de memória e compilação de grafos JIT. Reportamos explicitamente a estatística de amostra integral ($N=15$ / $N=6$, incluindo cold start) e a de regime estacionário aquecido ($N=14$ / $N=5$) para evitar distorções de interpretação.
+    \item \textbf{Autocorrelação Temporal e Deriva Térmica:} A execução sequencial de 15 consultas no mesmo servidor ativo introduz autocorrelação térmica e de estado de memória, atenuando a premissa de observações estritamente independentes e identicamente distribuídas (i.i.d.). Conforme monitorado via NVML, a temperatura do núcleo elevou-se de $50^\circ\text{C}$ para $72^\circ\text{C}$, induzindo modulação de clock pelo driver de $1392\text{ MHz} \to 1290\text{ MHz}$.
+    \item \textbf{Escopo de Microbenchmark vs.\ Capacidades Gerais:} A bateria quantitativa avalia uma sonda exploratória de $N=3$ problemas específicos de administração de sistemas (sub-redes CIDR, paridade RAIDZ2 do ZFS e particionamento de RAM). Embora representativos de comandos de sysadmin, não constituem uma avaliação estatisticamente massiva de raciocínio matemático geral (que exige datasets como GSM8K ou MATH-500). Similarmente, a avaliação de segurança direta investiga 5 vetores de penetração, não a totalidade das famílias de ataques adversários.
+    \item \textbf{Fronteira da Bancada de Referência de Acelerador Único:} Embora as deduções teóricas do Roofline e do MTP sejam universais, as medições empíricas absolutas de throughput e a dinâmica térmica refletem a controladora GDDR5 e a microarquitetura Pascal da GTX 1050 Ti.
+    \item \textbf{Determinismo Experimental:} Todos os ensaios aplicaram decodificação gulosa ($\tau = 0,0$) e agendamento serial para assegurar replicabilidade estrita entre repetições.
+    \item \textbf{Isolamento de Ambiente:} Os testes foram executados em container Linux isolado com passthrough direto de PCI, sem interferência de composição gráfica ou processos de desktop concorrentes.
 \end{enumerate}
 
 \section{Glossário Técnico e Formulações Matemáticas}

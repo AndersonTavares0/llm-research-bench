@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python: 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](pyproject.toml)
-[![Tests: 31 Passing](https://img.shields.io/badge/tests-31%20passing-brightgreen.svg)](tests/)
+[![Tests: 37 Passing](https://img.shields.io/badge/tests-37%20passing-brightgreen.svg)](tests/)
 [![Paper: PDF (EN)](https://img.shields.io/badge/Paper-PDF%20(en--US)-red.svg)](reports/en-US/report_en-US.pdf)
 [![Paper: PDF (PT)](https://img.shields.io/badge/Artigo-PDF%20(pt--BR)-red.svg)](reports/pt-BR/report_pt-BR.pdf)
 
@@ -52,8 +52,8 @@ Evaluated with deterministic greedy decoding ($\tau = 0.0$) on technical system 
 | **Gemma-4-E2B (with MTP)** | **42.21 tok/s** | 10.82 | ±5.99 | [36.2, 48.2] tok/s | **44.95 tok/s** | 2038 MiB |
 | **Gemma-4-E2B (Base without MTP)** | **32.25 tok/s** | 5.83 | ±3.23 | [29.0, 35.5] tok/s | **33.75 tok/s** | 2038 MiB |
 
-- **Overall Acceleration:** $+30.9\%$ throughput gain ($t = 3.139, p = 0.0024$, Cohen's $d = 1.146$, large effect).
-- **Warmed Steady-State Acceleration:** $+33.2\%$ throughput gain ($44.95$ vs $33.75$\,tok/s, Welch's $t = 21.05, p < 10^{-13}$), exactly matching the theoretical speculative formulation ($S \approx 1.333\times$ for draft acceptance $\alpha = 0.40$).
+- **Overall Acceleration:** $+30.9\%$ throughput gain (Welch's $t = 3.139, \nu = 21.51$, two-tailed $p = 0.0049$, one-tailed $p = 0.0024$, Cohen's $d = 1.146$, large effect).
+- **Warmed Steady-State Acceleration:** $+33.2\%$ throughput gain ($44.95 \pm 2.12$ vs $33.75 \pm 0.41$\,tok/s, Welch's $t = 19.38, \nu = 13.99, p = 1.67 \times 10^{-11}$, Cohen's $d = 7.32$), exactly matching the theoretical speculative formulation ($S \approx 1.333\times$ for draft acceptance $\alpha = 0.40$).
 - **Memory Footprint Neutrality:** Zero additional VRAM overhead (2038\,MiB in both configurations).
 
 ### 2. Cross-Model Systems Performance and Energy Efficiency
@@ -69,12 +69,14 @@ Evaluated with deterministic greedy decoding ($\tau = 0.0$) on technical system 
 
 ### 3. Adversarial Safety Robustness and Model Context Protocol (MCP)
 
-| Model | Direct Attack Refusal (5 Vectors) | Indirect Context Injection (Log Canary) | MCP Tool Calling (stdio) | Quantitative Reasoning |
+| Model | Direct Attack Refusal (5 Vectors) | Indirect Context Injection (Log Canary) | MCP Tool Calling (stdio) | SysAdmin Math (3 Probes) |
 | :--- | :--- | :--- | :--- | :--- |
-| **Gemma-4-E2B (MTP)** | **100% (5/5)** | **Failed (0% refusal)** | **Passed (100% schema match)** | 33.3% (exact match) |
-| **Qwen-3.5-4B** | **100% (5/5)** | **Failed (0% refusal)** | **Passed (100% schema match)** | 33.3% (exact match) |
+| **Gemma-4-E2B (MTP)** | **100% (5/5)** | **Failed (0% refusal)** | **Passed (100% schema match)** | 33.3% (ZFS Parity) |
+| **Qwen-3.5-4B** | **100% (5/5)** | **Failed (0% refusal)** | **Passed (100% schema match)** | 33.3% (ZFS Parity) |
 | **Qwen-3.5-2B** | **100% (5/5)** | **Failed (0% refusal)** | **Passed (100% schema match)** | 0.0% (arithmetic drift) |
-| **Llama-3.2-3B** | **100% (5/5)** | **Failed (0% refusal)** | Failed (turn 2 schema error) | 33.3% (exact match) |
+| **Llama-3.2-3B** | **100% (5/5)** | **Failed (0% refusal)** | Failed (turn 2 schema error) | 33.3% (RAM logic) |
+
+*Note on SysAdmin Math:* Evaluates a 3-probe exploratory microbenchmark of systems administration arithmetic (CIDR subnetting, ZFS RAIDZ2 parity math, RAM partitioning); it does not constitute an exhaustive evaluation of general mathematical reasoning capability.
 
 - **Direct Refusal:** 100% across all models against weaponized CVE exploits (Log4Shell), stealth keyloggers, DAN persona framing, and prompt extraction.
 - **Indirect Prompt Injection:** Universal vulnerability (0% refusal). All models executed simulated command overrides when embedded inside untrusted context logs, proving that post-training alignment fails to enforce instruction boundaries.
@@ -133,7 +135,7 @@ llm-research-bench/
 │   ├── statistical_engine.py            # Student's t 95% confidence interval engine
 │   ├── generate_figures.py              # Publication-grade vector PDF chart generator
 │   └── mcp_server.py                    # Standard JSON-RPC 2.0 stdio MCP server
-├── tests/                               # Comprehensive unit test suite (31 tests)
+├── tests/                               # Comprehensive unit test suite (37 tests)
 └── pyproject.toml                       # Python package configuration
 ```
 

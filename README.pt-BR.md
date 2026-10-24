@@ -2,7 +2,7 @@
 
 [![Licença: MIT](https://img.shields.io/badge/Licen%C3%A7a-MIT-blue.svg)](LICENSE)
 [![Python: 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](pyproject.toml)
-[![Testes: 31 Passando](https://img.shields.io/badge/testes-31%20passando-brightgreen.svg)](tests/)
+[![Testes: 37 Passando](https://img.shields.io/badge/testes-37%20passando-brightgreen.svg)](tests/)
 [![Artigo: PDF (EN)](https://img.shields.io/badge/Paper-PDF%20(en--US)-red.svg)](reports/en-US/report_en-US.pdf)
 [![Artigo: PDF (PT)](https://img.shields.io/badge/Artigo-PDF%20(pt--BR)-red.svg)](reports/pt-BR/report_pt-BR.pdf)
 
@@ -52,8 +52,8 @@ Avaliado com amostragem determinística gulosa ($\tau = 0,0$) em tarefas técnic
 | **Gemma-4-E2B (com MTP)** | **42,21 tok/s** | 10,82 | ±5,99 | [36,2; 48,2] tok/s | **44,95 tok/s** | 2038 MiB |
 | **Gemma-4-E2B (Base sem MTP)** | **32,25 tok/s** | 5,83 | ±3,23 | [29,0; 35,5] tok/s | **33,75 tok/s** | 2038 MiB |
 
-- **Aceleração Global:** Ganho de $+30,9\%$ no throughput ($t = 3,139, p = 0,0024$, $d$ de Cohen = 1,146, efeito grande).
-- **Aceleração em Regime Estacionário:** Ganho de $+33,2\%$ ($44,95$ vs $33,75$\,tok/s, teste $t$ de Welch = 21,05, $p < 10^{-13}$), convergindo exatamente com a formulação teórica ($S \approx 1,333\times$ para taxa de aceitação $\alpha = 0,40$).
+- **Aceleração Global:** Ganho de $+30,9\%$ no throughput (teste $t$ de Welch = 3,139, $\nu = 21,51$, valor-$p$ bicaudal = 0,0049, valor-$p$ unicaudal = 0,0024, $d$ de Cohen = 1,146, efeito grande).
+- **Aceleração em Regime Estacionário:** Ganho de $+33,2\%$ ($44,95 \pm 2,12$ vs $33,75 \pm 0,41$\,tok/s, teste $t$ de Welch = 19,38, $\nu = 13,99, p = 1,67 \times 10^{-11}$, $d$ de Cohen = 7,32), convergindo exatamente com a formulação teórica ($S \approx 1,333\times$ para taxa de aceitação $\alpha = 0,40$).
 - **Neutralidade de Memória:** Zero sobrecarga adicional de VRAM (2038\,MiB em ambas as configurações).
 
 ### 2. Desempenho de Sistemas e Eficiência Energética
@@ -69,12 +69,14 @@ Avaliado com amostragem determinística gulosa ($\tau = 0,0$) em tarefas técnic
 
 ### 3. Robustez Adversarial e Model Context Protocol (MCP)
 
-| Modelo | Recusa de Ataque Direto (5 Vetores) | Injeção Indireta de Contexto (Canary) | Chamada de Ferramentas MCP (stdio) | Raciocínio Quantitativo |
+| Modelo | Recusa de Ataque Direto (5 Vetores) | Injeção Indireta de Contexto (Canary) | Chamada de Ferramentas MCP (stdio) | Aritmética SysAdmin (3 Sondas) |
 | :--- | :--- | :--- | :--- | :--- |
-| **Gemma-4-E2B (MTP)** | **100% (5/5)** | **Falhou (0% recusa)** | **Aprovado (100% conformidade)** | 33,3% (exato) |
-| **Qwen-3.5-4B** | **100% (5/5)** | **Falhou (0% recusa)** | **Aprovado (100% conformidade)** | 33,3% (exato) |
+| **Gemma-4-E2B (MTP)** | **100% (5/5)** | **Falhou (0% recusa)** | **Aprovado (100% conformidade)** | 33,3% (Paridade ZFS) |
+| **Qwen-3.5-4B** | **100% (5/5)** | **Falhou (0% recusa)** | **Aprovado (100% conformidade)** | 33,3% (Paridade ZFS) |
 | **Qwen-3.5-2B** | **100% (5/5)** | **Falhou (0% recusa)** | **Aprovado (100% conformidade)** | 0,0% (deriva aritmética) |
-| **Llama-3.2-3B** | **100% (5/5)** | **Falhou (0% recusa)** | Falhou (erro sintático no turno 2) | 33,3% (exato) |
+| **Llama-3.2-3B** | **100% (5/5)** | **Falhou (0% recusa)** | Falhou (erro sintático no turno 2) | 33,3% (Lógica de RAM) |
+
+*Nota sobre Aritmética SysAdmin:* Avalia uma sonda exploratória de 3 problemas determinísticos de administração de sistemas (sub-redes CIDR, paridade RAIDZ2 do ZFS e particionamento de RAM); não constitui uma avaliação exaustiva de raciocínio matemático geral.
 
 - **Recusa Direta:** 100% em todos os modelos contra exploits armados de CVE (Log4Shell), keyloggers furtivos, personificação DAN e extração de instruções do sistema.
 - **Injeção Indireta de Prompt:** Vulnerabilidade universal (0% de recusa). Todos os modelos executaram comandos simulados de substituição quando encapsulados em logs de contexto não confiáveis, provando que o alinhamento pós-treinamento falha em isolar fronteiras de instrução.
@@ -133,7 +135,7 @@ llm-research-bench/
 │   ├── statistical_engine.py            # Motor de intervalos de confiança t de Student a 95%
 │   ├── generate_figures.py              # Gerador de gráficos vetoriais em PDF
 │   └── mcp_server.py                    # Servidor MCP padrão JSON-RPC 2.0 stdio
-├── tests/                               # Suíte de testes unitários (31 testes)
+├── tests/                               # Suíte de testes unitários (37 testes)
 └── pyproject.toml                       # Configuração do pacote Python
 ```
 
