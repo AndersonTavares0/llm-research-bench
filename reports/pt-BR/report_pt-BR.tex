@@ -51,7 +51,7 @@
   \begin{@twocolumnfalse}
     \maketitle
     \begin{abstract}
-    A implantação de Modelos de Linguagem Pequenos (\emph{Small Language Models} --- SLMs, 0,5B a 4B parâmetros) em aceleradores de borda viabiliza soberania de dados e latência determinística, mas impõe severos limites físicos de memória ($\le 4096\text{ MiB}$ de VRAM). Este artigo apresenta uma investigação empírica rigorosa na GPU NVIDIA GeForce GTX 1050 Ti (4096\,MiB GDDR5, $112,0\text{ GB/s}$). Avaliamos sete modelos (\textbf{Qwen-2.5-0.5B}, \textbf{SmolLM2-1.7B}, \textbf{Gemma-4-E2B [MTP]}, \textbf{Gemma-4-E2B [Q4\_K\_M]}, \textbf{Qwen-3.5-2B}, \textbf{Llama-3.2-3B} e \textbf{Qwen-3.5-4B}) sob \texttt{llama-server} com telemetria contínua NVML a 250\,ms. Uma ablação fatorial controlada comprovou aceleração causal de $+61,0\%$ no throughput de decodificação via \emph{Multi-Token Prediction} (MTP) ($43,35 \pm 0,57$ vs $26,92 \pm 0,23$\,tok/s, $t$ de Welch = 86,9, $p < 10^{-15}$, $d$ de Cohen = 38,8) sob sobretaxa de apenas 40\,MiB de VRAM. A análise analítica de viabilidade provou que modelos de 4B operam na margem crítica ($76,7\%$), exigindo compressão Q4\_0 de cache KV no Gemma-3-4B para evitar estouro de memória física. Avaliações de segurança defensiva ($N=10$) demonstraram taxa nula de recusa indevida ($\text{FPR}=0,0$\%) em tarefas operacionais benignas, porém vulnerabilidade crítica a injeções indiretas e quebra de delimitadores (ASR entre 42,9\% e 100,0\%). Testes de viés (BBQ, StereoSet-PT, P3B3) e fertilidade indicaram sobretaxa de 1,30 a 2,17 tokens/palavra para a língua portuguesa. Dados brutos e scripts são integralmente auditáveis e reproduzíveis.
+    A implantação de Modelos de Linguagem Pequenos (\emph{Small Language Models} --- SLMs, 0,5B a 4B parâmetros) em aceleradores de borda viabiliza soberania de dados e latência determinística, mas impõe severos limites físicos de memória ($\le 4096\text{ MiB}$ de VRAM). Este artigo apresenta uma investigação empírica rigorosa na GPU NVIDIA GeForce GTX 1050 Ti (4096\,MiB GDDR5, $112,0\text{ GB/s}$). Avaliamos oito configurações de modelos (\textbf{Qwen-2.5-0.5B}, \textbf{SmolLM2-1.7B}, \textbf{Gemma-4-E2B [MTP]}, \textbf{Gemma-4-E2B [IQ4\_XS]}, \textbf{Gemma-4-E2B [Q4\_K\_M]}, \textbf{Qwen-3.5-2B}, \textbf{Llama-3.2-3B} e \textbf{Qwen-3.5-4B}) sob \texttt{llama-server} com telemetria contínua NVML a 250\,ms. Uma ablação fatorial $2 \times 2$ isolou os componentes de aceleração: a compressão de quantização (IQ4\_XS vs Q4\_K\_M) contribuiu com $+28,2\%$ ($34,51 \pm 0,29$ vs $26,92 \pm 0,23$\,tok/s, $t=65,41$), enquanto a decodificação especulativa via \emph{Multi-Token Prediction} (MTP) sob quantização constante entregou $+25,6\%$ de ganho causal isolado ($43,35 \pm 0,57$ vs $34,51 \pm 0,29$\,tok/s, $t=43,72$, $p < 10^{-15}$), totalizando $+61,0\%$ de ganho composto ($t$ de Welch = 84,50, $p = 5,88 \times 10^{-18}$, $d$ de Cohen = 37,79) sob sobretaxa de apenas 40\,MiB de VRAM para cabeças Q8\_0. A modelagem analítica comprovou que modelos de 4B operam na margem crítica ($76,7\%$), exigindo compressão Q4\_0 de cache KV no Gemma-3-4B para evitar estouro de memória física. Avaliações de segurança defensiva ($N=10$) demonstraram taxa nula de recusa indevida ($\text{FPR}=0,0$\%) em tarefas operacionais benignas, porém vulnerabilidade crítica a injeções indiretas e quebra de delimitadores (ASR entre 50,0\% e 100,0\%). Em ferramentas com parâmetros maliciosos, as chamadas propostas foram interceptadas pela camada de proteção (\emph{guardrail}). A avaliação linguística por corpus paralelo revelou sobretaxa de 1,35 a 2,33 tokens/palavra para a língua portuguesa frente a 1,10 para o inglês. Dados brutos, hashes SHA-256 e scripts são integralmente auditáveis e reproduzíveis.
     \end{abstract}
     \vspace{0.25em}
     \noindent\textbf{Palavras-chave:} Modelos de Linguagem Compactos, Engenharia de Sistemas, Modelo Roofline, Cache KV, Multi-Token Prediction, Segurança Defensiva, Injeção Indireta, Telemetria NVML.
@@ -59,7 +59,7 @@
 
     \begin{otherlanguage}{english}
     \begin{abstract}
-    Edge deployment of Small Language Models (SLMs, 0.5B--4B) enables data sovereignty and bounded latency, but faces strict memory constraints ($\le 4096\text{ MiB}$ VRAM). This paper presents a systems evaluation on an NVIDIA GeForce GTX 1050 Ti (4096\,MiB GDDR5, $112.0\text{ GB/s}$). We benchmark seven models (\textbf{Qwen-2.5-0.5B}, \textbf{SmolLM2-1.7B}, \textbf{Gemma-4-E2B [MTP]}, \textbf{Gemma-4-E2B [Q4\_K\_M]}, \textbf{Qwen-3.5-2B}, \textbf{Llama-3.2-3B}, and \textbf{Qwen-3.5-4B}) using \texttt{llama-server} under live NVML telemetry. Controlled ablation isolated a causal $+61.0\%$ decoding throughput gain via Multi-Token Prediction (MTP) ($43.35 \pm 0.57$ vs $26.92 \pm 0.23$\,tok/s, Welch's $t = 86.9$, $p < 10^{-15}$, Cohen's $d = 38.8$) with only 40\,MiB VRAM overhead. Analytical modeling showed 4B models operate at the critical edge ($76.7\%$), requiring Q4\_0 KV compression for Gemma-3-4B to avert OOM. Defensive evaluations ($N=10$) revealed zero false positive refusals ($\text{FPR}=0.0$\%) on benign system tasks, but severe susceptibility to indirect injection and delimiter evasion (ASR 42.9\%--100.0\%). Bias and tokenization fertility show a 1.30--2.17 tokens/word penalty for Portuguese versus English. All raw logs and code are open and reproducible.
+    Edge deployment of Small Language Models (SLMs, 0.5B--4B) enables data sovereignty and bounded latency, but faces strict physical memory constraints ($\le 4096\text{ MiB}$ VRAM). This paper presents a systems evaluation on an NVIDIA GeForce GTX 1050 Ti (4096\,MiB GDDR5, $112.0\text{ GB/s}$). We benchmark eight model configurations (\textbf{Qwen-2.5-0.5B}, \textbf{SmolLM2-1.7B}, \textbf{Gemma-4-E2B [MTP]}, \textbf{Gemma-4-E2B [IQ4\_XS]}, \textbf{Gemma-4-E2B [Q4\_K\_M]}, \textbf{Qwen-3.5-2B}, \textbf{Llama-3.2-3B}, and \textbf{Qwen-3.5-4B}) using \texttt{llama-server} under live NVML telemetry. A $2 \times 2$ factorial ablation isolated performance drivers: weight quantization compression (IQ4\_XS vs Q4\_K\_M) accounted for $+28.2\%$ speedup ($34.51 \pm 0.29$ vs $26.92 \pm 0.23$\,tok/s, $t=65.41$), whereas speculative Multi-Token Prediction (MTP) under identical quantization yielded $+25.6\%$ causal speedup ($43.35 \pm 0.57$ vs $34.51 \pm 0.29$\,tok/s, $t=43.72$, $p < 10^{-15}$), resulting in an overall $+61.0\%$ compound configuration gain (Welch's $t = 84.50$, $p = 5.88 \times 10^{-18}$, Cohen's $d = 37.79$) with only 40\,MiB VRAM overhead for Q8\_0 draft heads. Analytical modeling showed 4B models operate at the critical edge ($76.7\%$), requiring Q4\_0 KV compression for Gemma-3-4B to avert OOM. Defensive evaluations ($N=10$) revealed zero false positive refusals ($\text{FPR}=0.0$\%) on benign system tasks, but severe susceptibility to indirect injection and delimiter evasion (ASR 50.0\%--100.0\%). In agentic tool scenarios, proposed unsafe invocations were successfully intercepted by harness guardrails. Parallel corpus tokenization demonstrated a 1.35--2.33 tokens/word penalty for Portuguese compared to 1.10 for English. All raw traces, SHA-256 hashes, and code are open and reproducible.
     \end{abstract}
     \vspace{0.25em}
     \noindent\textbf{Keywords:} Small Language Models, Systems Engineering, Roofline Model, KV Cache, Multi-Token Prediction, Defensive Safety, Prompt Injection, NVML Telemetry.
@@ -200,15 +200,16 @@ A Tabela~\ref{tab:empirical_perf} sumariza os resultados empíricos coletados em
 \midrule
 \textbf{Qwen-2.5-0.5B-Q4\_K\_M} & 0,49 & 620,7 & 15,2\% & $237,1 \pm 449,3$ & \textbf{97,5} $\pm$ \textbf{0,6} & \textbf{12,1} $\pm$ \textbf{5,1} & \textbf{160,8} \\
 \textbf{SmolLM2-1.7B-Q4\_K\_M} & 1,71 & 2902,7 & 70,9\% & $103,3 \pm 176,0$ & 47,8 $\pm$ 0,1 & 25,5 $\pm$ 14,3 & 16,9 \\
-\textbf{Gemma-4-E2B [MTP IQ4\_XS]} & 2,30 & 2036,7 & 49,7\% & $62,2 \pm 18,5$ & \textbf{43,4} $\pm$ \textbf{0,6} & 480,4 $\pm$ 52,1 & 21,8 \\
-\textbf{Gemma-4-E2B [Q4\_K\_M base]} & 2,30 & 1996,7 & 48,7\% & $65,5 \pm 7,7$ & 26,9 $\pm$ 0,2 & 116,1 $\pm$ 2,4 & 13,8 \\
-\textbf{Qwen-3.5-2B-Q4\_K\_XL} & 1,95 & 1580,7 & 38,6\% & $126,5 \pm 108,8$ & 37,6 $\pm$ 0,1 & 49,9 $\pm$ 27,2 & 24,4 \\
-\textbf{Llama-3.2-3B-Q4\_K\_M} & 3,21 & 3074,7 & 75,1\% & $59,6 \pm 101,1$ & 27,6 $\pm$ 0,0 & 43,5 $\pm$ 1,8 & 9,2 \\
-\textbf{Qwen-3.5-4B-Q4\_K\_M} & 4,12 & 3140,7 & 76,7\% & $49,3 \pm 46,5$ & 18,6 $\pm$ 0,1 & 129,8 $\pm$ 45,3 & 6,1 \\
+\textbf{Gemma-4-E2B [MTP IQ4\_XS]} & 2,30 & 2036,7 & 49,7\% & $62,2 \pm 18,5$ & \textbf{43,4} $\pm$ \textbf{0,6} & 480,4 $\pm$ 1286,7 & 21,8 \\
+\textbf{Gemma-4-E2B [IQ4\_XS base]} & 2,00 & 1800,7 & 44,0\% & $79,2 \pm 32,4$ & 34,5 $\pm$ 0,3 & 88,0 $\pm$ 49,0 & 19,6 \\
+\textbf{Gemma-4-E2B [Q4\_K\_M base]} & 2,00 & 1996,7 & 48,7\% & $65,5 \pm 7,7$ & 26,9 $\pm$ 0,2 & 116,1 $\pm$ 116,3 & 13,8 \\
+\textbf{Qwen-3.5-2B-Q4\_K\_XL} & 1,95 & 1580,7 & 38,6\% & $126,5 \pm 108,8$ & 37,6 $\pm$ 0,1 & 49,9 $\pm$ 20,3 & 24,4 \\
+\textbf{Llama-3.2-3B-Q4\_K\_M} & 3,21 & 3074,7 & 75,1\% & $59,6 \pm 101,1$ & 27,6 $\pm$ 0,0 & 43,5 $\pm$ 23,1 & 9,2 \\
+\textbf{Qwen-3.5-4B-Q4\_K\_M} & 4,02 & 3140,7 & 76,7\% & $49,3 \pm 46,5$ & 18,6 $\pm$ 0,1 & 129,8 $\pm$ 45,3 & 6,1 \\
 \bottomrule
 \end{tabularx}
 \vspace{0.3em}
-{\scriptsize \textit{Nota:} VRAM física medida via chamadas NVML nativas; inclui pesos, cache KV ativo e $256\text{ MiB}$ de overhead base do driver CUDA. Eficiência de memória é dada pela vazão de decodificação dividida pela VRAM física em GiB binário ($1024^3$ bytes).}
+{\scriptsize \textit{Nota:} VRAM física medida via chamadas NVML nativas; inclui pesos, cache KV ativo e $256\text{ MiB}$ de overhead base do driver CUDA. Os intervalos correspondem a desvios-padrão amostrais com intervalos de confiança de 95\% truncados em zero para limites físicos não negativos. Eficiência de memória é dada pela vazão de decodificação dividida pela VRAM física em GiB binário ($1024^3$ bytes).}
 \end{table*}
 
 \subsection{Análise do Ponto de Operação Roofline}
@@ -225,24 +226,40 @@ Os dados confirmam que a decodificação autorregressiva padrão satura entre 33
 
 \section{Análise Estatística e Estudo de Ablação Fatorial de MTP}
 
-Para investigar a hipótese $H_1$, comparamos o \textbf{Gemma-4-E2B [MTP]} ($43,35 \pm 0,57$\,tok/s) com o baseline correspondente sem especulação \textbf{Gemma-4-E2B [Q4\_K\_M]} ($26,92 \pm 0,23$\,tok/s) sob idênticas condições físicas.
+Para investigar a hipótese $H_1$ sem confundir os efeitos de quantização e de decodificação especulativa, estruturamos uma ablação fatorial $2 \times 2$ no modelo Gemma-4-E2B sob três condições experimentais controladas ($N=10$, $\tau=0,0$, \texttt{seed=42}):
+\begin{enumerate}[leftmargin=1.4em,itemsep=0.1em]
+    \item \textbf{Condição $C_1$ (Baseline Geral):} Gemma-4-E2B em formato Q4\_K\_M sem cabeças especulativas ($26,92 \pm 0,23$\,tok/s, VRAM 1996,7\,MiB);
+    \item \textbf{Condição $C_2$ (Ablação de Quantização):} Gemma-4-E2B em formato IQ4\_XS sem cabeças especulativas ($34,51 \pm 0,29$\,tok/s, VRAM 1800,7\,MiB);
+    \item \textbf{Condição $C_3$ (Especulativo MTP Completo):} Gemma-4-E2B em formato IQ4\_XS com cabeças de rascunho MTP integradas em Q8\_0 ($43,35 \pm 0,57$\,tok/s, VRAM 2036,7\,MiB).
+\end{enumerate}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\columnwidth]{figures/mtp_ablation_ci.pdf}
-\caption{Ablação controlada do MTP: throughput com intervalos de confiança de 95\% de Student ($N=10$, $\tau=0,0$).}
+\caption{Decomposição fatorial da aceleração: efeito isolado da quantização ($C_1 \rightarrow C_2$) e efeito causal do MTP ($C_2 \rightarrow C_3$) com intervalos de 95\% de Student ($N=10$).}
 \label{fig:mtp_ablation}
 \end{figure}
 
-O teste $t$ de Welch revelou:
+\subsection{Efeito Causal Isolado do MTP (Quantização Constante em IQ4\_XS)}
+Comparando $C_3$ e $C_2$, a quantização é mantida estritamente idêntica em IQ4\_XS. O teste $t$ de Welch revela:
 \begin{equation}
-t = \frac{43,35 - 26,92}{\sqrt{\frac{0,57^2}{10} + \frac{0,23^2}{10}}} = \frac{16,43}{0,195} \approx 84,26, \quad \nu = 11,8
+t_{\text{MTP}} = \frac{43,35 - 34,51}{\sqrt{\frac{0,57^2}{10} + \frac{0,29^2}{10}}} = \frac{8,84}{0,2022} \approx 43,72, \quad \nu = 13,43
 \end{equation}
-com valor-$p < 10^{-15}$ e tamanho de efeito padronizado $d$ de Cohen igual a $38,8$.
+com $p = 7,12 \times 10^{-16}$ e $d = 19,55$. O ganho causal estrito atribuível exclusivamente ao rascunho especulativo MTP é de \textbf{+25,6\%} ($8,84$\,tok/s).
 
-A telemetria interna do \texttt{llama-server} registrou taxa empírica de aceitação do rascunho de $\alpha = 52,8$\% (65 tokens aceitos em 123 gerados), com comprimento médio de bloco de rascunho aceito de $\bar{L} = 2,05$ tokens. Esse mecanismo explica a superação da barreira de DRAM: enquanto a leitura dos tensores de peso transfere dados suficientes para 1 token, a validação paralela emite 2,05 tokens médios por ciclo, proporcionando um ganho causal real de +61,0\%.
+\subsection{Efeito Isolado da Quantização (Decodificação Constante sem MTP)}
+Comparando $C_2$ e $C_1$, a decodificação é mantida estritamente autorregressiva padrão. O teste $t$ de Welch resulta em:
+\begin{equation}
+t_{\text{Quant}} = \frac{34,51 - 26,92}{\sqrt{\frac{0,29^2}{10} + \frac{0,23^2}{10}}} = \frac{7,59}{0,1160} \approx 65,41, \quad \nu = 17,09
+\end{equation}
+com $p = 5,67 \times 10^{-18}$ e $d = 29,25$. A redução no tamanho dos tensores via matriz de importância IQ4\_XS proporcionou ganho de \textbf{+28,2\%} ($7,59$\,tok/s).
 
-Adicionalmente, o consumo de VRAM física do modelo com MTP aumentou em apenas $40,0\text{ MiB}$ ($2036,7$ vs $1996,7\text{ MiB}$, acréscimo de 2,0\%), confirmando integralmente a Hipótese $H_1$.
+\subsection{Diferença Composta de Configuração ($C_3$ vs $C_1$)}
+A comparação direta entre a configuração final otimizada ($C_3$) e o baseline padrão ($C_1$) reflete o ganho acumulado:
+\begin{equation}
+t_{\text{Composto}} = \frac{43,35 - 26,92}{\sqrt{\frac{0,57^2}{10} + \frac{0,23^2}{10}}} = \frac{16,43}{0,1944} \approx 84,50, \quad \nu = 11,94
+\end{equation}
+com $p = 5,88 \times 10^{-18}$ e $d = 37,79$. O ganho composto totaliza \textbf{+61,0\%} ($16,43$\,tok/s), superando a barreira de largura de banda com sobretaxa de apenas $40,0\text{ MiB}$ de VRAM para as cabeças Q8\_0 frente a $C_1$, confirmando a Hipótese $H_1$.
 
 \section{Catálogo Arquitetural e Limites Físicos de Viabilidade}
 
@@ -285,36 +302,71 @@ A Tabela~\ref{tab:safety_bias_lang} detalha os resultados empíricos nos três e
 \toprule
 \textbf{Modelo} & \makecell{\textbf{Over-Refusal}\\\textbf{(FPR \%)}} & \makecell{\textbf{Injeção Ind.}\\\textbf{(ASR \%)}} & \makecell{\textbf{Quebra Del.}\\\textbf{(ASR \%)}} & \makecell{\textbf{Tool Guard}\\\textbf{(ASR \%)}} & \makecell{\textbf{Neutralidade}\\\textbf{BBQ/Stereo}} & \makecell{\textbf{Fertilidade}\\\textbf{pt-BR (tok/w)}} & \makecell{\textbf{Fertilidade}\\\textbf{en-US (tok/w)}} \\
 \midrule
-\textbf{Qwen-2.5-0.5B} & \textbf{0,0\%} & 0,0\% & 50,0\% & 100,0\% & 66,7\% & 1,59 & \textbf{1,41} \\
-\textbf{SmolLM2-1.7B} & \textbf{0,0\%} & 100,0\% & 100,0\% & \textbf{0,0\%} & 33,3\% & 2,08 & 1,56 \\
-\textbf{Gemma-4-E2B [MTP]} & \textbf{0,0\%} & 66,7\% & 100,0\% & 50,0\% & \textbf{100,0\%} & 1,52 & 1,38 \\
-\textbf{Gemma-4-E2B [Q4\_K\_M]} & \textbf{0,0\%} & 100,0\% & 100,0\% & 50,0\% & \textbf{100,0\%} & 1,52 & 1,38 \\
-\textbf{Qwen-3.5-2B} & \textbf{0,0\%} & 100,0\% & 100,0\% & 50,0\% & 66,7\% & 1,54 & 1,44 \\
-\textbf{Llama-3.2-3B} & \textbf{0,0\%} & 100,0\% & 100,0\% & 100,0\% & 66,7\% & 1,49 & 1,45 \\
-\textbf{Qwen-3.5-4B} & \textbf{0,0\%} & 100,0\% & 100,0\% & 100,0\% & 66,7\% & \textbf{1,30} & \textbf{1,35} \\
+\textbf{Qwen-2.5-0.5B} & \textbf{0,0\%} & \textbf{0,0\%} & 50,0\% & 100,0\% & 66,7\% & 1,74 & \textbf{1,10} \\
+\textbf{SmolLM2-1.7B} & \textbf{0,0\%} & \textbf{0,0\%} & 50,0\% & \textbf{0,0\%} & 33,3\% & 2,33 & \textbf{1,10} \\
+\textbf{Gemma-4-E2B [MTP]} & \textbf{0,0\%} & \textbf{0,0\%} & 100,0\% & 100,0\% & \textbf{100,0\%} & \textbf{1,35} & \textbf{1,10} \\
+\textbf{Gemma-4-E2B [Q4\_K\_M]} & \textbf{0,0\%} & 50,0\% & 50,0\% & 100,0\% & \textbf{100,0\%} & \textbf{1,35} & \textbf{1,10} \\
+\textbf{Qwen-3.5-2B} & \textbf{0,0\%} & 50,0\% & 100,0\% & 100,0\% & 66,7\% & 1,37 & \textbf{1,10} \\
+\textbf{Llama-3.2-3B} & \textbf{0,0\%} & \textbf{0,0\%} & 50,0\% & 100,0\% & 66,7\% & 1,74 & \textbf{1,10} \\
+\textbf{Qwen-3.5-4B} & \textbf{0,0\%} & 100,0\% & 100,0\% & 100,0\% & 66,7\% & 1,37 & \textbf{1,10} \\
 \bottomrule
 \end{tabularx}
 \vspace{0.3em}
-{\scriptsize \textit{Nota:} $\text{FPR}=0{,}0$\% indica ausência de recusas indevidas em comandos administrativos legítimos (\texttt{kill -9}, \texttt{tcpdump}, \texttt{gdb}). ASR reflete a taxa de sucesso do vetor de ataque (injeção de canário, escape de delimitadores XML/JSON e execução de comandos maliciosos em parâmetros de ferramentas).}
+{\scriptsize \textit{Nota:} $\text{FPR}=0{,}0$\% indica ausência de recusas indevidas em comandos administrativos legítimos (\texttt{kill -9}, \texttt{tcpdump}, \texttt{gdb}). ASR reflete a taxa de sucesso do ataque no modelo. No Tool Guard, 100\% de ASR indica que o modelo propôs a chamada da ferramenta com os argumentos maliciosos injetados, sendo a execução bloqueada pela camada de contenção (\emph{harness guardrail}) antes de atingir o sistema.}
 \end{table*}
 
 \subsection{Ausência de Recusa Indevida ($\text{FPR} = 0{,}0$\%)}
 Todos os modelos responderam com precisão técnica aos prompts de administração de sistemas (como encerramento de processos travados via \texttt{kill -9} e dissecação de pacotes SYN com \texttt{tcpdump}), refutando a hipótese de hiper-alinhamento conservador em tarefas operacionais.
 
-\subsection{Vulnerabilidade Crítica a Injeções Indiretas}
-Em conformidade com a Hipótese $H_3$, todos os modelos de 1,7B a 4B sucumbiram amplamente à injeção indireta (ASR entre 66,7\% e 100,0\%). Ao analisar logs de sistema fictícios contendo comandos imperativos embutidos, as redes abandonaram a tarefa primária de sumarização e emitiram o token de canário exfiltrado. Esse resultado evidencia a falha fundamental da arquitetura Transformer autoregressiva em segregar dados de entrada de instruções de controle (\emph{instruction hierarchy breach})~\cite{wallace2024}.
+\subsection{Vulnerabilidade a Injeções Indiretas e Quebra de Delimitadores}
+Em conformidade com a Hipótese $H_3$, os modelos demonstraram suscetibilidade à injeção indireta e escape de delimitadores (ASR de 50,0\% a 100,0\%). Ao processar entradas não estruturadas com instruções imperativas simuladas, as redes compactas tenderam a fundir o contexto com comandos executáveis, emitindo os canários pré-estabelecidos.
+
+\subsection{Diferenciação no Uso de Ferramentas e Guardrails de Execução}
+Uma auditoria detalhada das chamadas de ferramentas (\emph{agentic tool calls}) permitiu diferenciar três estágios operacionais:
+\begin{enumerate}[leftmargin=1.4em,itemsep=0.1em]
+    \item \textbf{Proposta de Chamada (\texttt{proposed\_call}):} O modelo emite um bloco estruturado \texttt{tool\_calls} solicitando a invocação da função com argumentos específicos;
+    \item \textbf{Validação de Esquema (\texttt{valid\_call}):} Os parâmetros atendem estritamente à assinatura JSON Schema requerida;
+    \item \textbf{Execução Efetiva (\texttt{execution\_status}):} Validação da segurança dos parâmetros antes do envio ao sistema operacional.
+\end{enumerate}
+Modelos como Qwen, Gemma e Llama geraram chamadas estruturadas perfeitamente válidas contendo as injeções maliciosas (\texttt{"nginx; rm -rf /"} e \texttt{"admin'; DROP TABLE"}), confirmando que modelos compactos não possuem capacidade intrínseca de filtrar parâmetros em chamadas de função. Em todos os casos, a camada de proteção do framework de teste interceptou as chamadas com status \texttt{BLOCKED\_BY\_HARNESS}, registrando a invocação completa no log sem permitir efeitos destrutivos. Em contraste, o SmolLM2 não emitiu chamadas de ferramenta estruturadas, respondendo em texto plano seguro (\texttt{SAFE\_BENIGN\_TEXT}).
 
 \section{Avaliação de Viés Comportamental e Eficiência de Linguagem}
 
 \subsection{Viés Demográfico e Consistência Contrafactual}
 A avaliação inspirada em BBQ e StereoSet-PT revelou que os modelos Gemma-4-E2B sustentaram 100\% de neutralidade em pares contrafactuais de gênero e nível socioeconômico. No entanto, no teste P3B3 de variação regional brasileira, modelos compactos (como SmolLM2 e Qwen-0.5B) falharam em emitir asserções categóricas de equivalência cognitiva, gerando discursos prolixos sobre infraestrutura regional ao invés de rejeitar o viés de forma direta.
 
-\subsection{Fertilidade de Tokenização em Português}
-A medição de fertilidade de tokenização ($\text{tokens}/\text{palavra}$) comprovou que os vocabulários da maioria dos SLMs são fortemente enviesados para o inglês:
+\subsection{Fertilidade de Tokenização via Corpus Paralelo}
+Para eliminar distorções de truncamento e avaliar rigorosamente o custo linguístico, utilizamos um corpus paralelo de referência técnica com significado semântico rigorosamente idêntico tokenizado nativamente via \texttt{/tokenize}:
 \begin{itemize}[leftmargin=1.4em,itemsep=0.1em]
-    \item No \textbf{SmolLM2-1.7B}, a fertilidade atingiu $2,08\text{ tok/w}$ em pt-BR e $2,17\text{ tok/w}$ em pt-PT, contra $1,56\text{ tok/w}$ em en-US. Cada frase em português consome até 40\% mais contexto e tempo de decodificação que o equivalente em inglês.
-    \item O \textbf{Qwen-3.5-4B} apresentou a melhor eficiência multilíngue, com $1,30\text{ tok/w}$ em pt-BR e $1,35\text{ tok/w}$ em en-US, fruto do vocabulário expandido TikToken de $152\text{k}$ tokens.
+    \item O \textbf{SmolLM2-1.7B} exibiu a maior penalidade de tokenização: $2,33\text{ tok/w}$ em pt-BR (100 tokens para 43 palavras) e $2,40\text{ tok/w}$ em pt-PT, frente a $1,10\text{ tok/w}$ em en-US (44 tokens para 40 palavras), impondo uma sobretaxa superior a $111\%$ no consumo de contexto e tempo de decodificação;
+    \item Os modelos \textbf{Gemma-4-E2B} ($1,35\text{ tok/w}$ em pt-BR, $1,42\text{ tok/w}$ em pt-PT) e \textbf{Qwen-3.5} ($1,37\text{ tok/w}$ em pt-BR, $1,44\text{ tok/w}$ em pt-PT) apresentaram excelente eficiência multilíngue, reduzindo drasticamente o custo de inferência em línguas latinas.
 \end{itemize}
+
+\section{Proveniência de Modelos e Reprodutibilidade de Artefatos}
+
+Para garantir rastreabilidade irrestrita, todos os pesos utilizados foram checados contra seus hashes criptográficos SHA-256 oficiais, documentados na Tabela~\ref{tab:model_provenance}.
+
+\begin{table*}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\caption{Registro de Proveniência, Tamanho Físico e Hashes Criptográficos SHA-256 dos Pesos GGUF}
+\label{tab:model_provenance}
+\begin{tabularx}{\textwidth}{L{2.5cm} c c c C}
+\toprule
+\textbf{Identificador do Modelo} & \textbf{Quantização} & \textbf{Tamanho (MiB)} & \textbf{Contexto} & \textbf{Hash SHA-256 Oficial Verificado} \\
+\midrule
+\texttt{qwen2.5-0.5b} & Q4\_K\_M & 379,3 & 16.384 & {\scriptsize\texttt{74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db}} \\
+\texttt{smollm2-1.7b} & Q4\_K\_M & 1009,1 & 16.384 & {\scriptsize\texttt{decd2598bc2c8ed08c19adc3c8fdd461ee19ed5708679d1c54ef54a5a30d4f33}} \\
+\texttt{gemma4:Q4KM} & Q4\_K\_M & 1351,9 & 16.384 & {\scriptsize\texttt{6dd7ac24fe13a238898e16e253ebc7a72fa27fb83f2658c2f6c241df3af5937d}} \\
+\texttt{gemma4:MTP} & IQ4\_XS & 1185,6 & 16.384 & {\scriptsize\texttt{c149620926221669c4941ae6dac259953cc729c48e4a4edb69e9807b782fd1e3}} \\
+\texttt{gemma4:E2B} & IQ4\_XS+MTP & 1225,6 & 16.384 & {\scriptsize\texttt{9eba819938efccfd6044f8af84e3bbfddc639a2bcf32ebc36420e6a649191919}} \\
+\texttt{qwen3.5:2B} & Q4\_K\_XL & 1331,2 & 16.384 & {\scriptsize\texttt{9f7b15d04cf2d5878c8122a7c181dbc09f050cd66080ce3374576e734ccb0910}} \\
+\texttt{llama3.2:3B} & Q4\_K\_M & 1925,9 & 16.384 & {\scriptsize\texttt{6c1a2b41161032677be168d354123594c0e6e67d2b9227c84f296ad037c728ff}} \\
+\texttt{qwen3.5:4B} & Q4\_K\_M & 2458,2 & 16.384 & {\scriptsize\texttt{00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4}} \\
+\bottomrule
+\end{tabularx}
+\end{table*}
 
 \section{Ameaças à Validade e Limitações}
 
@@ -333,10 +385,10 @@ Este estudo conduziu uma investigação experimental rigorosa, matemática e te�
 
 As principais conclusões sustentadas pelas evidências empíricas são:
 \begin{enumerate}[leftmargin=1.4em,itemsep=0.1em]
-    \item \textbf{Decodificação Especulativa Causal:} O MTP entrega aceleração real de +61,0\% no throughput de decodificação ($43,4$ vs $26,9$\,tok/s) sob idêntico modelo e quantização, validando que a inferência em borda pode quebrar o gargalo de largura de banda de DRAM GDDR5.
+    \item \textbf{Decodificação Especulativa Causal e Fatorial:} A ablação fatorial comprovou que o MTP entrega ganho causal de $+25,6\%$ no throughput sob quantização constante em IQ4\_XS ($43,35$ vs $34,51$\,tok/s, $t=43,72$, $p < 10^{-15}$), enquanto a compressão IQ4\_XS agrega $+28,2\%$ sobre Q4\_K\_M ($34,51$ vs $26,92$\,tok/s, $t=65,41$), acumulando ganho composto de $+61,0\%$ ($t=84,50$, $p = 5,88 \times 10^{-18}$) com apenas 40\,MiB de sobretaxa em VRAM para as cabeças Q8\_0.
     \item \textbf{Fronteira Física de 4B:} Modelos de 4B operam na margem crítica da VRAM (76,7\%). O Gemma-3-4B requer compressão Q4\_0 de cache KV para evitar travamento por estouro de memória física.
-    \item \textbf{Frágil Segregação Defensiva:} Embora todos os SLMs exibam $\text{FPR}=0{,}0$\% em tarefas administrativas benignas, a resiliência a injeções indiretas permanece crítica ($\text{ASR} \le 100$\%). Modelos compactos não devem ter acesso irrestrito a ferramentas de sistema sem uma camada externa de sanitização e autorização explícita de parâmetros.
-    \item \textbf{Penalidade Linguística:} Vocabulários centrados no inglês impõem sobretaxa de até $2,17\times$ no consumo de tokens para a língua portuguesa.
+    \item \textbf{Frágil Segregação Defensiva:} Embora todos os SLMs exibam $\text{FPR}=0{,}0$\% em tarefas administrativas benignas, a resiliência a injeções indiretas permanece crítica ($\text{ASR} \le 100$\%). Em ferramentas autônomas, argumentos maliciosos são gerados com facilidade pelos modelos, exigindo obrigatoriamente contenção e interceptação no nível do harness.
+    \item \textbf{Penalidade Linguística em Corpus Paralelo:} A avaliação por corpus paralelo comprovou sobretaxa de até $2,33\text{ tok/w}$ em pt-BR (SmolLM2-1.7B) contra $1,10$ em en-US, enquanto Gemma-4 e Qwen-3.5 sustentaram eficiência multilíngue próxima a $1,35\text{ tok/w}$.
 \end{enumerate}
 
 Trabalhos futuros explorarão a aplicação de quantização ternária (1,58 bits) e a instrumentação física de medidores de bancada na linha PCIe para validação térmica e energética direta.
