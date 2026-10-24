@@ -8,7 +8,10 @@
 [![Artigo: PDF (PT)](https://img.shields.io/badge/Artigo-PDF%20(pt--BR)-red.svg)](reports/pt-BR/report_pt-BR.pdf)
 
 > **Monografia Científica e Suíte Aberta de Avaliação**<br>
-> Uma investigação empírica independente sobre a dinâmica arquitetural, limites teóricos Roofline, fronteiras de quantização não homogênea, decodificação especulativa (Multi-Token Prediction), escalonamento analítico do cache Chave-Valor (KV) e vulnerabilidades adversariais de Modelos de Linguagem Compactos (SLMs) sob um teto rígido de $\le 4096\text{ MiB}$ de VRAM.
+> Uma investigação empírica sobre a dinâmica arquitetural, limites teóricos Roofline, fronteiras de quantização não homogênea, decodificação especulativa (Multi-Token Prediction), escalonamento analítico do cache Chave-Valor (KV) e vulnerabilidades adversariais de Modelos de Linguagem Compactos (SLMs) sob um teto rígido de $\le 4096\text{ MiB}$ de VRAM.
+
+**Autor:** Anderson Tavares (Graduando em Engenharia de Software e Ciência de Dados)<br>
+**Repositório do Projeto:** [https://github.com/AndersonTavares0/llm-research-bench](https://github.com/AndersonTavares0/llm-research-bench)
 
 For the English version of this documentation, see [README.md](README.md).
 
@@ -118,7 +121,7 @@ Avaliado com amostragem determinística gulosa ($\tau = 0,0$, `seed=42`) em tare
 | Dimensão | Observação Específica do Hardware (GTX 1050 Ti) | Princípio Arquitetural Generalizável |
 | :--- | :--- | :--- |
 | **Throughput de Decode** | $18,4$--$46,3$\,tok/s delimitado pelo barramento GDDR5 de 128 bits ($112,0\text{ GB/s}$) | A geração autorregressiva é universalmente limitada por memória ($I_{\text{decode}} \ll I^*$) em qualquer acelerador |
-| **Aceleração MTP** | Ganho mensurado entre $+30,9\%$ e $+33,2\%$ | A equação $S = \frac{1 + \alpha\gamma}{1 + c_{\text{draft}}/c_{\text{target}}}$ é válida universalmente sempre que $\alpha > c_{\text{draft}}/c_{\text{target}}$ |
+| **Aceleração MTP** | $+25,6\%$ de ganho causal ($+28,2\%$ da quantização IQ4_XS, $+61,0\%$ composto) | A equação $S = \frac{1 + \sum \alpha^k}{1 + \mathcal{O}_{\text{draft}}}$ é válida sempre que a taxa de aceitação superar a sobretaxa do rascunho |
 | **Escalonamento Cache KV** | OOM disparado em contexto $>8\text{k}$ para modelos 4B em 4 GiB VRAM | O cache KV não quantizado cresce estritamente como $\mathcal{O}(L)$; contextos longos exigem compressão do cache |
 | **Fronteira de Alinhamento** | 0% de recusa contra payload de injeção em log | Técnicas de RLHF/DPO falham arquiteturalmente em isolar instruções de controle de dados contextuais |
 
@@ -165,7 +168,7 @@ llm-research-bench/
 │   ├── statistical_engine.py            # Motor de intervalos de confiança t de Student a 95%
 │   ├── generate_figures.py              # Gerador de gráficos vetoriais em PDF
 │   └── mcp_server.py                    # Servidor MCP padrão JSON-RPC 2.0 stdio
-├── tests/                               # Suíte de testes unitários (39 testes)
+├── tests/                               # Suíte de testes unitários (56 testes)
 └── pyproject.toml                       # Configuração do pacote Python
 ```
 
@@ -218,7 +221,7 @@ Caso utilize esta suíte de testes, dados empíricos ou metodologia em sua pesqu
 @article{tavares2026slmbench,
   title   = {Avaliação Reproduzível de Modelos de Linguagem Compactos sob Restrições Severas de Memória e Computação: Dinâmica Arquitetural, Fronteiras de Quantização, Decodificação Especulativa e Vulnerabilidades Adversariais em Bancada Experimental de Referência},
   author  = {Tavares, Anderson},
-  journal = {Série de Monografias do Grupo Independente de Pesquisa em Sistemas},
+  journal = {Relatório Técnico e Monografia Aberta de Benchmark},
   year    = {2026},
   url     = {https://github.com/AndersonTavares0/llm-research-bench}
 }

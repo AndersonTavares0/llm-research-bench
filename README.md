@@ -8,7 +8,10 @@
 [![Paper: PDF (PT)](https://img.shields.io/badge/Artigo-PDF%20(pt--BR)-red.svg)](reports/pt-BR/report_pt-BR.pdf)
 
 > **Scientific Monograph and Open Benchmark Suite**<br>
-> An independent empirical research investigation on the architectural dynamics, Roofline theoretical limits, non-uniform quantization frontiers, speculative decoding (Multi-Token Prediction), Key-Value cache analytical scaling, and adversarial vulnerabilities of Small Language Models (SLMs) under a rigid $\le 4096\text{ MiB}$ VRAM budget.
+> An empirical research investigation on the architectural dynamics, Roofline theoretical limits, non-uniform quantization frontiers, speculative decoding (Multi-Token Prediction), Key-Value cache analytical scaling, and adversarial vulnerabilities of Small Language Models (SLMs) under a rigid $\le 4096\text{ MiB}$ VRAM budget.
+
+**Author:** Anderson Tavares (Undergraduate Student in Software Engineering and Data Science)<br>
+**Project Repository:** [https://github.com/AndersonTavares0/llm-research-bench](https://github.com/AndersonTavares0/llm-research-bench)
 
 Para a versão em português desta documentação, consulte [README.pt-BR.md](README.pt-BR.md).
 
@@ -118,7 +121,7 @@ Evaluated with deterministic greedy decoding ($\tau = 0.0$, `seed=42`) on the ph
 | Dimension | Hardware-Specific Observation (GTX 1050 Ti) | Generalizable Architectural Principle |
 | :--- | :--- | :--- |
 | **Decode Throughput** | $18.4$--$46.3$\,tok/s constrained by 128-bit GDDR5 bus ($112.0\text{ GB/s}$) | Autoregressive generation is universally memory-bound ($I_{\text{decode}} \ll I^*$) on any accelerator |
-| **MTP Speedup** | $+30.9\%$ to $+33.2\%$ measured acceleration | Speedup formula $S = \frac{1 + \alpha\gamma}{1 + c_{\text{draft}}/c_{\text{target}}}$ holds universally whenever $\alpha > c_{\text{draft}}/c_{\text{target}}$ |
+| **MTP Speedup** | $+25.6\%$ causal speedup ($+28.2\%$ from IQ4_XS quantization, $+61.0\%$ compound) | Speedup formula $S = \frac{1 + \sum \alpha^k}{1 + \mathcal{O}_{\text{draft}}}$ holds whenever draft acceptance exceeds overhead |
 | **KV Cache Scaling** | OOM triggered at $>8\text{k}$ context for 4B models in 4 GiB VRAM | Uncompressed KV cache scales strictly as $\mathcal{O}(L)$; context scaling requires cache quantization |
 | **Alignment Boundary** | 0% refusal against log-embedded canary payload | RLHF/DPO fails architecturally to isolate system instructions from untrusted tool context tokens |
 
@@ -165,7 +168,7 @@ llm-research-bench/
 │   ├── statistical_engine.py            # Student's t 95% confidence interval engine
 │   ├── generate_figures.py              # Publication-grade vector PDF chart generator
 │   └── mcp_server.py                    # Standard JSON-RPC 2.0 stdio MCP server
-├── tests/                               # Comprehensive unit test suite (39 tests)
+├── tests/                               # Comprehensive unit test suite (56 tests)
 └── pyproject.toml                       # Python package configuration
 ```
 
@@ -218,7 +221,7 @@ If you use this benchmark suite, empirical data, or methodology in your research
 @article{tavares2026slmbench,
   title   = {Reproducible Evaluation of Small Language Models Under Severe Memory and Compute Constraints: Architectural Dynamics, Quantization Frontiers, Speculative Decoding, and Adversarial Vulnerabilities on a Reference Edge Testbed},
   author  = {Tavares, Anderson},
-  journal = {Independent Systems Research Group Monograph Series},
+  journal = {Open Technical Report and Benchmark Monograph},
   year    = {2026},
   url     = {https://github.com/AndersonTavares0/llm-research-bench}
 }
