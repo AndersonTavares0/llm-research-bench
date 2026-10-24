@@ -84,15 +84,28 @@ The bench evaluates both operational system performance and behavioral model qua
 The benchmark suite coordinates configuration loading, runtime health checks, background telemetry, prompt dispatching, and statistical export in a deterministic pipeline:
 
 ```mermaid
-flowchart TD
-    A["Configuration Layer<br/>(models.ini / CLI Args)"] --> B["Runtime Health Check<br/>(llama.cpp server / API)"]
-    B --> C["NVML Telemetry Daemon<br/>(libnvidia-ml.so / 250 ms)"]
-    C --> D["Benchmark Dispatcher<br/>(Prompts / Datasets)"]
-    D --> E["Inference Execution<br/>(Prefill & Decode Passes)"]
-    E --> F["Telemetry Synchronization<br/>(Peak VRAM, Temp, Clocks)"]
-    F --> G["Raw Metrics Storage<br/>(JSON & CSV Traces)"]
-    G --> H["Statistical Engine<br/>(SciPy, CI, Clopper-Pearson)"]
-    H --> I["Visual Artifacts & Reports<br/>(Matplotlib Figures & PDFs)"]
+flowchart LR
+    subgraph G1["1. Configuration & Runtime"]
+        CFG["Config & CLI<br/>(models.ini)"] --> SRV["Inference Server<br/>(llama.cpp / API)"]
+    end
+
+    subgraph G2["2. Benchmark Execution"]
+        DISP["Prompt Dispatcher<br/>(Safety & Reasoning)"] --> INFER["Inference Engine<br/>(Prefill & Decode)"]
+    end
+
+    subgraph G3["3. Telemetry & Hardware"]
+        NVML["NVML Daemon<br/>(libnvidia-ml.so / 4 Hz)"]
+    end
+
+    subgraph G4["4. Analysis & Reporting"]
+        STORE["Trace Storage<br/>(JSON / CSV)"] --> STAT["Statistical Engine<br/>(CI & Clopper-Pearson)"]
+        STAT --> OUT["Visual Artifacts<br/>(PNGs & LaTeX PDFs)"]
+    end
+
+    SRV --> DISP
+    INFER <-->|Concurrent Sampling| NVML
+    INFER --> STORE
+    NVML --> STORE
 ```
 
 ### Core Python Components (`src/llm_research_bench/`)
@@ -142,15 +155,26 @@ All empirical results in this repository were collected on a dedicated, physical
 
 ## Key Empirical Results
 
-### 1. Throughput vs. VRAM Trade-off (Empirical Frontier)
+### 1. Throughput vs. VRAM Trade-off & Configuration Map
 
-The figure below plots observed decode generation throughput against measured peak device memory. The red vertical dashed line indicates the 4096 MiB physical ceiling of the GTX 1050 Ti.
+The figure below plots observed generation throughput (greedy decode, tokens/s) against measured peak device memory (MiB via NVML). Points **[1] through [8]** represent empirical configurations tested on the physical NVIDIA GeForce GTX 1050 Ti.
 
-![Pareto Trade-off: Throughput vs. VRAM](docs/images/pareto_frontier.png)
+![Throughput vs. VRAM on GTX 1050 Ti](docs/images/pareto_frontier.png)
 
-- **Small Footprint Efficiency:** Qwen-2.5-0.5B operates well within memory limits (620.7 MiB, 15.2% budget), reaching 97.47 tok/s.
-- **Mid-Tier Density:** Gemma-4-E2B in IQ4_XS with MTP provides a balanced operating point (43.35 tok/s at 2036.7 MiB, ~50% of VRAM), leaving sufficient headroom for context expansion.
-- **Capacity Boundaries:** Models in the 3B--4B range (Llama-3.2-3B, Qwen-3.5-4B) occupy over 75% of total memory just for weights, restricting long-context generation under FP16 KV cache.
+| Point | Model & Operational Configuration | Foundational Architecture | Format / Quantization | Peak VRAM (MiB) | % of 4 GiB | Decode (tok/s) |
+| :---: | :--- | :--- | :--- | :---: | :---: | :---: |
+| **[1]** | **Qwen-2.5-0.5B** | Qwen2.5 (0.49B) | `Q4_K_M` | **620.7** | 15.2% | **97.47 ± 0.60** |
+| **[2]** | **Qwen-3.5-2B** | Qwen (1.95B) | `Q4_K_XL` | 1580.7 | 38.6% | 37.60 ± 0.10 |
+| **[3]** | **Gemma-4-E2B [C2]** | Gemma 2 (2.00B) | `IQ4_XS` Base | 1800.7 | 44.0% | 34.51 ± 0.29 |
+| **[4]** | **Gemma-4-E2B [C1]** | Gemma 2 (2.00B) | `Q4_K_M` Base | 1996.7 | 48.7% | 26.92 ± 0.23 |
+| **[5]** | **Gemma-4-E2B [C3]** | Gemma 2 (2.00B) | `IQ4_XS` + **MTP** | 2036.7 | 49.7% | **43.35 ± 0.57** |
+| **[6]** | **SmolLM2-1.7B** | LLaMA (1.71B) | `Q4_K_M` | 2902.7 | 70.9% | 47.80 ± 0.10 |
+| **[7]** | **Llama-3.2-3B** | Llama 3.2 (3.21B) | `Q4_K_M` | 3074.7 | 75.1% | 27.59 ± 0.04 |
+| **[8]** | **Qwen-3.5-4B** | Qwen (4.02B) | `Q4_K_M` | 3140.7 | 76.7% | 18.55 ± 0.10 |
+
+> [!NOTE]
+> **Pareto Dominance Criteria & Trade-offs:**<br/>
+> If evaluated purely on the bivariate tuple `(min VRAM, max Throughput)`, Point **[1] (Qwen-0.5B)** strictly Pareto-dominates all other points on this testbed. However, real-world deployment requires balancing throughput against model reasoning capacity, knowledge density, and context retention. Points **[2]**, **[5]**, and **[6]** represent the most practical engineering trade-offs between model intelligence and memory headroom, while 3B--4B models (**[7]**, **[8]**) leave minimal VRAM headroom for multi-turn KV cache growth.
 
 ### 2. Controlled Observational Comparison: Quantization & MTP
 

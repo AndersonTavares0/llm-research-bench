@@ -84,15 +84,28 @@ O benchmark investiga tanto o desempenho operacional do sistema quanto o comport
 A suíte de benchmark orquestra a leitura de configurações, testes de prontidão do serviço, telemetria em segundo plano, envio dos prompts e exportação estatística em um fluxo determinístico:
 
 ```mermaid
-flowchart TD
-    A["Camada de Configuração<br/>(models.ini / Argumentos CLI)"] --> B["Verificação do Runtime<br/>(llama.cpp server / API)"]
-    B --> C["Daemon de Telemetria NVML<br/>(libnvidia-ml.so / 250 ms)"]
-    C --> D["Despachante de Testes<br/>(Prompts / Datasets)"]
-    D --> E["Execução da Inferência<br/>(Passos de Prefill e Decode)"]
-    E --> F["Sincronização de Telemetria<br/>(Pico de VRAM, Clocks e Temp)"]
-    F --> G["Armazenamento de Dados Brutos<br/>(Registros em JSON e CSV)"]
-    G --> H["Motor Estatístico<br/>(SciPy, CIs e Clopper-Pearson)"]
-    H --> I["Geração de Artefatos<br/>(Gráficos Matplotlib e PDFs)"]
+flowchart LR
+    subgraph G1["1. Configuração e Runtime"]
+        CFG["Config & CLI<br/>(models.ini)"] --> SRV["Servidor de Inferência<br/>(llama.cpp / API)"]
+    end
+
+    subgraph G2["2. Execução de Benchmarks"]
+        DISP["Despachante de Prompts<br/>(Segurança & Raciocínio)"] --> INFER["Motor de Inferência<br/>(Prefill & Decode)"]
+    end
+
+    subgraph G3["3. Telemetria e Hardware"]
+        NVML["Daemon NVML<br/>(libnvidia-ml.so / 4 Hz)"]
+    end
+
+    subgraph G4["4. Análise e Relatórios"]
+        STORE["Armazenamento<br/>(JSON / CSV)"] --> STAT["Motor Estatístico<br/>(CIs & Clopper-Pearson)"]
+        STAT --> OUT["Artefatos Visuais<br/>(PNGs & PDFs LaTeX)"]
+    end
+
+    SRV --> DISP
+    INFER <-->|Amostragem Concorrente| NVML
+    INFER --> STORE
+    NVML --> STORE
 ```
 
 ### Componentes em Python (`src/llm_research_bench/`)
@@ -142,15 +155,26 @@ Todos os resultados empíricos apresentados neste repositório foram coletados e
 
 ## Principais Resultados Empíricos
 
-### 1. Relação Vazão vs. Alocação de VRAM (Fronteira Empírica)
+### 1. Relação Vazão vs. Alocação de VRAM e Mapeamento de Configurações
 
-O gráfico abaixo apresenta a vazão de geração (*decode*) em relação ao pico de memória física de vídeo medido na GPU. A linha tracejada vermelha delimita o teto de 4096 MiB da GTX 1050 Ti.
+O gráfico abaixo apresenta a vazão de geração (*decode* guloso, tokens/s) em relação ao pico de memória física de vídeo medido na GPU (MiB via NVML). Os pontos **[1] a [8]** representam as configurações experimentais testadas fisicamente na NVIDIA GeForce GTX 1050 Ti.
 
-![Trade-off de Pareto: Vazão vs VRAM](docs/images/pareto_frontier.png)
+![Vazão vs. VRAM na GTX 1050 Ti](docs/images/pareto_frontier.png)
 
-- **Alta Eficiência em Modelos Sub-1B:** O Qwen-2.5-0.5B opera com folga expressiva (620,7 MiB, apenas 15,2% do orçamento), atingindo 97,47 tok/s.
-- **Ponto de Equilíbrio Intermediário:** O Gemma-4-E2B em IQ4_XS com MTP oferece equilíbrio sólido (43,35 tok/s consumindo 2036,7 MiB, ~50% da VRAM), preservando margem para alocação do cache de contexto.
-- **Fronteira de Capacidade:** Modelos de 3B a 4B (Llama-3.2-3B, Qwen-3.5-4B) demandam mais de 75% da VRAM apenas para carga estática de pesos, restringindo a janela de contexto útil sob cache KV em FP16.
+| Ponto | Modelo e Configuração Operacional | Arquitetura Fundacional | Formato / Quantização | Pico de VRAM (MiB) | % de 4 GiB | Vazão Decode (tok/s) |
+| :---: | :--- | :--- | :--- | :---: | :---: | :---: |
+| **[1]** | **Qwen-2.5-0.5B** | Qwen2.5 (0,49B) | `Q4_K_M` | **620,7** | 15,2% | **97,47 ± 0,60** |
+| **[2]** | **Qwen-3.5-2B** | Qwen (1,95B) | `Q4_K_XL` | 1580,7 | 38,6% | 37,60 ± 0,10 |
+| **[3]** | **Gemma-4-E2B [C2]** | Gemma 2 (2,00B) | `IQ4_XS` Base | 1800,7 | 44,0% | 34,51 ± 0,29 |
+| **[4]** | **Gemma-4-E2B [C1]** | Gemma 2 (2,00B) | `Q4_K_M` Base | 1996,7 | 48,7% | 26,92 ± 0,23 |
+| **[5]** | **Gemma-4-E2B [C3]** | Gemma 2 (2,00B) | `IQ4_XS` + **MTP** | 2036,7 | 49,7% | **43,35 ± 0,57** |
+| **[6]** | **SmolLM2-1.7B** | LLaMA (1,71B) | `Q4_K_M` | 2902,7 | 70,9% | 47,80 ± 0,10 |
+| **[7]** | **Llama-3.2-3B** | Llama 3.2 (3,21B) | `Q4_K_M` | 3074,7 | 75,1% | 27,59 ± 0,04 |
+| **[8]** | **Qwen-3.5-4B** | Qwen (4,02B) | `Q4_K_M` | 3140,7 | 76,7% | 18,55 ± 0,10 |
+
+> [!NOTE]
+> **Critérios de Dominância de Pareto e Compromissos Práticos:**<br/>
+> Sob uma avaliação estritamente restrita à tupla bivariada `(min VRAM, max Vazão)`, o Ponto **[1] (Qwen-0.5B)** domina estritamente todos os demais pontos nesta bancada de testes. Entretanto, a seleção prática de modelos exige equilibrar velocidade com capacidade de raciocínio, densidade de conhecimento e preservação de contexto. Os Pontos **[2]**, **[5]** e **[6]** representam os compromissos práticos mais equilibrados entre inteligência e margem de memória, enquanto modelos de 3B--4B (**[7]**, **[8]**) deixam margem mínima de VRAM para expansão do cache KV em múltiplos turnos.
 
 ### 2. Comparações Observacionais Controladas: Quantização e MTP
 
