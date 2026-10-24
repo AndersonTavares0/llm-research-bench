@@ -47,7 +47,7 @@ The experimental platform was selected as a **reference edge testbed** represent
 
 ## Empirical Benchmark Findings
 
-### 1. Factorial MTP Speculative & Quantization Ablation ($N=10$, 95% Student's $t$ CI)
+### 1. Controlled MTP Speculative & Quantization Ablation ($N=10$, 95% Student's $t$ CI)
 
 Evaluated with deterministic greedy decoding ($\tau = 0.0$, `seed=42`) on the physical NVIDIA GeForce GTX 1050 Ti:
 
@@ -58,9 +58,9 @@ Evaluated with deterministic greedy decoding ($\tau = 0.0$, `seed=42`) on the ph
 | **Gemma-4-E2B [IQ4_XS + MTP]** | **43.35 tok/s** | ±0.57 | [42.94, 43.75] tok/s | **+25.6%** (MTP causal) | $t = 43.72, p = 7.12 \times 10^{-16}$ | 2036.7 MiB |
 | *Compound Comparison ($C_3$ vs $C_1$)* | — | — | — | **+61.0%** (Compound) | $t = 84.50, p = 5.88 \times 10^{-18}$ | +40.0 MiB |
 
-- **Factorial Decomposition:** Holding decoding constant, IQ4_XS weight compression provides a $+28.2\%$ throughput gain. Holding quantization constant in IQ4_XS, MTP speculative decoding delivers an isolated $+25.6\%$ causal speedup ($43.35 \pm 0.57$ vs $34.51 \pm 0.29$\,tok/s, $t = 43.72$, Cohen's $d = 19.55$). The compound configuration speedup is $+61.03\%$ ($t = 84.50$, Cohen's $d = 37.79$).
+- **Effect Decomposition:** Holding decoding constant, IQ4_XS weight compression provides a $+28.2\%$ throughput gain. Holding quantization constant in IQ4_XS, MTP speculative decoding delivers an isolated $+25.6\%$ causal speedup ($43.35 \pm 0.57$ vs $34.51 \pm 0.29$\,tok/s, $t = 43.72$, Cohen's $d = 19.55$). The compound configuration speedup is $+61.03\%$ ($t = 84.50$, Cohen's $d = 37.79$).
 - **Draft Acceptance Dynamics:** Runtime telemetry logged empirical draft acceptance rate $\alpha = 52.8\%$ (65 tokens accepted out of 123 generated), with mean accepted block length $\bar{L} = 2.05$ tokens per validation pass.
-- **Minimal VRAM Overhead:** Speculative decoding adds only $40.0\text{ MiB}$ (2036.7 vs 1996.7 MiB, +2.0% overhead for Q8_0 draft heads).
+- **VRAM Allocation Dynamics:** The isolated causal mechanism footprint of MTP is $+236.0\text{ MiB}$ ($C_3$ vs $C_2$, 2036.7 vs 1800.7 MiB) for Q8_0 draft heads, speculative KV cache, and verification buffers. This yields a net $+40.0\text{ MiB}$ difference relative to baseline $C_1$ (2036.7 vs 1996.7 MiB) because the $196.0\text{ MiB}$ weight compression savings of IQ4_XS offset 83% of the MTP draft head footprint.
 
 ### 2. Cross-Model Empirical Performance on Physical GTX 1050 Ti ($N=10$, $\tau=0.0$)
 

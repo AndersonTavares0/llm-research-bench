@@ -47,7 +47,7 @@ A plataforma de testes foi adotada como **bancada experimental de referência** 
 
 ## Resultados Empíricos Medidos
 
-### 1. Ablação Fatorial de MTP e Quantização ($N=10$, IC 95% de Student)
+### 1. Estudo de Ablação Controlada de MTP e Quantização ($N=10$, IC 95% de Student)
 
 Avaliado com amostragem determinística gulosa ($\tau = 0,0$, `seed=42`) em tarefas técnicas de sistemas na GPU física NVIDIA GeForce GTX 1050 Ti:
 
@@ -58,9 +58,9 @@ Avaliado com amostragem determinística gulosa ($\tau = 0,0$, `seed=42`) em tare
 | **Gemma-4-E2B [IQ4_XS + MTP]** | **43,35 tok/s** | ±0,57 | [42,94; 43,75] tok/s | **+25,6%** (MTP causal) | $t = 43,72, p = 7,12 \times 10^{-16}$ | 2036,7 MiB |
 | *Comparação Composta ($C_3$ vs $C_1$)* | — | — | — | **+61,0%** (Composto) | $t = 84,50, p = 5,88 \times 10^{-18}$ | +40,0 MiB |
 
-- **Decomposição Fatorial:** Mantendo a decodificação autorregressiva constante, a compressão IQ4_XS responde por $+28,2\%$ de aceleração. Sob quantização constante em IQ4_XS, a decodificação especulativa MTP agrega $+25,6\%$ de ganho causal isolado ($43,35 \pm 0,57$ vs $34,51 \pm 0,29$\,tok/s, $t = 43,72$, $d = 19,55$). O ganho acumulado entre configurações atinge $+61,03\%$ ($t = 84,50$, $d = 37,79$).
+- **Decomposição dos Efeitos:** Mantendo a decodificação autorregressiva constante, a compressão IQ4_XS responde por $+28,2\%$ de aceleração. Sob quantização constante em IQ4_XS, a decodificação especulativa MTP agrega $+25,6\%$ de ganho causal isolado ($43,35 \pm 0,57$ vs $34,51 \pm 0,29$\,tok/s, $t = 43,72$, $d = 19,55$). O ganho acumulado entre configurações atinge $+61,03\%$ ($t = 84,50$, $d = 37,79$).
 - **Dinâmica de Aceitação de Rascunho:** A telemetria registrou taxa empírica de aceitação do rascunho de $\alpha = 52,8\%$ (65 tokens aceitos em 123 gerados), com comprimento médio de bloco aceito de $\bar{L} = 2,05$ tokens por ciclo.
-- **Sobretaxa Mínima de Memória:** O MTP adicionou apenas $40,0\text{ MiB}$ (2036,7 vs 1996,7 MiB, acréscimo de +2,0% para as cabeças Q8_0).
+- **Dinâmica de Memória (VRAM):** O custo causal isolado do mecanismo MTP é de $+236,0\text{ MiB}$ ($C_3$ vs $C_2$, 2036,7 vs 1800,7 MiB) para as cabeças Q8_0, cache KV de rascunho e buffers de verificação. Esse custo causal resulta em diferença líquida de apenas $+40,0\text{ MiB}$ frente à linha de base $C_1$ (2036,7 vs 1996,7 MiB), pois a compressão de pesos do formato IQ4_XS economizou $196,0\text{ MiB}$, absorvendo 83% da pegada física do MTP.
 
 ### 2. Resultados Empíricos de Desempenho na GTX 1050 Ti ($N=10$, $\tau=0,0$)
 

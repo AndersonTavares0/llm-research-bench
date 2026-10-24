@@ -27,8 +27,8 @@
 
 \pagestyle{fancy}
 \fancyhf{}
-\rhead{\footnotesize Experimental Systems Engineering: Edge Inference of SLMs}
-\lhead{\footnotesize Anderson Tavares --- Software Eng. \& Data Science Undergraduate}
+\rhead{\footnotesize SLM Inference under Edge Memory Constraints}
+\lhead{\footnotesize Anderson Tavares}
 \rfoot{\footnotesize Page \thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
@@ -49,7 +49,8 @@
 \author{
     \textbf{Anderson Tavares}\\[0.25em]
     \normalsize Undergraduate Student in Software Engineering and Data Science\\[0.15em]
-    \normalsize Project Repository: \url{https://github.com/AndersonTavares0/llm-research-bench}
+    \normalsize Project Repository:\\[-0.1em]
+    \normalsize \url{https://github.com/AndersonTavares0/llm-research-bench}
 }
 \date{October 24, 2026}
 
@@ -62,7 +63,9 @@
 
 \begin{abstract}
 \onehalfspacing
-Deploying Small Language Models (SLMs, 0.5B to 4B parameters) on physical edge accelerators enables complete data sovereignty, bounded latency, and autonomous offline operation without cloud egress. However, operating under strict physical memory boundaries ($\le 4096\text{ MiB}$ VRAM) introduces acute trade-offs among tensor quantization compression, DRAM memory bus saturation, Time-To-First-Token (TTFT), and defensive safety alignment. This technical report presents a systems evaluation conducted on an NVIDIA GeForce GTX 1050 Ti GPU (4096\,MiB GDDR5, 128-bit bus, $112.0\text{ GB/s}$ theoretical bandwidth, Pascal sm\_61). We benchmark eight model configurations (\textbf{Qwen-2.5-0.5B}, \textbf{SmolLM2-1.7B}, \textbf{Gemma-4-E2B [MTP]}, \textbf{Gemma-4-E2B [IQ4\_XS]}, \textbf{Gemma-4-E2B [Q4\_K\_M]}, \textbf{Qwen-3.5-2B}, \textbf{Llama-3.2-3B}, and \textbf{Qwen-3.5-4B}) using the \texttt{llama-server} runtime (commit b4120+) with continuous asynchronous NVML hardware telemetry sampled at 250\,ms intervals. A $2 \times 2$ factorial ablation isolated performance drivers: weight quantization compression (IQ4\_XS vs Q4\_K\_M) accounted for $+28.2\%$ speedup ($34.51 \pm 0.29$ vs $26.92 \pm 0.23$\,tok/s, $t=65.41$), whereas speculative Multi-Token Prediction (MTP) under identical quantization yielded $+25.6\%$ causal speedup ($43.35 \pm 0.57$ vs $34.51 \pm 0.29$\,tok/s, $t=43.72$, $p < 10^{-15}$), resulting in an overall $+61.0\%$ compound configuration gain (Welch's $t = 84.50$, $p = 5.88 \times 10^{-18}$, Cohen's $d = 37.79$) with only 40\,MiB VRAM overhead for Q8\_0 draft heads. Systems feasibility modeling indicates that 4B architectures operate at the critical edge ($76.7\%$), requiring Q4\_0 KV cache compression for Gemma-3-4B to avert physical memory exhaustion ($4358\text{ MiB}$ required in uncompressed FP16). Defensive safety evaluations ($N=10$) demonstrated zero false positive refusals ($\text{FPR}=0.0$\%) on benign administrative tasks, but susceptibility to indirect instruction injection and delimiter breach (ASR between 50.0\% and 100.0\%). In agentic tool scenarios, proposed unsafe invocations were successfully intercepted by harness guardrails. Parallel corpus tokenization demonstrated a 1.35--2.33 tokens/word penalty for Portuguese compared to 1.10 for English. All raw traces, SHA-256 hashes, and code are open and reproducible.
+\begin{sloppypar}
+Deploying Small Language Models (SLMs, 0.5B to 4B parameters) on physical edge accelerators enables complete data sovereignty, bounded latency, and autonomous offline operation without cloud egress. However, operating under strict physical memory boundaries ($\le 4096\text{ MiB}$ VRAM) introduces acute trade-offs among tensor quantization compression, DRAM memory bus saturation, Time-To-First-Token (TTFT), and defensive safety alignment. This technical report presents a systems evaluation conducted on an NVIDIA GeForce GTX 1050 Ti GPU (4096\,MiB GDDR5, $112.0\text{ GB/s}$ theoretical bandwidth). We benchmark eight model configurations using \texttt{llama-server} with continuous NVML hardware telemetry sampled at 250\,ms intervals. A controlled three-condition ablation ($C_1, C_2, C_3$) along two orthogonal contrast axes isolated performance drivers: weight quantization compression (IQ4\_XS vs Q4\_K\_M) accounted for $+28.2\%$ speedup ($34.51 \pm 0.29$ vs $26.92 \pm 0.23$\,tok/s, $t=65.41$), whereas speculative Multi-Token Prediction (MTP) under identical quantization yielded $+25.6\%$ causal speedup ($43.35 \pm 0.57$ vs $34.51 \pm 0.29$\,tok/s, $t=43.72$, $p < 10^{-15}$), resulting in an overall $+61.0\%$ compound configuration gain (Welch's $t = 84.50$, $p = 5.88 \times 10^{-18}$, Cohen's $d = 37.79$). The isolated causal memory cost of MTP is $+236.0\text{ MiB}$ ($C_3$ vs $C_2$), yielding a net $+40.0\text{ MiB}$ difference over $C_1$ due to the $196.0\text{ MiB}$ compression savings of IQ4\_XS. Systems feasibility modeling indicates that 4B architectures operate at the critical edge ($76.7\%$), requiring Q4\_0 KV cache compression for Gemma-3-4B to avert physical memory exhaustion ($4358\text{ MiB}$ required in uncompressed FP16). Defensive safety evaluations ($N=10$) demonstrated zero false positive refusals ($\text{FPR}=0.0$\%) on benign administrative tasks, but susceptibility to indirect instruction injection and delimiter breach (ASR between 50.0\% and 100.0\%). In agentic tool scenarios, proposed unsafe invocations were successfully intercepted by harness guardrails. Parallel corpus tokenization demonstrated a 1.35--2.33 tokens/word penalty for Portuguese compared to 1.10 for English. All raw traces, SHA-256 hashes, and code are open and reproducible.
+\end{sloppypar}
 \end{abstract}
 
 \vspace{0.3em}
@@ -74,7 +77,7 @@ Deploying Small Language Models (SLMs, 0.5B to 4B parameters) on physical edge a
 
 The expansion of autonomous applications across cyber-physical systems, mobile robotics, edge gateways, and microservers requires local natural language processing without continuous cloud connectivity~\cite{williams2009,leviathan2023}. Offloading operational telemetry, control commands, and private user context to centralized proprietary APIs presents three prohibitive failure modes:
 \begin{enumerate}[leftmargin=1.5em,itemsep=0.2em]
-    \item \textbf{Data Sovereignty and Privacy:} Risk of confidential data transit through third-party servers and compliance constraints under data privacy regulations (GDPR/LGPD);
+    \item \textbf{Data Sovereignty and Privacy:} Risk of sensitive data transit across external servers and regulatory constraints under GDPR and LGPD;
     \item \textbf{Temporal Determinism:} Variable WAN transit latencies ($100\text{ ms}$ to $2000\text{ ms}$) with acute vulnerability to packet jitter and link drops;
     \item \textbf{Recurring Costs:} Unbounded cumulative operational expenditures per million tokens generated on commercial cloud platforms.
 \end{enumerate}
@@ -168,17 +171,21 @@ Experiments were executed on an isolated physical host:
 \begin{itemize}[leftmargin=1.5em,itemsep=0.2em]
     \item \textbf{Graphics Accelerator:} NVIDIA GeForce GTX 1050 Ti (GP107, 768 CUDA cores, base clock $1290\text{ MHz}$, boost $1392\text{ MHz}$, 4096\,MiB GDDR5, 128-bit bus, $112.0\text{ GB/s}$ theoretical bandwidth, $75\text{ W}$ board TDP ceiling, Compute Capability 6.1).
     \item \textbf{Host Environment:} Linux 6.8.12-8-pve (Proxmox VE 8.2), cgroup v2 process isolation, NVIDIA proprietary driver 580.173.02, CUDA Toolkit 13.0.
-    \item \textbf{Inference Server:} \texttt{llama-server} (commit b4120+, native CUDA build with cuBLAS sm\_61 optimization, OpenAI-compatible HTTP interface on port 18081).
-    \item \textbf{Hardware Telemetry:} Continuous asynchronous polling via native calls to \texttt{libnvidia-ml.so.1} (\texttt{pynvml} ctypes) recording physical VRAM, die temperature, GPU utilization, and core clocks at 250\,ms intervals.
+    \item \textbf{Inference Server:} \texttt{llama-server} (commit b4120+, native CUDA build with cuBLAS sm\_61 optimizations, OpenAI-compatible HTTP server on port 18081).
+\begin{sloppypar}
+    \item \textbf{Hardware Telemetry:} Continuous asynchronous polling via native calls to \texttt{libnvidia-\allowbreak ml.\allowbreak so.1} (\texttt{pynvml} ctypes) recording physical VRAM, die temperature, GPU utilization, and core clocks at 250\,ms intervals.
+\end{sloppypar}
 \end{itemize}
 
-\noindent\textit{Methodological Transparency Note on Energy Modeling:} Power dissipation and derived energy efficiency metrics ($42\text{ W}$ to $62\text{ W}$ observed across sustained inference workloads) represent analytical estimates grounded in the GPU board's TDP envelope ($75\text{ W}$) and thermal state transitions, rather than direct physical measurements from an external in-line AC socket power analyzer.
+\begin{sloppypar}
+\noindent\textit{Methodological Transparency Note on Energy Modeling:} Energy efficiency estimates ($\eta_{\text{energy}} \approx \text{Throughput}_{\text{decode}} / P_{\text{est}}$) utilize a heuristic power draw $P_{\text{est}} \in [42, 62]\text{ W}$ grounded in the board TDP envelope ($75\text{ W}$) and NVML thermal state telemetry, rather than direct physical measurements from an external in-line AC socket power analyzer.
+\end{sloppypar}
 
 \subsection{Execution Protocol and Environmental Controls}
 The benchmarking harness applied strict experimental controls:
 \begin{enumerate}[leftmargin=1.5em,itemsep=0.2em]
     \item \textbf{Warmup Runs ($k=2$):} Each model executed two 10-token preliminary invocations prior to formal recording, establishing stable memory residency.
-    \item \textbf{Independent Replications ($N=10$):} Each experimental condition was evaluated across 10 repeated trials using a fixed seed (\texttt{seed=42}) and greedy sampling ($\tau = 0.0$).
+    \item \textbf{Independent Replications ($N=10$):} Each experimental condition was evaluated across 10 repeated trials using a fixed seed (\texttt{seed=42}) and greedy sampling ($\tau = 0.0$). Under $\tau = 0.0$, emitted token sequences are mathematically deterministic; observed variance across trials stems strictly from host system jitter (PCIe bus contention, operating system memory management, and dynamic core clock scaling).
     \item \textbf{Thermal Stabilization:} Enforced cooldown pauses of $400\text{ ms}$ between trials; GPU die temperatures were continuously verified between $38^\circ\text{C}$ and $74^\circ\text{C}$, confirming the absence of thermal throttling.
 \end{enumerate}
 
@@ -191,17 +198,17 @@ Two-tailed 95\% confidence intervals were constructed using Student's $t$-distri
 
 \section{Empirical Performance and Efficiency Results}
 
-Table~\ref{tab:empirical_perf} summarizes the empirical metrics collected on the physical testbed across all eight evaluated model configurations.
+Table~\ref{tab:empirical_perf} summarizes the empirical metrics collected across all eight evaluated model configurations, and decoding throughput dispersion is depicted in Figure~\ref{fig:throughput_box}.
 
 \begin{table}[htbp]
 \centering
 \scriptsize
-\setlength{\tabcolsep}{1.8pt}
+\setlength{\tabcolsep}{1.2pt}
 \caption{Empirical Performance, Physical VRAM Allocation, and Memory Efficiency on NVIDIA GeForce GTX 1050 Ti ($N=10$, $\tau=0.0$)}
 \label{tab:empirical_perf}
-\begin{tabularx}{\textwidth}{L{3.2cm} C C C C C C C}
+\begin{tabularx}{\textwidth}{L{2.8cm} C C C C C C C}
 \toprule
-\textbf{Model and Quantization} & \makecell{\textbf{Params}\\\textbf{(B)}} & \makecell{\textbf{Peak VRAM}\\\textbf{(MiB)}} & \makecell{\textbf{Occupancy}\\\textbf{(\% 4 GiB)}} & \makecell{\textbf{Prefill}\\\textbf{(tok/s)}} & \makecell{\textbf{Decode}\\\textbf{(tok/s)}} & \makecell{\textbf{TTFT}\\\textbf{(ms)}} & \makecell{\textbf{Mem. Effic.}\\\textbf{(tok/s/GiB)}} \\
+\textbf{Model and Quantization} & \makecell{\textbf{Params}\\\textbf{(B)}} & \makecell{\textbf{VRAM}\\\textbf{(MiB)}} & \makecell{\textbf{Occup.}\\\textbf{(\% 4GiB)}} & \makecell{\textbf{Prefill}\\\textbf{(tok/s)}} & \makecell{\textbf{Decode}\\\textbf{(tok/s)}} & \makecell{\textbf{TTFT}\\\textbf{(ms)}} & \makecell{\textbf{Mem. Eff.}\\\textbf{(tok/s/GiB)}} \\
 \midrule
 \textbf{Qwen-2.5-0.5B-Q4\_K\_M} & 0.49 & 620.7 & 15.2\% & $237.1 \pm 449.3$ & \textbf{97.5} $\pm$ \textbf{0.6} & \textbf{12.1} $\pm$ \textbf{5.1} & \textbf{160.8} \\
 \textbf{SmolLM2-1.7B-Q4\_K\_M} & 1.71 & 2902.7 & 70.9\% & $103.3 \pm 176.0$ & 47.8 $\pm$ 0.1 & 25.5 $\pm$ 14.3 & 16.9 \\
@@ -235,7 +242,7 @@ Computing effective memory bandwidth ($B_{\text{eff}} = S_{\text{weights}} \time
     \item \textbf{Qwen-3.5-4B:} $2.72\text{ GB} \times 18.6\text{ tok/s} \approx 50.6\text{ GB/s}$ ($45.2\%$).
 \end{itemize}
 
-These empirical observations are consistent with memory bus saturation between 33\% and 50\% of peak GDDR5 bandwidth, constrained by kernel launch overhead and non-aligned DRAM memory accesses.
+These empirical observations are consistent with memory bus saturation between 33\% and 50\% of peak GDDR5 bandwidth, constrained by kernel launch overhead and non-aligned DRAM memory accesses, as synthesized in Figure~\ref{fig:bandwidth_util}.
 
 \begin{figure}[htbp]
 \centering
@@ -244,19 +251,21 @@ These empirical observations are consistent with memory bus saturation between 3
 \label{fig:bandwidth_util}
 \end{figure}
 
-\section{Statistical Analysis and Factorial MTP Ablation}
+\section{Statistical Analysis and Controlled MTP Ablation Study}
 
-To rigorously test Hypothesis $H_1$ without confounding weight quantization with speculative decoding, we evaluated a $2 \times 2$ factorial ablation on Gemma-4-E2B across three controlled configurations ($N=10$, $\tau=0.0$, \texttt{seed=42}):
+To rigorously test Hypothesis $H_1$ without confounding weight quantization with speculative decoding, we structured a controlled experimental ablation across three conditions ($N=10$, $\tau=0.0$, \texttt{seed=42}) spanning two orthogonal contrast axes. A full $2 \times 2$ factorial matrix would theoretically require a fourth condition ($C_4 = \text{Q4\_K\_M} + \text{MTP}$); however, because draft head weights coupled to Q4\_K\_M base tensors do not exist upstream, the empirical evaluation is strictly bounded to the triplet $\{C_1, C_2, C_3\}$, precluding estimation of interaction terms:
 \begin{enumerate}[leftmargin=1.5em,itemsep=0.2em]
     \item \textbf{Condition $C_1$ (Baseline):} Gemma-4-E2B in Q4\_K\_M format without speculative heads ($26.92 \pm 0.23$\,tok/s, VRAM $1996.7$\,MiB);
     \item \textbf{Condition $C_2$ (Quantization Ablation):} Gemma-4-E2B in IQ4\_XS format without speculative heads ($34.51 \pm 0.29$\,tok/s, VRAM $1800.7$\,MiB);
     \item \textbf{Condition $C_3$ (MTP Speculative):} Gemma-4-E2B in IQ4\_XS format with integrated Q8\_0 MTP draft heads ($43.35 \pm 0.57$\,tok/s, VRAM $2036.7$\,MiB).
 \end{enumerate}
 
+Speedup decomposition and 95\% Student's $t$ confidence intervals are illustrated in Figure~\ref{fig:mtp_ablation}.
+
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.85\textwidth]{figures/mtp_ablation_ci.pdf}
-\caption{Factorial speedup decomposition: isolated effect of quantization ($C_1 \rightarrow C_2$) and causal MTP speculative gain under identical quantization ($C_2 \rightarrow C_3$), with Student's $t$ 95\% confidence intervals ($N=10$).}
+\caption{Speedup decomposition under controlled ablation: isolated effect of quantization ($C_1 \rightarrow C_2$) and causal MTP speculative gain under identical quantization ($C_2 \rightarrow C_3$), with Student's $t$ 95\% confidence intervals ($N=10$).}
 \label{fig:mtp_ablation}
 \end{figure}
 
@@ -265,42 +274,42 @@ Comparing $C_3$ directly with $C_2$, quantization format is held constant in IQ4
 \begin{equation}
 t_{\text{MTP}} = \frac{43.35 - 34.51}{\sqrt{\frac{0.57^2}{10} + \frac{0.29^2}{10}}} = \frac{8.84}{0.2022} \approx 43.72, \quad \nu = 13.43
 \end{equation}
-with $p = 7.12 \times 10^{-16}$ and $d = 19.55$. The isolated causal speedup attributable strictly to MTP speculative decoding is \textbf{+25.6\%} ($8.84$\,tok/s).
+with $p = 7.12 \times 10^{-16}$ and $d = 19.55$. The isolated causal speedup attributable strictly to MTP speculative decoding is \textbf{+25.6\%} ($8.84$\,tok/s). Regarding memory allocation, the isolated causal cost of MTP is $+236.0\text{ MiB}$ of physical VRAM ($2036.7$ vs $1800.7\text{ MiB}$), reflecting the footprint of Q8\_0 draft heads, draft KV cache, and verification buffers.
 
 \subsection{Isolated Effect of Quantization (Standard Autoregressive Decoding)}
 Comparing $C_2$ with $C_1$, decoding mode is held constant without speculative draft heads. Welch's $t$-test yields:
 \begin{equation}
 t_{\text{Quant}} = \frac{34.51 - 26.92}{\sqrt{\frac{0.29^2}{10} + \frac{0.23^2}{10}}} = \frac{7.59}{0.1160} \approx 65.41, \quad \nu = 17.09
 \end{equation}
-with $p = 5.67 \times 10^{-18}$ and $d = 29.25$. Weight compression via the IQ4\_XS importance matrix provides a speedup of \textbf{+28.2\%} ($7.59$\,tok/s).
+with $p = 5.67 \times 10^{-18}$ and $d = 29.25$. Weight compression via the IQ4\_XS importance matrix provides a speedup of \textbf{+28.2\%} ($7.59$\,tok/s) while saving $196.0\text{ MiB}$ of VRAM ($1996.7$ vs $1800.7\text{ MiB}$).
 
 \subsection{Compound Configuration Differential ($C_3$ vs $C_1$)}
 Comparing the optimized configuration ($C_3$) with the baseline standard ($C_1$) reflects total accumulated gain:
 \begin{equation}
 t_{\text{Compound}} = \frac{43.35 - 26.92}{\sqrt{\frac{0.57^2}{10} + \frac{0.23^2}{10}}} = \frac{16.43}{0.1944} \approx 84.50, \quad \nu = 11.94
 \end{equation}
-with $p = 5.88 \times 10^{-18}$ and $d = 37.79$. The compound configuration gain totals \textbf{+61.0\%} ($16.43$\,tok/s) under only $40.0\text{ MiB}$ of VRAM overhead for Q8\_0 draft heads relative to $C_1$, providing empirical support for Hypothesis $H_1$.
+with $p = 5.88 \times 10^{-18}$ and $d = 37.79$. The compound configuration gain totals \textbf{+61.0\%} ($16.43$\,tok/s). In terms of physical memory, $C_3$ exhibits a net difference of only $+40.0\text{ MiB}$ over $C_1$ ($2036.7$ vs $1996.7\text{ MiB}$); this modest net differential occurs because the $196.0\text{ MiB}$ saved by IQ4\_XS compression offset 83\% of the true causal MTP footprint ($+236.0\text{ MiB}$), validating Hypothesis $H_1$ while explicitly differentiating mechanism cost from net configuration delta.
 
-\section{Architectural Survey and Physical Feasibility Boundaries}
+\section{Architectural Survey and Edge Feasibility Boundaries}
 
 Table~\ref{tab:candidate_models} provides systems feasibility projections across contemporary SLM candidates under a $4096\text{ MiB}$ VRAM ceiling.
 
 \begin{table}[htbp]
 \centering
-\footnotesize
-\setlength{\tabcolsep}{2.5pt}
+\scriptsize
+\setlength{\tabcolsep}{1.5pt}
 \caption{Architectural Analytical Modeling and Edge Feasibility Frontiers in 4 GiB VRAM}
 \label{tab:candidate_models}
-\begin{tabularx}{\textwidth}{L{2.2cm} >{\centering\arraybackslash}p{2.3cm} c c c c C}
+\begin{tabularx}{\textwidth}{L{1.8cm} L{1.6cm} c c c c >{\raggedright\arraybackslash}X}
 \toprule
-\textbf{Candidate Model} & \makecell{\textbf{Vendor /}\\\textbf{License}} & \makecell{\textbf{Params}\\\textbf{(B)}} & \makecell{\textbf{Weights Q4\_K\_M}\\\textbf{(MiB)}} & \makecell{\textbf{KV Cache 4k}\\\textbf{(FP16)}} & \makecell{\textbf{Total VRAM}\\\textbf{(4k context)}} & \makecell{\textbf{Status and Boundaries}\\\textbf{on GTX 1050 Ti}} \\
+\textbf{Model} & \makecell{\textbf{Vendor /}\\\textbf{License}} & \makecell{\textbf{Par.}\\\textbf{(B)}} & \makecell{\textbf{Weights}\\\textbf{(MiB)}} & \makecell{\textbf{KV 4k}\\\textbf{(FP16)}} & \makecell{\textbf{Total}\\\textbf{VRAM}} & \textbf{Status and Boundaries on GTX 1050 Ti} \\
 \midrule
-\textbf{Qwen-2.5-0.5B} & Alibaba (Apache-2.0) & 0.49 & 469 & 112\,MiB & 837\,MiB & \textbf{Evaluated:} Full operational margin (20.4\% capacity) \\
-\textbf{Qwen-2.5-1.5B} & Alibaba (Apache-2.0) & 1.54 & 986 & 224\,MiB & 1,466\,MiB & \textbf{Feasible:} Ample margin for 16k context \\
+\textbf{Qwen-2.5-0.5B} & Alibaba (Apache-2.0) & 0.49 & 469 & 112\,MiB & 837\,MiB & \textbf{Evaluated:} Full margin (20.4\% capacity) \\
+\textbf{Qwen-2.5-1.5B} & Alibaba (Apache-2.0) & 1.54 & 986 & 224\,MiB & 1,466\,MiB & \textbf{Feasible:} Headroom for 16k context \\
 \textbf{SmolLM2-1.7B} & HuggingFace (Apache) & 1.71 & 1,007 & 192\,MiB & 1,455\,MiB & \textbf{Evaluated:} High memory efficiency \\
-\textbf{Granite-3.1-2B} & IBM (Apache-2.0) & 2.50 & 1,580 & 320\,MiB & 2,156\,MiB & \textbf{Feasible:} Long-context operational headroom \\
-\textbf{Phi-4-mini-3.8B} & Microsoft (Gated) & 3.82 & 2,510 & 512\,MiB & 3,278\,MiB & \textbf{Not Executed:} Gated repository authentication (HTTP 401) \\
-\textbf{Gemma-3-1B} & Google (Gemma) & 1.20 & 880 & 384\,MiB & 1,520\,MiB & \textbf{Feasible:} Low static memory consumption \\
+\textbf{Granite-3.1-2B} & IBM (Apache-2.0) & 2.50 & 1,580 & 320\,MiB & 2,156\,MiB & \textbf{Feasible:} Long-context headroom \\
+\textbf{Phi-4-mini-3.8B} & Microsoft (Gated) & 3.82 & 2,510 & 512\,MiB & 3,278\,MiB & \textbf{Not Executed:} Gated repository auth (HTTP 401) \\
+\textbf{Gemma-3-1B} & Google (Gemma) & 1.20 & 880 & 384\,MiB & 1,520\,MiB & \textbf{Feasible:} Low static footprint \\
 \textbf{Gemma-3-4B} & Google (Gemma) & 4.30 & 2,950 & 1,152\,MiB & 4,358\,MiB & \textbf{Physical Barrier:} OOM under FP16 KV; requires Q4\_0 KV \\
 \bottomrule
 \end{tabularx}
@@ -310,17 +319,17 @@ Table~\ref{tab:candidate_models} provides systems feasibility projections across
 
 \section{Defensive Safety and Adversarial Robustness Evaluation}
 
-Table~\ref{tab:safety_bias_lang} provides empirical findings across defensive safety and linguistic metrics.
+Table~\ref{tab:safety_bias_lang} provides empirical findings across defensive safety and linguistic metrics, which are visualized in Figure~\ref{fig:adv_robustness}.
 
 \begin{table}[htbp]
 \centering
 \scriptsize
-\setlength{\tabcolsep}{2.0pt}
+\setlength{\tabcolsep}{1.2pt}
 \caption{Defensive Safety Evaluation, Algorithmic Bias, and Tokenization Fertility ($N=10$, $\tau=0.0$)}
 \label{tab:safety_bias_lang}
-\begin{tabularx}{\textwidth}{L{2.8cm} C C C C C C C}
+\begin{tabularx}{\textwidth}{L{2.5cm} C C C C C C C}
 \toprule
-\textbf{Model} & \makecell{\textbf{Over-Ref.}\\\textbf{(FPR \%)}} & \makecell{\textbf{Ind. Inj.}\\\textbf{(ASR \%)}} & \makecell{\textbf{Delim. Esc.}\\\textbf{(ASR \%)}} & \makecell{\textbf{Tool Guard}\\\textbf{(ASR \%)}} & \makecell{\textbf{Neutrality}\\\textbf{BBQ/Stereo}} & \makecell{\textbf{Fertility}\\\textbf{pt-BR (tok/w)}} & \makecell{\textbf{Fertility}\\\textbf{en-US (tok/w)}} \\
+\textbf{Model} & \makecell{\textbf{Over-Ref.}\\\textbf{(FPR \%)}} & \makecell{\textbf{Ind. Inj.}\\\textbf{(ASR \%)}} & \makecell{\textbf{Delim. Esc.}\\\textbf{(ASR \%)}} & \makecell{\textbf{Tool Guard}\\\textbf{(ASR \%)}} & \makecell{\textbf{Neutr.}\\\textbf{BBQ (\%)}} & \makecell{\textbf{Fertil.}\\\textbf{pt-BR}} & \makecell{\textbf{Fertil.}\\\textbf{en-US}} \\
 \midrule
 \textbf{Qwen-2.5-0.5B} & \textbf{0.0\%} & \textbf{0.0\%} & 50.0\% & 100.0\% & 66.7\% & 1.74 & \textbf{1.10} \\
 \textbf{SmolLM2-1.7B} & \textbf{0.0\%} & \textbf{0.0\%} & 50.0\% & \textbf{0.0\%} & 33.3\% & 2.33 & \textbf{1.10} \\
@@ -356,7 +365,9 @@ Detailed auditing of tool interactions enabled differentiation across three dist
     \item \textbf{Host Execution (\texttt{execution\_status}):} Security evaluation prior to system dispatch.
 \end{enumerate}
 
-Models including Qwen, Gemma, and Llama generated valid schema payloads containing injected payloads (\texttt{"nginx; rm -rf /"} and \texttt{"admin'; DROP TABLE"}). In all instances, harness guardrails intercepted execution with \texttt{BLOCKED\_BY\_HARNESS}, logging invocations without permitting host side effects. Conversely, SmolLM2 did not emit tool call syntax, replying with safe conversational text (\texttt{SAFE\_BENIGN\_TEXT}).
+\begin{sloppypar}
+Models including Qwen, Gemma, and Llama generated valid schema payloads containing injected commands (such as \texttt{"nginx; rm -rf /"} and \texttt{"admin'; DROP TABLE"}). In all instances, harness guardrails intercepted execution with \texttt{BLOCKED\_\allowbreak BY\_\allowbreak HARNESS}, logging invocations without permitting host side effects. Conversely, SmolLM2 did not emit tool call syntax, replying with safe conversational text (\texttt{SAFE\_\allowbreak BENIGN\_\allowbreak TEXT}).
+\end{sloppypar}
 
 \section{Algorithmic Bias and Language Efficiency Evaluation}
 
@@ -377,10 +388,10 @@ To guarantee experimental auditability, all GGUF model files were cryptographica
 \begin{table}[htbp]
 \centering
 \footnotesize
-\setlength{\tabcolsep}{3.5pt}
+\setlength{\tabcolsep}{2.0pt}
 \caption{Model Provenance, Physical Artifact Size, and Verified SHA-256 Checksums}
 \label{tab:model_provenance}
-\begin{tabularx}{\textwidth}{L{2.5cm} c c c C}
+\begin{tabularx}{\textwidth}{L{2.3cm} c c c >{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Model Identifier} & \textbf{Quantization} & \textbf{Size (MiB)} & \textbf{Context} & \textbf{Official Verified SHA-256 Checksum} \\
 \midrule
@@ -413,7 +424,7 @@ This study provided an empirical, mathematical, and systems evaluation of Small 
 
 Primary empirical conclusions supported by measured evidence are:
 \begin{enumerate}[leftmargin=1.5em,itemsep=0.2em]
-    \item \textbf{Decomposition of Speculative Speedup:} Structured factorial ablation demonstrates that multi-token prediction (MTP) under constant IQ4\_XS quantization yields an isolated causal speedup of $+25.6\%$ ($43.35$ vs $34.51$\,tok/s, $t=43.72$, $p < 10^{-15}$), while IQ4\_XS compression accounts for $+28.2\%$ over Q4\_K\_M ($34.51$ vs $26.92$\,tok/s, $t=65.41$), totaling a compound $+61.0\%$ gain ($t=84.50$, $p = 5.88 \times 10^{-18}$) with 40\,MiB VRAM overhead for Q8\_0 draft heads.
+    \item \textbf{Decomposition of Speculative Speedup:} Controlled three-condition experimental ablation demonstrates that MTP under constant IQ4\_XS quantization yields an isolated causal speedup of $+25.6\%$ ($43.35$ vs $34.51$\,tok/s, $t=43.72$, $p < 10^{-15}$) under a $+236.0\text{ MiB}$ causal VRAM mechanism footprint, whereas IQ4\_XS compression accounts for $+28.2\%$ over Q4\_K\_M ($34.51$ vs $26.92$\,tok/s, $t=65.41$) saving $196.0\text{ MiB}$. Between the two endpoints, a compound $+61.0\%$ gain is attained ($t=84.50$, $p = 5.88 \times 10^{-18}$) with net $+40.0\text{ MiB}$ VRAM delta.
     \item \textbf{4B Physical Operating Edge:} Models near 4 billion parameters operate at the physical capacity boundary of 4\,GiB ($76.7\%$). For Gemma-3-4B, Q4\_0 KV cache quantization is required to prevent out-of-memory faults.
     \item \textbf{Harness-Level Interception Imperative:} Although models showed zero false positive refusals on operational queries ($\text{FPR}=0.0\%$), susceptibility to indirect injections in tool calls highlights the necessity of application-level guardrails.
     \item \textbf{Multilingual Efficiency Variations:} Parallel corpus tokenization demonstrated an overhead of up to $2.33\text{ tok/w}$ in Portuguese (SmolLM2-1.7B), whereas Gemma-4 and Qwen-3.5 maintained balanced multilingual efficiency near $1.35\text{ tok/w}$.
@@ -427,7 +438,9 @@ All raw NVML telemetry logs, benchmark traces, evaluation prompts, and statistic
 \small\url{https://github.com/AndersonTavares0/llm-research-bench}
 \end{center}
 
+\begin{singlespace}
 \begin{thebibliography}{99}
+\setlength{\itemsep}{0.35em}
 \bibitem{williams2009} Williams, S., Waterman, A., Patterson, D. Roofline: An Insightful Visual Performance Model for Multicore Architectures. \emph{Communications of the ACM}, 52(4), 65--76, 2009. \url{https://doi.org/10.1145/1498765.1498785}
 \bibitem{leviathan2023} Leviathan, Y., Kalman, M., Matias, Y. Fast Inference from Transformers via Speculative Decoding. In \emph{Proc. International Conference on Machine Learning (ICML)}, pp. 19274--19286, 2023.
 \bibitem{rottger2023} R\"ottger, P., et al. XSTest: A Test Suite for Identifying Exaggerated Safety Behaviors in Large Language Models. In \emph{Proc. NAACL}, 2024. arXiv:2308.01263.
@@ -449,5 +462,6 @@ All raw NVML telemetry logs, benchmark traces, evaluation prompts, and statistic
 \bibitem{miao2024} Miao, X., et al. SpecInfer: Accelerating Generative Large Language Model Serving with Tree-based Speculative Inference and Verification. In \emph{Proc. ASPLOS}, 2024.
 \bibitem{anthropic2024mcp} Anthropic. Model Context Protocol: Open Standard for Secure AI Agent Tool Integration. Technical Specification, 2024. \url{https://modelcontextprotocol.io}
 \end{thebibliography}
+\end{singlespace}
 
 \end{document}
