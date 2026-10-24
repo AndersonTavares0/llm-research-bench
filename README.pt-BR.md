@@ -55,12 +55,12 @@ Avaliado com amostragem determinística gulosa ($\tau = 0,0$, `seed=42`) em tare
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Gemma-4-E2B [Q4_K_M Base]** | **26,92 tok/s** | ±0,23 | [26,76; 27,09] tok/s | Linha de Base ($C_1$) | — | 1996,7 MiB |
 | **Gemma-4-E2B [IQ4_XS Base]** | **34,51 tok/s** | ±0,29 | [34,30; 34,72] tok/s | **+28,2%** (Quantização) | $t = 65,41, p = 5,67 \times 10^{-18}$ | 1800,7 MiB |
-| **Gemma-4-E2B [IQ4_XS + MTP]** | **43,35 tok/s** | ±0,57 | [42,94; 43,75] tok/s | **+25,6%** (MTP causal) | $t = 43,72, p = 7,12 \times 10^{-16}$ | 2036,7 MiB |
+| **Gemma-4-E2B [IQ4_XS + MTP]** | **43,35 tok/s** | ±0,57 | [42,94; 43,75] tok/s | **+25,6%** (Mecanismo MTP) | $t = 43,72, p = 7,12 \times 10^{-16}$ | 2036,7 MiB |
 | *Comparação Composta ($C_3$ vs $C_1$)* | — | — | — | **+61,0%** (Composto) | $t = 84,50, p = 5,88 \times 10^{-18}$ | +40,0 MiB |
 
-- **Decomposição dos Efeitos:** Mantendo a decodificação autorregressiva constante, a compressão IQ4_XS responde por $+28,2\%$ de aceleração. Sob quantização constante em IQ4_XS, a decodificação especulativa MTP agrega $+25,6\%$ de ganho causal isolado ($43,35 \pm 0,57$ vs $34,51 \pm 0,29$\,tok/s, $t = 43,72$, $d = 19,55$). O ganho acumulado entre configurações atinge $+61,03\%$ ($t = 84,50$, $d = 37,79$).
+- **Decomposição dos Efeitos:** Mantendo a decodificação autorregressiva constante, a compressão IQ4_XS responde por $+28,2\%$ de aceleração. Sob quantização constante em IQ4_XS, a decodificação especulativa MTP associa-se a $+25,6\%$ de ganho ($43,35 \pm 0,57$ vs $34,51 \pm 0,29$\,tok/s, $t = 43,72$, $d = 19,55$). O ganho acumulado entre configurações atinge $+61,03\%$ ($t = 84,50$, $d = 37,79$).
 - **Dinâmica de Aceitação de Rascunho:** A telemetria registrou taxa empírica de aceitação do rascunho de $\alpha = 52,8\%$ (65 tokens aceitos em 123 gerados), com comprimento médio de bloco aceito de $\bar{L} = 2,05$ tokens por ciclo.
-- **Dinâmica de Memória (VRAM):** O custo causal isolado do mecanismo MTP é de $+236,0\text{ MiB}$ ($C_3$ vs $C_2$, 2036,7 vs 1800,7 MiB) para as cabeças Q8_0, cache KV de rascunho e buffers de verificação. Esse custo causal resulta em diferença líquida de apenas $+40,0\text{ MiB}$ frente à linha de base $C_1$ (2036,7 vs 1996,7 MiB), pois a compressão de pesos do formato IQ4_XS economizou $196,0\text{ MiB}$, absorvendo 83% da pegada física do MTP.
+- **Dinâmica de Memória (VRAM):** A alocação adicional de VRAM associada à infraestrutura de MTP é de $+236,0\text{ MiB}$ ($C_3$ vs $C_2$, 2036,7 vs 1800,7 MiB) para as cabeças Q8_0, cache KV de rascunho e buffers de verificação. Essa alocação resulta em diferença líquida de apenas $+40,0\text{ MiB}$ frente à linha de base $C_1$ (2036,7 vs 1996,7 MiB), pois a compressão de pesos do formato IQ4_XS economizou $196,0\text{ MiB}$, absorvendo 83% da pegada física do MTP.
 
 ### 2. Resultados Empíricos de Desempenho na GTX 1050 Ti ($N=10$, $\tau=0,0$)
 
@@ -121,7 +121,7 @@ Avaliado com amostragem determinística gulosa ($\tau = 0,0$, `seed=42`) em tare
 | Dimensão | Observação Específica do Hardware (GTX 1050 Ti) | Princípio Arquitetural Generalizável |
 | :--- | :--- | :--- |
 | **Throughput de Decode** | $18,4$--$46,3$\,tok/s delimitado pelo barramento GDDR5 de 128 bits ($112,0\text{ GB/s}$) | A geração autorregressiva é universalmente limitada por memória ($I_{\text{decode}} \ll I^*$) em qualquer acelerador |
-| **Aceleração MTP** | $+25,6\%$ de ganho causal ($+28,2\%$ da quantização IQ4_XS, $+61,0\%$ composto) | A equação $S = \frac{1 + \sum \alpha^k}{1 + \mathcal{O}_{\text{draft}}}$ é válida sempre que a taxa de aceitação superar a sobretaxa do rascunho |
+| **Aceleração MTP** | $+25,6\%$ de ganho associado sob quantização constante ($+28,2\%$ da quantização IQ4_XS, $+61,0\%$ composto) | A equação $S = \frac{1 + \sum \alpha^k}{1 + \mathcal{O}_{\text{draft}}}$ é válida sempre que a taxa de aceitação superar a sobretaxa do rascunho |
 | **Escalonamento Cache KV** | OOM disparado em contexto $>8\text{k}$ para modelos 4B em 4 GiB VRAM | O cache KV não quantizado cresce estritamente como $\mathcal{O}(L)$; contextos longos exigem compressão do cache |
 | **Fronteira de Alinhamento** | 0% de recusa contra payload de injeção em log | Técnicas de RLHF/DPO falham arquiteturalmente em isolar instruções de controle de dados contextuais |
 

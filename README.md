@@ -55,12 +55,12 @@ Evaluated with deterministic greedy decoding ($\tau = 0.0$, `seed=42`) on the ph
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Gemma-4-E2B [Q4_K_M Base]** | **26.92 tok/s** | ±0.23 | [26.76, 27.09] tok/s | Baseline ($C_1$) | — | 1996.7 MiB |
 | **Gemma-4-E2B [IQ4_XS Base]** | **34.51 tok/s** | ±0.29 | [34.30, 34.72] tok/s | **+28.2%** (Quantization) | $t = 65.41, p = 5.67 \times 10^{-18}$ | 1800.7 MiB |
-| **Gemma-4-E2B [IQ4_XS + MTP]** | **43.35 tok/s** | ±0.57 | [42.94, 43.75] tok/s | **+25.6%** (MTP causal) | $t = 43.72, p = 7.12 \times 10^{-16}$ | 2036.7 MiB |
+| **Gemma-4-E2B [IQ4_XS + MTP]** | **43.35 tok/s** | ±0.57 | [42.94, 43.75] tok/s | **+25.6%** (MTP mechanism) | $t = 43.72, p = 7.12 \times 10^{-16}$ | 2036.7 MiB |
 | *Compound Comparison ($C_3$ vs $C_1$)* | — | — | — | **+61.0%** (Compound) | $t = 84.50, p = 5.88 \times 10^{-18}$ | +40.0 MiB |
 
-- **Effect Decomposition:** Holding decoding constant, IQ4_XS weight compression provides a $+28.2\%$ throughput gain. Holding quantization constant in IQ4_XS, MTP speculative decoding delivers an isolated $+25.6\%$ causal speedup ($43.35 \pm 0.57$ vs $34.51 \pm 0.29$\,tok/s, $t = 43.72$, Cohen's $d = 19.55$). The compound configuration speedup is $+61.03\%$ ($t = 84.50$, Cohen's $d = 37.79$).
+- **Effect Decomposition:** Holding decoding constant, IQ4_XS weight compression provides a $+28.2\%$ throughput gain. Holding quantization constant in IQ4_XS, MTP speculative decoding delivers a $+25.6\%$ associated speedup ($43.35 \pm 0.57$ vs $34.51 \pm 0.29$\,tok/s, $t = 43.72$, Cohen's $d = 19.55$). The compound configuration speedup is $+61.03\%$ ($t = 84.50$, Cohen's $d = 37.79$).
 - **Draft Acceptance Dynamics:** Runtime telemetry logged empirical draft acceptance rate $\alpha = 52.8\%$ (65 tokens accepted out of 123 generated), with mean accepted block length $\bar{L} = 2.05$ tokens per validation pass.
-- **VRAM Allocation Dynamics:** The isolated causal mechanism footprint of MTP is $+236.0\text{ MiB}$ ($C_3$ vs $C_2$, 2036.7 vs 1800.7 MiB) for Q8_0 draft heads, speculative KV cache, and verification buffers. This yields a net $+40.0\text{ MiB}$ difference relative to baseline $C_1$ (2036.7 vs 1996.7 MiB) because the $196.0\text{ MiB}$ weight compression savings of IQ4_XS offset 83% of the MTP draft head footprint.
+- **VRAM Allocation Dynamics:** The additional VRAM allocation associated with the MTP mechanism is $+236.0\text{ MiB}$ ($C_3$ vs $C_2$, 2036.7 vs 1800.7 MiB) for Q8_0 draft heads, speculative KV cache, and verification buffers. This yields a net $+40.0\text{ MiB}$ difference relative to baseline $C_1$ (2036.7 vs 1996.7 MiB) because the $196.0\text{ MiB}$ weight compression savings of IQ4_XS offset 83% of the MTP draft head footprint.
 
 ### 2. Cross-Model Empirical Performance on Physical GTX 1050 Ti ($N=10$, $\tau=0.0$)
 
@@ -121,7 +121,7 @@ Evaluated with deterministic greedy decoding ($\tau = 0.0$, `seed=42`) on the ph
 | Dimension | Hardware-Specific Observation (GTX 1050 Ti) | Generalizable Architectural Principle |
 | :--- | :--- | :--- |
 | **Decode Throughput** | $18.4$--$46.3$\,tok/s constrained by 128-bit GDDR5 bus ($112.0\text{ GB/s}$) | Autoregressive generation is universally memory-bound ($I_{\text{decode}} \ll I^*$) on any accelerator |
-| **MTP Speedup** | $+25.6\%$ causal speedup ($+28.2\%$ from IQ4_XS quantization, $+61.0\%$ compound) | Speedup formula $S = \frac{1 + \sum \alpha^k}{1 + \mathcal{O}_{\text{draft}}}$ holds whenever draft acceptance exceeds overhead |
+| **MTP Speedup** | $+25.6\%$ associated speedup under constant quantization ($+28.2\%$ from IQ4_XS quantization, $+61.0\%$ compound) | Speedup formula $S = \frac{1 + \sum \alpha^k}{1 + \mathcal{O}_{\text{draft}}}$ holds whenever draft acceptance exceeds overhead |
 | **KV Cache Scaling** | OOM triggered at $>8\text{k}$ context for 4B models in 4 GiB VRAM | Uncompressed KV cache scales strictly as $\mathcal{O}(L)$; context scaling requires cache quantization |
 | **Alignment Boundary** | 0% refusal against log-embedded canary payload | RLHF/DPO fails architecturally to isolate system instructions from untrusted tool context tokens |
 
