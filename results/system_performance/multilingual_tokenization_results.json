@@ -1,0 +1,1469 @@
+{
+  "metadata": {
+    "corpus_items": 12,
+    "languages": [
+      "en-US",
+      "pt-BR",
+      "zh-CN"
+    ],
+    "tokenizers_evaluated": [
+      "qwen2.5",
+      "gemma2",
+      "llama3.2",
+      "smollm2"
+    ],
+    "reference_context_window": 4096
+  },
+  "aggregated_metrics": {
+    "qwen2.5": {
+      "mean_pt_over_en_ratio": 1.52,
+      "mean_zh_over_en_ratio": 1.4,
+      "mean_fertility": {
+        "en-US": 1.15,
+        "pt-BR": 1.4,
+        "zh-CN": 0.79
+      },
+      "context_window_4096_budget_impact": {
+        "en_capacity_doc_multiplier": 1.0,
+        "pt_capacity_relative": 0.66,
+        "zh_capacity_relative": 0.72
+      }
+    },
+    "gemma2": {
+      "mean_pt_over_en_ratio": 1.48,
+      "mean_zh_over_en_ratio": 1.83,
+      "mean_fertility": {
+        "en-US": 1.15,
+        "pt-BR": 1.37,
+        "zh-CN": 1.03
+      },
+      "context_window_4096_budget_impact": {
+        "en_capacity_doc_multiplier": 1.0,
+        "pt_capacity_relative": 0.67,
+        "zh_capacity_relative": 0.55
+      }
+    },
+    "llama3.2": {
+      "mean_pt_over_en_ratio": 1.6,
+      "mean_zh_over_en_ratio": 2.2,
+      "mean_fertility": {
+        "en-US": 1.15,
+        "pt-BR": 1.48,
+        "zh-CN": 1.25
+      },
+      "context_window_4096_budget_impact": {
+        "en_capacity_doc_multiplier": 1.0,
+        "pt_capacity_relative": 0.63,
+        "zh_capacity_relative": 0.46
+      }
+    },
+    "smollm2": {
+      "mean_pt_over_en_ratio": 2.4,
+      "mean_zh_over_en_ratio": 4.59,
+      "mean_fertility": {
+        "en-US": 1.21,
+        "pt-BR": 2.35,
+        "zh-CN": 2.75
+      },
+      "context_window_4096_budget_impact": {
+        "en_capacity_doc_multiplier": 1.0,
+        "pt_capacity_relative": 0.42,
+        "zh_capacity_relative": 0.22
+      }
+    }
+  },
+  "items": [
+    {
+      "id": "para_01_everyday_travel",
+      "domain": "everyday",
+      "texts": {
+        "en-US": "I need to confirm whether the express train departing from the central station at half past eight stops at the international airport, and if tickets can be purchased directly on the mobile application without printing paper passes.",
+        "pt-BR": "Preciso confirmar se o trem expresso que parte da estação central às oito e meia faz parada no aeroporto internacional, e se os bilhetes podem ser adquiridos diretamente pelo aplicativo móvel sem necessidade de imprimir passagens em papel.",
+        "zh-CN": "我需要确认八点半从中央车站出发的特快列车是否在国际机场停靠，以及车票是否可以直接在手机应用程序上购买而无需打印纸质车票。"
+      },
+      "stats": {
+        "en-US": {
+          "word_or_hanzi_count": 37,
+          "byte_count": 231,
+          "char_count": 231
+        },
+        "pt-BR": {
+          "word_or_hanzi_count": 38,
+          "byte_count": 243,
+          "char_count": 239
+        },
+        "zh-CN": {
+          "word_or_hanzi_count": 58,
+          "byte_count": 180,
+          "char_count": 60
+        }
+      },
+      "token_counts": {
+        "en-US": {
+          "qwen2.5": {
+            "tokens": 41,
+            "fertility": 1.11,
+            "tokens_per_byte": 0.177
+          },
+          "gemma2": {
+            "tokens": 41,
+            "fertility": 1.11,
+            "tokens_per_byte": 0.177
+          },
+          "llama3.2": {
+            "tokens": 41,
+            "fertility": 1.11,
+            "tokens_per_byte": 0.177
+          },
+          "smollm2": {
+            "tokens": 43,
+            "fertility": 1.16,
+            "tokens_per_byte": 0.186
+          }
+        },
+        "pt-BR": {
+          "qwen2.5": {
+            "tokens": 53,
+            "fertility": 1.39,
+            "tokens_per_byte": 0.218
+          },
+          "gemma2": {
+            "tokens": 52,
+            "fertility": 1.37,
+            "tokens_per_byte": 0.214
+          },
+          "llama3.2": {
+            "tokens": 56,
+            "fertility": 1.47,
+            "tokens_per_byte": 0.23
+          },
+          "smollm2": {
+            "tokens": 89,
+            "fertility": 2.34,
+            "tokens_per_byte": 0.366
+          }
+        },
+        "zh-CN": {
+          "qwen2.5": {
+            "tokens": 43,
+            "fertility": 0.74,
+            "tokens_per_byte": 0.239
+          },
+          "gemma2": {
+            "tokens": 57,
+            "fertility": 0.98,
+            "tokens_per_byte": 0.317
+          },
+          "llama3.2": {
+            "tokens": 69,
+            "fertility": 1.19,
+            "tokens_per_byte": 0.383
+          },
+          "smollm2": {
+            "tokens": 156,
+            "fertility": 2.69,
+            "tokens_per_byte": 0.867
+          }
+        }
+      },
+      "ratios": {
+        "qwen2.5": {
+          "pt_over_en": 1.293,
+          "zh_over_en": 1.049,
+          "zh_over_pt": 0.811
+        },
+        "gemma2": {
+          "pt_over_en": 1.268,
+          "zh_over_en": 1.39,
+          "zh_over_pt": 1.096
+        },
+        "llama3.2": {
+          "pt_over_en": 1.366,
+          "zh_over_en": 1.683,
+          "zh_over_pt": 1.232
+        },
+        "smollm2": {
+          "pt_over_en": 2.07,
+          "zh_over_en": 3.628,
+          "zh_over_pt": 1.753
+        }
+      }
+    },
+    {
+      "id": "para_02_everyday_weather",
+      "domain": "everyday",
+      "texts": {
+        "en-US": "The local meteorological bureau predicts heavy showers and strong winds late this afternoon, so our team decided to move the scheduled outdoor conference into the main auditorium to avoid unexpected interruptions.",
+        "pt-BR": "O instituto meteorológico local prevê pancadas de chuva torrencial e ventos fortes no fim da tarde, de modo que nossa equipe decidiu transferir a conferência ao ar livre para o auditório principal a fim de evitar interrupções inesperadas.",
+        "zh-CN": "当地气象局预测傍晚将有强阵雨和大风，因此我们的团队决定将原定在室外举行的会议转移到主礼堂，以避免意外中断。"
+      },
+      "stats": {
+        "en-US": {
+          "word_or_hanzi_count": 31,
+          "byte_count": 213,
+          "char_count": 213
+        },
+        "pt-BR": {
+          "word_or_hanzi_count": 38,
+          "byte_count": 244,
+          "char_count": 238
+        },
+        "zh-CN": {
+          "word_or_hanzi_count": 50,
+          "byte_count": 159,
+          "char_count": 53
+        }
+      },
+      "token_counts": {
+        "en-US": {
+          "qwen2.5": {
+            "tokens": 35,
+            "fertility": 1.13,
+            "tokens_per_byte": 0.164
+          },
+          "gemma2": {
+            "tokens": 35,
+            "fertility": 1.13,
+            "tokens_per_byte": 0.164
+          },
+          "llama3.2": {
+            "tokens": 35,
+            "fertility": 1.13,
+            "tokens_per_byte": 0.164
+          },
+          "smollm2": {
+            "tokens": 37,
+            "fertility": 1.19,
+            "tokens_per_byte": 0.174
+          }
+        },
+        "pt-BR": {
+          "qwen2.5": {
+            "tokens": 53,
+            "fertility": 1.39,
+            "tokens_per_byte": 0.217
+          },
+          "gemma2": {
+            "tokens": 52,
+            "fertility": 1.37,
+            "tokens_per_byte": 0.213
+          },
+          "llama3.2": {
+            "tokens": 56,
+            "fertility": 1.47,
+            "tokens_per_byte": 0.23
+          },
+          "smollm2": {
+            "tokens": 89,
+            "fertility": 2.34,
+            "tokens_per_byte": 0.365
+          }
+        },
+        "zh-CN": {
+          "qwen2.5": {
+            "tokens": 38,
+            "fertility": 0.76,
+            "tokens_per_byte": 0.239
+          },
+          "gemma2": {
+            "tokens": 50,
+            "fertility": 1.0,
+            "tokens_per_byte": 0.314
+          },
+          "llama3.2": {
+            "tokens": 61,
+            "fertility": 1.22,
+            "tokens_per_byte": 0.384
+          },
+          "smollm2": {
+            "tokens": 136,
+            "fertility": 2.72,
+            "tokens_per_byte": 0.855
+          }
+        }
+      },
+      "ratios": {
+        "qwen2.5": {
+          "pt_over_en": 1.514,
+          "zh_over_en": 1.086,
+          "zh_over_pt": 0.717
+        },
+        "gemma2": {
+          "pt_over_en": 1.486,
+          "zh_over_en": 1.429,
+          "zh_over_pt": 0.962
+        },
+        "llama3.2": {
+          "pt_over_en": 1.6,
+          "zh_over_en": 1.743,
+          "zh_over_pt": 1.089
+        },
+        "smollm2": {
+          "pt_over_en": 2.405,
+          "zh_over_en": 3.676,
+          "zh_over_pt": 1.528
+        }
+      }
+    },
+    {
+      "id": "para_03_academic_systems",
+      "domain": "academic",
+      "texts": {
+        "en-US": "Distributed consensus protocols establish fault-tolerant state machine replication across unreliable networks by enforcing quorum intersections, formal leader election invariants, and monotonic log sequence numbering to guarantee safety despite crash-recovery failures.",
+        "pt-BR": "Protocolos de consenso distribuído estabelecem replicação tolerante a falhas de máquinas de estados em redes não confiáveis, impondo interseções de quórum, invariantes formais de eleição de líder e numeração monotônica de logs para assegurar consistência sob falhas de parada e recuperação.",
+        "zh-CN": "分布式共识协议通过强制实行法定人数交集、形式化领导者选举不变量和单调递增的日志序号，在不可靠网络中建立容错状态机副本，从而在崩溃恢复故障下确保系统安全性。"
+      },
+      "stats": {
+        "en-US": {
+          "word_or_hanzi_count": 30,
+          "byte_count": 269,
+          "char_count": 269
+        },
+        "pt-BR": {
+          "word_or_hanzi_count": 41,
+          "byte_count": 308,
+          "char_count": 290
+        },
+        "zh-CN": {
+          "word_or_hanzi_count": 73,
+          "byte_count": 231,
+          "char_count": 77
+        }
+      },
+      "token_counts": {
+        "en-US": {
+          "qwen2.5": {
+            "tokens": 36,
+            "fertility": 1.2,
+            "tokens_per_byte": 0.134
+          },
+          "gemma2": {
+            "tokens": 36,
+            "fertility": 1.2,
+            "tokens_per_byte": 0.134
+          },
+          "llama3.2": {
+            "tokens": 36,
+            "fertility": 1.2,
+            "tokens_per_byte": 0.134
+          },
+          "smollm2": {
+            "tokens": 38,
+            "fertility": 1.27,
+            "tokens_per_byte": 0.141
+          }
+        },
+        "pt-BR": {
+          "qwen2.5": {
+            "tokens": 58,
+            "fertility": 1.41,
+            "tokens_per_byte": 0.188
+          },
+          "gemma2": {
+            "tokens": 57,
+            "fertility": 1.39,
+            "tokens_per_byte": 0.185
+          },
+          "llama3.2": {
+            "tokens": 61,
+            "fertility": 1.49,
+            "tokens_per_byte": 0.198
+          },
+          "smollm2": {
+            "tokens": 97,
+            "fertility": 2.37,
+            "tokens_per_byte": 0.315
+          }
+        },
+        "zh-CN": {
+          "qwen2.5": {
+            "tokens": 55,
+            "fertility": 0.75,
+            "tokens_per_byte": 0.238
+          },
+          "gemma2": {
+            "tokens": 73,
+            "fertility": 1.0,
+            "tokens_per_byte": 0.316
+          },
+          "llama3.2": {
+            "tokens": 88,
+            "fertility": 1.21,
+            "tokens_per_byte": 0.381
+          },
+          "smollm2": {
+            "tokens": 198,
+            "fertility": 2.71,
+            "tokens_per_byte": 0.857
+          }
+        }
+      },
+      "ratios": {
+        "qwen2.5": {
+          "pt_over_en": 1.611,
+          "zh_over_en": 1.528,
+          "zh_over_pt": 0.948
+        },
+        "gemma2": {
+          "pt_over_en": 1.583,
+          "zh_over_en": 2.028,
+          "zh_over_pt": 1.281
+        },
+        "llama3.2": {
+          "pt_over_en": 1.694,
+          "zh_over_en": 2.444,
+          "zh_over_pt": 1.443
+        },
+        "smollm2": {
+          "pt_over_en": 2.553,
+          "zh_over_en": 5.211,
+          "zh_over_pt": 2.041
+        }
+      }
+    },
+    {
+      "id": "para_04_academic_ai",
+      "domain": "academic",
+      "texts": {
+        "en-US": "Rigorous empirical evaluation of neural language models requires sample independence, pre-registered statistical hypothesis testing, and reporting of effect sizes alongside bootstrap confidence intervals to avert false discoveries driven by unmodeled hardware runtime variance.",
+        "pt-BR": "A avaliação empírica rigorosa de modelos neurais de linguagem exige independência amostral, testes estatísticos de hipóteses pré-registrados e reporte de tamanhos de efeito acompanhados de intervalos de confiança bootstrap para evitar falsas descobertas decorrentes de variância não modelada do hardware hospedeiro.",
+        "zh-CN": "对神经语言模型的严格经验评估需要样本独立性、预先注册的统计假设检验，以及在报告效应量时附带自举置信区间，以避免由于未建模的硬件运行时方差而导致的虚假发现。"
+      },
+      "stats": {
+        "en-US": {
+          "word_or_hanzi_count": 33,
+          "byte_count": 277,
+          "char_count": 277
+        },
+        "pt-BR": {
+          "word_or_hanzi_count": 41,
+          "byte_count": 325,
+          "char_count": 315
+        },
+        "zh-CN": {
+          "word_or_hanzi_count": 73,
+          "byte_count": 231,
+          "char_count": 77
+        }
+      },
+      "token_counts": {
+        "en-US": {
+          "qwen2.5": {
+            "tokens": 39,
+            "fertility": 1.18,
+            "tokens_per_byte": 0.141
+          },
+          "gemma2": {
+            "tokens": 39,
+            "fertility": 1.18,
+            "tokens_per_byte": 0.141
+          },
+          "llama3.2": {
+            "tokens": 39,
+            "fertility": 1.18,
+            "tokens_per_byte": 0.141
+          },
+          "smollm2": {
+            "tokens": 41,
+            "fertility": 1.24,
+            "tokens_per_byte": 0.148
+          }
+        },
+        "pt-BR": {
+          "qwen2.5": {
+            "tokens": 58,
+            "fertility": 1.41,
+            "tokens_per_byte": 0.178
+          },
+          "gemma2": {
+            "tokens": 57,
+            "fertility": 1.39,
+            "tokens_per_byte": 0.175
+          },
+          "llama3.2": {
+            "tokens": 61,
+            "fertility": 1.49,
+            "tokens_per_byte": 0.188
+          },
+          "smollm2": {
+            "tokens": 97,
+            "fertility": 2.37,
+            "tokens_per_byte": 0.298
+          }
+        },
+        "zh-CN": {
+          "qwen2.5": {
+            "tokens": 55,
+            "fertility": 0.75,
+            "tokens_per_byte": 0.238
+          },
+          "gemma2": {
+            "tokens": 73,
+            "fertility": 1.0,
+            "tokens_per_byte": 0.316
+          },
+          "llama3.2": {
+            "tokens": 88,
+            "fertility": 1.21,
+            "tokens_per_byte": 0.381
+          },
+          "smollm2": {
+            "tokens": 198,
+            "fertility": 2.71,
+            "tokens_per_byte": 0.857
+          }
+        }
+      },
+      "ratios": {
+        "qwen2.5": {
+          "pt_over_en": 1.487,
+          "zh_over_en": 1.41,
+          "zh_over_pt": 0.948
+        },
+        "gemma2": {
+          "pt_over_en": 1.462,
+          "zh_over_en": 1.872,
+          "zh_over_pt": 1.281
+        },
+        "llama3.2": {
+          "pt_over_en": 1.564,
+          "zh_over_en": 2.256,
+          "zh_over_pt": 1.443
+        },
+        "smollm2": {
+          "pt_over_en": 2.366,
+          "zh_over_en": 4.829,
+          "zh_over_pt": 2.041
+        }
+      }
+    },
+    {
+      "id": "para_05_technical_linux",
+      "domain": "technical",
+      "texts": {
+        "en-US": "The Linux kernel manages physical page frames using the buddy allocator while resolving virtual memory faults through multi-level page tables, dynamically balancing anonymous dirty pages against the filesystem page cache via writeback background threads.",
+        "pt-BR": "O kernel Linux gerencia molduras de páginas físicas por meio do alocador buddy enquanto resolve falhas de memória virtual via tabelas de páginas multinível, equilibrando dinamicamente páginas anônimas modificadas e o cache de páginas do sistema de arquivos através de threads de escrita em segundo plano.",
+        "zh-CN": "Linux内核使用伙伴分配器管理物理页框，同时通过多级页表解析虚拟内存缺页异常，并通过后台回写线程在匿名脏页与文件系统页缓存之间进行动态平衡。"
+      },
+      "stats": {
+        "en-US": {
+          "word_or_hanzi_count": 34,
+          "byte_count": 254,
+          "char_count": 254
+        },
+        "pt-BR": {
+          "word_or_hanzi_count": 46,
+          "byte_count": 313,
+          "char_count": 304
+        },
+        "zh-CN": {
+          "word_or_hanzi_count": 63,
+          "byte_count": 203,
+          "char_count": 71
+        }
+      },
+      "token_counts": {
+        "en-US": {
+          "qwen2.5": {
+            "tokens": 39,
+            "fertility": 1.15,
+            "tokens_per_byte": 0.154
+          },
+          "gemma2": {
+            "tokens": 39,
+            "fertility": 1.15,
+            "tokens_per_byte": 0.154
+          },
+          "llama3.2": {
+            "tokens": 39,
+            "fertility": 1.15,
+            "tokens_per_byte": 0.154
+          },
+          "smollm2": {
+            "tokens": 41,
+            "fertility": 1.21,
+            "tokens_per_byte": 0.161
+          }
+        },
+        "pt-BR": {
+          "qwen2.5": {
+            "tokens": 64,
+            "fertility": 1.39,
+            "tokens_per_byte": 0.204
+          },
+          "gemma2": {
+            "tokens": 62,
+            "fertility": 1.35,
+            "tokens_per_byte": 0.198
+          },
+          "llama3.2": {
+            "tokens": 67,
+            "fertility": 1.46,
+            "tokens_per_byte": 0.214
+          },
+          "smollm2": {
+            "tokens": 107,
+            "fertility": 2.33,
+            "tokens_per_byte": 0.342
+          }
+        },
+        "zh-CN": {
+          "qwen2.5": {
+            "tokens": 53,
+            "fertility": 0.84,
+            "tokens_per_byte": 0.261
+          },
+          "gemma2": {
+            "tokens": 68,
+            "fertility": 1.08,
+            "tokens_per_byte": 0.335
+          },
+          "llama3.2": {
+            "tokens": 81,
+            "fertility": 1.29,
+            "tokens_per_byte": 0.399
+          },
+          "smollm2": {
+            "tokens": 177,
+            "fertility": 2.81,
+            "tokens_per_byte": 0.872
+          }
+        }
+      },
+      "ratios": {
+        "qwen2.5": {
+          "pt_over_en": 1.641,
+          "zh_over_en": 1.359,
+          "zh_over_pt": 0.828
+        },
+        "gemma2": {
+          "pt_over_en": 1.59,
+          "zh_over_en": 1.744,
+          "zh_over_pt": 1.097
+        },
+        "llama3.2": {
+          "pt_over_en": 1.718,
+          "zh_over_en": 2.077,
+          "zh_over_pt": 1.209
+        },
+        "smollm2": {
+          "pt_over_en": 2.61,
+          "zh_over_en": 4.317,
+          "zh_over_pt": 1.654
+        }
+      }
+    },
+    {
+      "id": "para_06_technical_cuda",
+      "domain": "technical",
+      "texts": {
+        "en-US": "Maximizing compute throughput on NVIDIA graphics processors requires coalescing global memory accesses across warps of thirty-two threads, keeping thread divergence minimal, and pre-loading shared memory tiles to saturate available arithmetic functional units.",
+        "pt-BR": "Maximizar a vazão computacional em processadores gráficos NVIDIA requer a coalescência de acessos à memória global ao longo de warps de trinta e duas threads, mantendo a divergência de execução mínima e pré-carregando blocos de memória compartilhada para saturar as unidades funcionais aritméticas.",
+        "zh-CN": "为了在NVIDIA图形处理器上实现最大计算吞吐量，需要在包含三十二个线程的线程束内合并全局内存访问，保持分支分歧最小化，并预加载共享内存块以使可用的算术功能单元达到饱和。"
+      },
+      "stats": {
+        "en-US": {
+          "word_or_hanzi_count": 32,
+          "byte_count": 260,
+          "char_count": 260
+        },
+        "pt-BR": {
+          "word_or_hanzi_count": 43,
+          "byte_count": 310,
+          "char_count": 298
+        },
+        "zh-CN": {
+          "word_or_hanzi_count": 75,
+          "byte_count": 243,
+          "char_count": 85
+        }
+      },
+      "token_counts": {
+        "en-US": {
+          "qwen2.5": {
+            "tokens": 38,
+            "fertility": 1.19,
+            "tokens_per_byte": 0.146
+          },
+          "gemma2": {
+            "tokens": 38,
+            "fertility": 1.19,
+            "tokens_per_byte": 0.146
+          },
+          "llama3.2": {
+            "tokens": 38,
+            "fertility": 1.19,
+            "tokens_per_byte": 0.146
+          },
+          "smollm2": {
+            "tokens": 41,
+            "fertility": 1.28,
+            "tokens_per_byte": 0.158
+          }
+        },
+        "pt-BR": {
+          "qwen2.5": {
+            "tokens": 61,
+            "fertility": 1.42,
+            "tokens_per_byte": 0.197
+          },
+          "gemma2": {
+            "tokens": 59,
+            "fertility": 1.37,
+            "tokens_per_byte": 0.19
+          },
+          "llama3.2": {
+            "tokens": 64,
+            "fertility": 1.49,
+            "tokens_per_byte": 0.206
+          },
+          "smollm2": {
+            "tokens": 101,
+            "fertility": 2.35,
+            "tokens_per_byte": 0.326
+          }
+        },
+        "zh-CN": {
+          "qwen2.5": {
+            "tokens": 64,
+            "fertility": 0.85,
+            "tokens_per_byte": 0.263
+          },
+          "gemma2": {
+            "tokens": 82,
+            "fertility": 1.09,
+            "tokens_per_byte": 0.337
+          },
+          "llama3.2": {
+            "tokens": 97,
+            "fertility": 1.29,
+            "tokens_per_byte": 0.399
+          },
+          "smollm2": {
+            "tokens": 211,
+            "fertility": 2.81,
+            "tokens_per_byte": 0.868
+          }
+        }
+      },
+      "ratios": {
+        "qwen2.5": {
+          "pt_over_en": 1.605,
+          "zh_over_en": 1.684,
+          "zh_over_pt": 1.049
+        },
+        "gemma2": {
+          "pt_over_en": 1.553,
+          "zh_over_en": 2.158,
+          "zh_over_pt": 1.39
+        },
+        "llama3.2": {
+          "pt_over_en": 1.684,
+          "zh_over_en": 2.553,
+          "zh_over_pt": 1.516
+        },
+        "smollm2": {
+          "pt_over_en": 2.463,
+          "zh_over_en": 5.146,
+          "zh_over_pt": 2.089
+        }
+      }
+    },
+    {
+      "id": "para_07_narrative_city",
+      "domain": "narrative",
+      "texts": {
+        "en-US": "The ancient stone lighthouse cast long amber beams across the choppy harbor waters as fishing vessels returned to the docks under a fading violet twilight, while street vendors began illuminating small lanterns along cobblestone alleys.",
+        "pt-BR": "O antigo farol de pedra lançava longos fachos de luz âmbar sobre as águas agitadas do porto enquanto os barcos pesqueiros retornavam aos cais sob um crepúsculo violeta que se esvaía, enquanto vendedores ambulantes começavam a acender pequenas lanternas pelas ruelas de paralelepípedos.",
+        "zh-CN": "暮色渐浓，紫色的晚霞逐渐隐去，古老的石砌灯塔在波涛起伏的港湾水面上投下修长的琥珀色光柱，渔船纷纷返回码头，街头小贩也开始沿着鹅卵石铺就的小巷点亮一盏盏小灯笼。"
+      },
+      "stats": {
+        "en-US": {
+          "word_or_hanzi_count": 35,
+          "byte_count": 236,
+          "char_count": 236
+        },
+        "pt-BR": {
+          "word_or_hanzi_count": 43,
+          "byte_count": 292,
+          "char_count": 285
+        },
+        "zh-CN": {
+          "word_or_hanzi_count": 74,
+          "byte_count": 237,
+          "char_count": 79
+        }
+      },
+      "token_counts": {
+        "en-US": {
+          "qwen2.5": {
+            "tokens": 39,
+            "fertility": 1.11,
+            "tokens_per_byte": 0.165
+          },
+          "gemma2": {
+            "tokens": 39,
+            "fertility": 1.11,
+            "tokens_per_byte": 0.165
+          },
+          "llama3.2": {
+            "tokens": 39,
+            "fertility": 1.11,
+            "tokens_per_byte": 0.165
+          },
+          "smollm2": {
+            "tokens": 41,
+            "fertility": 1.17,
+            "tokens_per_byte": 0.174
+          }
+        },
+        "pt-BR": {
+          "qwen2.5": {
+            "tokens": 60,
+            "fertility": 1.4,
+            "tokens_per_byte": 0.205
+          },
+          "gemma2": {
+            "tokens": 58,
+            "fertility": 1.35,
+            "tokens_per_byte": 0.199
+          },
+          "llama3.2": {
+            "tokens": 63,
+            "fertility": 1.47,
+            "tokens_per_byte": 0.216
+          },
+          "smollm2": {
+            "tokens": 100,
+            "fertility": 2.33,
+            "tokens_per_byte": 0.342
+          }
+        },
+        "zh-CN": {
+          "qwen2.5": {
+            "tokens": 57,
+            "fertility": 0.77,
+            "tokens_per_byte": 0.241
+          },
+          "gemma2": {
+            "tokens": 75,
+            "fertility": 1.01,
+            "tokens_per_byte": 0.316
+          },
+          "llama3.2": {
+            "tokens": 91,
+            "fertility": 1.23,
+            "tokens_per_byte": 0.384
+          },
+          "smollm2": {
+            "tokens": 202,
+            "fertility": 2.73,
+            "tokens_per_byte": 0.852
+          }
+        }
+      },
+      "ratios": {
+        "qwen2.5": {
+          "pt_over_en": 1.538,
+          "zh_over_en": 1.462,
+          "zh_over_pt": 0.95
+        },
+        "gemma2": {
+          "pt_over_en": 1.487,
+          "zh_over_en": 1.923,
+          "zh_over_pt": 1.293
+        },
+        "llama3.2": {
+          "pt_over_en": 1.615,
+          "zh_over_en": 2.333,
+          "zh_over_pt": 1.444
+        },
+        "smollm2": {
+          "pt_over_en": 2.439,
+          "zh_over_en": 4.927,
+          "zh_over_pt": 2.02
+        }
+      }
+    },
+    {
+      "id": "para_08_narrative_storm",
+      "domain": "narrative",
+      "texts": {
+        "en-US": "Sudden cold gusts swept across the exposed mountain ridge, whipping dense gray mist between rugged granite spires moments before heavy rain and rolling thunder compelled the mountaineers to seek shelter inside a shallow cave.",
+        "pt-BR": "Rajadas repentinas de vento gelado varreram a crista exposta da montanha, fustigando uma névoa cinzenta e densa entre agulhas de granito escarpadas instantes antes de chuvas torrenciais e trovões estrondosos forçarem os montanhistas a buscar abrigo no interior de uma caverna rasa.",
+        "zh-CN": "凛冽的冷风骤然席卷暴露的山脊，在陡峭的花岗岩尖峰之间撕扯着浓重灰暗的雾霭，片刻之后，暴雨倾盆，雷声隆隆，迫使登山队员们不得不躲进一处浅岩洞中暂避风雨。"
+      },
+      "stats": {
+        "en-US": {
+          "word_or_hanzi_count": 34,
+          "byte_count": 225,
+          "char_count": 225
+        },
+        "pt-BR": {
+          "word_or_hanzi_count": 42,
+          "byte_count": 284,
+          "char_count": 281
+        },
+        "zh-CN": {
+          "word_or_hanzi_count": 69,
+          "byte_count": 225,
+          "char_count": 75
+        }
+      },
+      "token_counts": {
+        "en-US": {
+          "qwen2.5": {
+            "tokens": 38,
+            "fertility": 1.12,
+            "tokens_per_byte": 0.169
+          },
+          "gemma2": {
+            "tokens": 38,
+            "fertility": 1.12,
+            "tokens_per_byte": 0.169
+          },
+          "llama3.2": {
+            "tokens": 38,
+            "fertility": 1.12,
+            "tokens_per_byte": 0.169
+          },
+          "smollm2": {
+            "tokens": 40,
+            "fertility": 1.18,
+            "tokens_per_byte": 0.178
+          }
+        },
+        "pt-BR": {
+          "qwen2.5": {
+            "tokens": 58,
+            "fertility": 1.38,
+            "tokens_per_byte": 0.204
+          },
+          "gemma2": {
+            "tokens": 57,
+            "fertility": 1.36,
+            "tokens_per_byte": 0.201
+          },
+          "llama3.2": {
+            "tokens": 61,
+            "fertility": 1.45,
+            "tokens_per_byte": 0.215
+          },
+          "smollm2": {
+            "tokens": 98,
+            "fertility": 2.33,
+            "tokens_per_byte": 0.345
+          }
+        },
+        "zh-CN": {
+          "qwen2.5": {
+            "tokens": 55,
+            "fertility": 0.8,
+            "tokens_per_byte": 0.244
+          },
+          "gemma2": {
+            "tokens": 71,
+            "fertility": 1.03,
+            "tokens_per_byte": 0.316
+          },
+          "llama3.2": {
+            "tokens": 86,
+            "fertility": 1.25,
+            "tokens_per_byte": 0.382
+          },
+          "smollm2": {
+            "tokens": 190,
+            "fertility": 2.75,
+            "tokens_per_byte": 0.844
+          }
+        }
+      },
+      "ratios": {
+        "qwen2.5": {
+          "pt_over_en": 1.526,
+          "zh_over_en": 1.447,
+          "zh_over_pt": 0.948
+        },
+        "gemma2": {
+          "pt_over_en": 1.5,
+          "zh_over_en": 1.868,
+          "zh_over_pt": 1.246
+        },
+        "llama3.2": {
+          "pt_over_en": 1.605,
+          "zh_over_en": 2.263,
+          "zh_over_pt": 1.41
+        },
+        "smollm2": {
+          "pt_over_en": 2.45,
+          "zh_over_en": 4.75,
+          "zh_over_pt": 1.939
+        }
+      }
+    },
+    {
+      "id": "para_09_questions_geopolitics",
+      "domain": "questions",
+      "texts": {
+        "en-US": "What are the primary geopolitical and environmental factors currently influencing commercial maritime shipping routes through the Arctic Ocean and the Suez Canal?",
+        "pt-BR": "Quais são os principais fatores geopolíticos e ambientais que influenciam atualmente as rotas de transporte marítimo comercial através do Oceano Ártico e do Canal de Suez?",
+        "zh-CN": "当前影响穿越北冰洋和苏伊士运河的商业海上航运路线的主要地缘政治和环境因素有哪些？"
+      },
+      "stats": {
+        "en-US": {
+          "word_or_hanzi_count": 22,
+          "byte_count": 162,
+          "char_count": 162
+        },
+        "pt-BR": {
+          "word_or_hanzi_count": 26,
+          "byte_count": 176,
+          "char_count": 171
+        },
+        "zh-CN": {
+          "word_or_hanzi_count": 39,
+          "byte_count": 120,
+          "char_count": 40
+        }
+      },
+      "token_counts": {
+        "en-US": {
+          "qwen2.5": {
+            "tokens": 24,
+            "fertility": 1.09,
+            "tokens_per_byte": 0.148
+          },
+          "gemma2": {
+            "tokens": 24,
+            "fertility": 1.09,
+            "tokens_per_byte": 0.148
+          },
+          "llama3.2": {
+            "tokens": 24,
+            "fertility": 1.09,
+            "tokens_per_byte": 0.148
+          },
+          "smollm2": {
+            "tokens": 26,
+            "fertility": 1.18,
+            "tokens_per_byte": 0.16
+          }
+        },
+        "pt-BR": {
+          "qwen2.5": {
+            "tokens": 36,
+            "fertility": 1.38,
+            "tokens_per_byte": 0.205
+          },
+          "gemma2": {
+            "tokens": 35,
+            "fertility": 1.35,
+            "tokens_per_byte": 0.199
+          },
+          "llama3.2": {
+            "tokens": 38,
+            "fertility": 1.46,
+            "tokens_per_byte": 0.216
+          },
+          "smollm2": {
+            "tokens": 60,
+            "fertility": 2.31,
+            "tokens_per_byte": 0.341
+          }
+        },
+        "zh-CN": {
+          "qwen2.5": {
+            "tokens": 28,
+            "fertility": 0.72,
+            "tokens_per_byte": 0.233
+          },
+          "gemma2": {
+            "tokens": 38,
+            "fertility": 0.97,
+            "tokens_per_byte": 0.317
+          },
+          "llama3.2": {
+            "tokens": 46,
+            "fertility": 1.18,
+            "tokens_per_byte": 0.383
+          },
+          "smollm2": {
+            "tokens": 105,
+            "fertility": 2.69,
+            "tokens_per_byte": 0.875
+          }
+        }
+      },
+      "ratios": {
+        "qwen2.5": {
+          "pt_over_en": 1.5,
+          "zh_over_en": 1.167,
+          "zh_over_pt": 0.778
+        },
+        "gemma2": {
+          "pt_over_en": 1.458,
+          "zh_over_en": 1.583,
+          "zh_over_pt": 1.086
+        },
+        "llama3.2": {
+          "pt_over_en": 1.583,
+          "zh_over_en": 1.917,
+          "zh_over_pt": 1.211
+        },
+        "smollm2": {
+          "pt_over_en": 2.308,
+          "zh_over_en": 4.038,
+          "zh_over_pt": 1.75
+        }
+      }
+    },
+    {
+      "id": "para_10_questions_history",
+      "domain": "questions",
+      "texts": {
+        "en-US": "How did institutional capital accumulation and domestic resource endowments shape the divergent paths of early industrial mechanization between Britain and Japan in the nineteenth century?",
+        "pt-BR": "Como a acumulação institucional de capital e as dotações de recursos naturais domésticos moldaram os caminhos divergentes da mecanização industrial inicial entre a Grã-Bretanha e o Japão no século XIX?",
+        "zh-CN": "在十九世纪，制度性资本积累与国内自然资源禀赋是如何塑造英国与日本早期工业机械化发展的不同路径的？"
+      },
+      "stats": {
+        "en-US": {
+          "word_or_hanzi_count": 25,
+          "byte_count": 188,
+          "char_count": 188
+        },
+        "pt-BR": {
+          "word_or_hanzi_count": 30,
+          "byte_count": 211,
+          "char_count": 201
+        },
+        "zh-CN": {
+          "word_or_hanzi_count": 46,
+          "byte_count": 144,
+          "char_count": 48
+        }
+      },
+      "token_counts": {
+        "en-US": {
+          "qwen2.5": {
+            "tokens": 27,
+            "fertility": 1.08,
+            "tokens_per_byte": 0.144
+          },
+          "gemma2": {
+            "tokens": 27,
+            "fertility": 1.08,
+            "tokens_per_byte": 0.144
+          },
+          "llama3.2": {
+            "tokens": 27,
+            "fertility": 1.08,
+            "tokens_per_byte": 0.144
+          },
+          "smollm2": {
+            "tokens": 29,
+            "fertility": 1.16,
+            "tokens_per_byte": 0.154
+          }
+        },
+        "pt-BR": {
+          "qwen2.5": {
+            "tokens": 42,
+            "fertility": 1.4,
+            "tokens_per_byte": 0.199
+          },
+          "gemma2": {
+            "tokens": 41,
+            "fertility": 1.37,
+            "tokens_per_byte": 0.194
+          },
+          "llama3.2": {
+            "tokens": 44,
+            "fertility": 1.47,
+            "tokens_per_byte": 0.209
+          },
+          "smollm2": {
+            "tokens": 71,
+            "fertility": 2.37,
+            "tokens_per_byte": 0.336
+          }
+        },
+        "zh-CN": {
+          "qwen2.5": {
+            "tokens": 34,
+            "fertility": 0.74,
+            "tokens_per_byte": 0.236
+          },
+          "gemma2": {
+            "tokens": 45,
+            "fertility": 0.98,
+            "tokens_per_byte": 0.312
+          },
+          "llama3.2": {
+            "tokens": 55,
+            "fertility": 1.2,
+            "tokens_per_byte": 0.382
+          },
+          "smollm2": {
+            "tokens": 124,
+            "fertility": 2.7,
+            "tokens_per_byte": 0.861
+          }
+        }
+      },
+      "ratios": {
+        "qwen2.5": {
+          "pt_over_en": 1.556,
+          "zh_over_en": 1.259,
+          "zh_over_pt": 0.81
+        },
+        "gemma2": {
+          "pt_over_en": 1.519,
+          "zh_over_en": 1.667,
+          "zh_over_pt": 1.098
+        },
+        "llama3.2": {
+          "pt_over_en": 1.63,
+          "zh_over_en": 2.037,
+          "zh_over_pt": 1.25
+        },
+        "smollm2": {
+          "pt_over_en": 2.448,
+          "zh_over_en": 4.276,
+          "zh_over_pt": 1.746
+        }
+      }
+    },
+    {
+      "id": "para_11_instructions_docker",
+      "domain": "instructions",
+      "texts": {
+        "en-US": "Deploy the web service using an unprivileged user namespace, mount the root filesystem read-only with temporary scratch spaces in memory, drop all unnecessary Linux capabilities, and enforce a strict seccomp profile.",
+        "pt-BR": "Implante o serviço web utilizando um namespace de usuário sem privilégios, monte o sistema de arquivos raiz em modo somente leitura com diretórios temporários na memória, descarte todas as capacidades Linux desnecessárias e imponha um perfil seccomp rigoroso.",
+        "zh-CN": "使用非特权用户命名空间部署Web服务，以只读方式挂载根文件系统并将临时工作区保留在内存中，丢弃所有不必要的Linux内核权能，并强制执行严格的seccomp系统调用安全配置。"
+      },
+      "stats": {
+        "en-US": {
+          "word_or_hanzi_count": 31,
+          "byte_count": 216,
+          "char_count": 216
+        },
+        "pt-BR": {
+          "word_or_hanzi_count": 38,
+          "byte_count": 266,
+          "char_count": 259
+        },
+        "zh-CN": {
+          "word_or_hanzi_count": 68,
+          "byte_count": 231,
+          "char_count": 87
+        }
+      },
+      "token_counts": {
+        "en-US": {
+          "qwen2.5": {
+            "tokens": 37,
+            "fertility": 1.19,
+            "tokens_per_byte": 0.171
+          },
+          "gemma2": {
+            "tokens": 37,
+            "fertility": 1.19,
+            "tokens_per_byte": 0.171
+          },
+          "llama3.2": {
+            "tokens": 37,
+            "fertility": 1.19,
+            "tokens_per_byte": 0.171
+          },
+          "smollm2": {
+            "tokens": 39,
+            "fertility": 1.26,
+            "tokens_per_byte": 0.181
+          }
+        },
+        "pt-BR": {
+          "qwen2.5": {
+            "tokens": 54,
+            "fertility": 1.42,
+            "tokens_per_byte": 0.203
+          },
+          "gemma2": {
+            "tokens": 53,
+            "fertility": 1.39,
+            "tokens_per_byte": 0.199
+          },
+          "llama3.2": {
+            "tokens": 57,
+            "fertility": 1.5,
+            "tokens_per_byte": 0.214
+          },
+          "smollm2": {
+            "tokens": 90,
+            "fertility": 2.37,
+            "tokens_per_byte": 0.338
+          }
+        },
+        "zh-CN": {
+          "qwen2.5": {
+            "tokens": 68,
+            "fertility": 1.0,
+            "tokens_per_byte": 0.294
+          },
+          "gemma2": {
+            "tokens": 85,
+            "fertility": 1.25,
+            "tokens_per_byte": 0.368
+          },
+          "llama3.2": {
+            "tokens": 99,
+            "fertility": 1.46,
+            "tokens_per_byte": 0.429
+          },
+          "smollm2": {
+            "tokens": 203,
+            "fertility": 2.99,
+            "tokens_per_byte": 0.879
+          }
+        }
+      },
+      "ratios": {
+        "qwen2.5": {
+          "pt_over_en": 1.459,
+          "zh_over_en": 1.838,
+          "zh_over_pt": 1.259
+        },
+        "gemma2": {
+          "pt_over_en": 1.432,
+          "zh_over_en": 2.297,
+          "zh_over_pt": 1.604
+        },
+        "llama3.2": {
+          "pt_over_en": 1.541,
+          "zh_over_en": 2.676,
+          "zh_over_pt": 1.737
+        },
+        "smollm2": {
+          "pt_over_en": 2.308,
+          "zh_over_en": 5.205,
+          "zh_over_pt": 2.256
+        }
+      }
+    },
+    {
+      "id": "para_12_instructions_git",
+      "domain": "instructions",
+      "texts": {
+        "en-US": "Perform an interactive rebase against the upstream main branch, squash trivial fixup commits into atomic functional units, preserve descriptive conventional commit messages, and verify that all unit test suites pass before pushing.",
+        "pt-BR": "Execute um rebase interativo contra o ramo principal upstream, combine commits triviais de correção em unidades funcionais atômicas, preserve mensagens descritivas no padrão conventional commits e verifique se todas as baterias de testes unitários passam antes de realizar o envio.",
+        "zh-CN": "针对上游主分支执行交互式变基操作，将细碎的修补提交合并为原子的功能单元，保留符合常规提交规范的描述性提交信息，并在推送之前验证所有单元测试套件均已顺利通过。"
+      },
+      "stats": {
+        "en-US": {
+          "word_or_hanzi_count": 32,
+          "byte_count": 231,
+          "char_count": 231
+        },
+        "pt-BR": {
+          "word_or_hanzi_count": 40,
+          "byte_count": 286,
+          "char_count": 281
+        },
+        "zh-CN": {
+          "word_or_hanzi_count": 74,
+          "byte_count": 234,
+          "char_count": 78
+        }
+      },
+      "token_counts": {
+        "en-US": {
+          "qwen2.5": {
+            "tokens": 38,
+            "fertility": 1.19,
+            "tokens_per_byte": 0.165
+          },
+          "gemma2": {
+            "tokens": 38,
+            "fertility": 1.19,
+            "tokens_per_byte": 0.165
+          },
+          "llama3.2": {
+            "tokens": 38,
+            "fertility": 1.19,
+            "tokens_per_byte": 0.165
+          },
+          "smollm2": {
+            "tokens": 40,
+            "fertility": 1.25,
+            "tokens_per_byte": 0.173
+          }
+        },
+        "pt-BR": {
+          "qwen2.5": {
+            "tokens": 57,
+            "fertility": 1.43,
+            "tokens_per_byte": 0.199
+          },
+          "gemma2": {
+            "tokens": 55,
+            "fertility": 1.38,
+            "tokens_per_byte": 0.192
+          },
+          "llama3.2": {
+            "tokens": 60,
+            "fertility": 1.5,
+            "tokens_per_byte": 0.21
+          },
+          "smollm2": {
+            "tokens": 94,
+            "fertility": 2.35,
+            "tokens_per_byte": 0.329
+          }
+        },
+        "zh-CN": {
+          "qwen2.5": {
+            "tokens": 56,
+            "fertility": 0.76,
+            "tokens_per_byte": 0.239
+          },
+          "gemma2": {
+            "tokens": 74,
+            "fertility": 1.0,
+            "tokens_per_byte": 0.316
+          },
+          "llama3.2": {
+            "tokens": 90,
+            "fertility": 1.22,
+            "tokens_per_byte": 0.385
+          },
+          "smollm2": {
+            "tokens": 201,
+            "fertility": 2.72,
+            "tokens_per_byte": 0.859
+          }
+        }
+      },
+      "ratios": {
+        "qwen2.5": {
+          "pt_over_en": 1.5,
+          "zh_over_en": 1.474,
+          "zh_over_pt": 0.982
+        },
+        "gemma2": {
+          "pt_over_en": 1.447,
+          "zh_over_en": 1.947,
+          "zh_over_pt": 1.345
+        },
+        "llama3.2": {
+          "pt_over_en": 1.579,
+          "zh_over_en": 2.368,
+          "zh_over_pt": 1.5
+        },
+        "smollm2": {
+          "pt_over_en": 2.35,
+          "zh_over_en": 5.025,
+          "zh_over_pt": 2.138
+        }
+      }
+    }
+  ]
+}

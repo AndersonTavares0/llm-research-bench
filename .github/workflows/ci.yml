@@ -2,40 +2,63 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, "fix/**", "feat/**", "chore/**" ]
   pull_request:
     branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e .
           pip install pytest
+
       - name: Run unit tests
         run: |
           python -m pytest tests/
 
   compile-reports:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup Tectonic LaTeX engine
-        uses: Willem-J-an/setup-tectonic@v1
+        uses: wtfjoke/setup-tectonic@v4
+        with:
+          tectonic-version: "latest"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Compile Portuguese Scientific Report
         run: |
           tectonic reports/pt-BR/report_pt-BR.tex --outdir reports/pt-BR
+
       - name: Compile English Scientific Report
         run: |
           tectonic reports/en-US/report_en-US.tex --outdir reports/en-US
+
       - name: Upload PDF Artifacts
         uses: actions/upload-artifact@v4
         with:

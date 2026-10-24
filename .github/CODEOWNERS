@@ -1,0 +1,5 @@
+# Code Owners for llm-research-bench
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Repository maintainer owns all files by default
+* @AndersonTavares0

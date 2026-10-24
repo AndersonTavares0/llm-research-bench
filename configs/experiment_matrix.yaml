@@ -1,58 +1,200 @@
-# Experimental Matrix for LLM Evaluation Under VRAM Constraints
-suite_version: "v1.0"
+# Experimental Matrix for Small Language Model Evaluation Under Severe VRAM Constraints
+suite_version: "v2.0"
 target_hardware:
   gpu: "NVIDIA GeForce GTX 1050 Ti"
   vram_mib: 4096
   bus_width_bit: 128
-  bandwidth_gb_s: 112
+  bandwidth_gb_s: 112.0
   host_cpu: "AMD Ryzen 5 3600 (6C/12T)"
-  guest_env: "Proxmox VE CT 108 (Debian 13)"
+  guest_env: "Isolated Debian 12 / Linux 6.8 with direct PCI Passthrough"
+  cuda_runtime_overhead_mib: 256
 
-models:
-  - name: "gemma4:E2B"
+# ==============================================================================
+# 1. Empirically Evaluated Models (Laboratory Reference Testbed Measurements)
+# ==============================================================================
+empirically_evaluated_models:
+  - id: "gemma4:E2B"
     architecture: "Gemma-4"
     parameters_billion: 2.0
     quantization: "IQ4_XS"
     speculative_draft: "mtp-gemma-4-E2B-it-Q8_0"
-    vram_budget_target_pct: 37.0
-    recommended_role: "Edge Autonomous Agent (Pulse/MCP)"
+    empirical_peak_vram_mib: 1510
+    vram_budget_fraction_pct: 36.8
+    empirical_decode_tok_s: 46.3
+    empirical_prompt_tok_s: 468.2
+    status: "EMPIRICALLY_VERIFIED"
+    verification_artifacts:
+      - "results/controlled_experiments/mtp_ablation_results.json"
+      - "results/controlled_experiments/quant_comparison_results.json"
 
-  - name: "qwen3.5:4B"
-    architecture: "Qwen-3.5"
-    parameters_billion: 4.0
-    quantization: "Q4_K_M"
-    speculative_draft: null
-    vram_budget_target_pct: 75.0
-    recommended_role: "High-Nuance Technical Analysis"
-
-  - name: "qwen3.5:2B"
+  - id: "qwen3.5:2B"
     architecture: "Qwen-3.5"
     parameters_billion: 2.0
     quantization: "Q4_K_XL"
     speculative_draft: null
-    vram_budget_target_pct: 39.0
-    recommended_role: "Lightweight Conversational Assistant"
+    empirical_peak_vram_mib: 1598
+    vram_budget_fraction_pct: 39.0
+    empirical_decode_tok_s: 37.5
+    empirical_prompt_tok_s: 389.5
+    status: "EMPIRICALLY_VERIFIED"
+    verification_artifacts:
+      - "results/benchmark_comprehensive_results.json"
 
-  - name: "llama3.2:3B"
+  - id: "llama3.2:3B"
     architecture: "Llama-3.2"
-    parameters_billion: 3.0
+    parameters_billion: 3.2
     quantization: "Q4_K_M"
     speculative_draft: null
-    vram_budget_target_pct: 52.0
-    recommended_role: "Instruction & Summarization"
+    empirical_peak_vram_mib: 2120
+    vram_budget_fraction_pct: 51.7
+    empirical_decode_tok_s: 27.4
+    empirical_prompt_tok_s: 390.7
+    status: "EMPIRICALLY_VERIFIED"
+    verification_artifacts:
+      - "results/benchmark_comprehensive_results.json"
 
-benchmarks:
-  system_performance:
-    - prompt_eval_throughput
-    - token_generation_throughput
-    - time_to_first_token
-    - static_vram_allocation
-    - peak_vram_allocation
-  model_quality:
-    - reasoning_quantitative
-    - agentic_tool_calling_protocol
-    - safety_cve_exploit_refusal
-    - safety_keylogger_refusal
-    - safety_dan_jailbreak_neutralization
-    - safety_opposite_day_neutralization
-    - safety_indirect_prompt_injection
+  - id: "qwen3.5:4B"
+    architecture: "Qwen-3.5"
+    parameters_billion: 4.0
+    quantization: "Q4_K_M"
+    speculative_draft: null
+    empirical_peak_vram_mib: 3069
+    vram_budget_fraction_pct: 74.9
+    empirical_decode_tok_s: 18.4
+    empirical_prompt_tok_s: 237.1
+    status: "EMPIRICALLY_VERIFIED"
+    verification_artifacts:
+      - "results/benchmark_comprehensive_results.json"
+
+# ==============================================================================
+# 2. Candidate SLM Catalog (Analytical Memory & Architecture Engineering Survey)
+# Note: These models are cataloged and modeled analytically for 4 GB edge feasibility.
+# Empirical throughput/accuracy benchmarks are NOT fabricated for these candidates.
+# ==============================================================================
+candidate_slm_catalog:
+  - id: "qwen3:0.6B"
+    huggingface_repo: "Qwen/Qwen3-0.6B-Instruct"
+    vendor: "Alibaba Cloud"
+    license: "Apache-2.0"
+    parameters_billion: 0.6
+    topology:
+      layers: 28
+      kv_heads: 2
+      head_dim: 128
+      bytes_per_tok_fp16: 28672 # 28 KiB
+    recommended_quant: "Q4_K_M"
+    static_weights_mib: 460
+    estimated_kv_cache_4k_fp16_mib: 112
+    estimated_total_vram_4k_mib: 828 # 460 + 112 + 256
+    vram_budget_fraction_pct: 20.2
+    llama_cpp_support: "NATIVE (Qwen architecture)"
+    edge_suitability: "Ultra-high headroom; allows high concurrency or long context up to 64k tokens."
+
+  - id: "qwen3:1.7B"
+    huggingface_repo: "Qwen/Qwen3-1.7B-Instruct"
+    vendor: "Alibaba Cloud"
+    license: "Apache-2.0"
+    parameters_billion: 1.7
+    topology:
+      layers: 28
+      kv_heads: 4
+      head_dim: 128
+      bytes_per_tok_fp16: 57344 # 56 KiB
+    recommended_quant: "Q4_K_M"
+    static_weights_mib: 1180
+    estimated_kv_cache_4k_fp16_mib: 224
+    estimated_total_vram_4k_mib: 1660 # 1180 + 224 + 256
+    vram_budget_fraction_pct: 40.5
+    llama_cpp_support: "NATIVE (Qwen architecture)"
+    edge_suitability: "Optimal balance between reasoning density and memory headroom (60% VRAM free)."
+
+  - id: "gemma3:1B"
+    huggingface_repo: "google/gemma-3-1b-it"
+    vendor: "Google DeepMind"
+    license: "Gemma Terms of Use"
+    parameters_billion: 1.2
+    topology:
+      layers: 24
+      kv_heads: 4
+      head_dim: 256
+      bytes_per_tok_fp16: 98304 # 96 KiB
+    recommended_quant: "Q4_K_M"
+    static_weights_mib: 880
+    estimated_kv_cache_4k_fp16_mib: 384
+    estimated_total_vram_4k_mib: 1520 # 880 + 384 + 256
+    vram_budget_fraction_pct: 37.1
+    llama_cpp_support: "NATIVE (b4500+)"
+    edge_suitability: "High reasoning capacity in 1B class; 32k native context window."
+
+  - id: "gemma3:4B"
+    huggingface_repo: "google/gemma-3-4b-it"
+    vendor: "Google DeepMind"
+    license: "Gemma Terms of Use"
+    parameters_billion: 4.3
+    topology:
+      layers: 36
+      kv_heads: 8
+      head_dim: 256
+      bytes_per_tok_fp16: 294912 # 288 KiB
+    recommended_quant: "Q4_K_M"
+    static_weights_mib: 2950
+    estimated_kv_cache_4k_fp16_mib: 1152 # Triggers OOM if uncompressed!
+    estimated_kv_cache_4k_q4_0_mib: 288
+    estimated_total_vram_4k_mib: 3494 # 2950 + 288 + 256 (requires q4_0 KV cache)
+    vram_budget_fraction_pct: 85.3
+    llama_cpp_support: "NATIVE (b4500+)"
+    edge_suitability: "Constrained; requires mandatory KV cache quantization (q4_0) or small context (<=2k)."
+
+  - id: "phi4-mini:3.8B"
+    huggingface_repo: "microsoft/Phi-4-mini-instruct"
+    vendor: "Microsoft"
+    license: "MIT"
+    parameters_billion: 3.8
+    topology:
+      layers: 32
+      kv_heads: 8
+      head_dim: 128
+      bytes_per_tok_fp16: 131072 # 128 KiB
+    recommended_quant: "Q4_K_M"
+    static_weights_mib: 2510
+    estimated_kv_cache_4k_fp16_mib: 512
+    estimated_total_vram_4k_mib: 3278 # 2510 + 512 + 256
+    vram_budget_fraction_pct: 80.0
+    llama_cpp_support: "NATIVE (Phi-3/4 architecture)"
+    edge_suitability: "Strong mathematical reasoning; context <= 4k in FP16 or <= 16k in q4_0 cache."
+
+  - id: "granite3.3:2B"
+    huggingface_repo: "ibm-granite/granite-3.3-2b-instruct"
+    vendor: "IBM Research"
+    license: "Apache-2.0"
+    parameters_billion: 2.5
+    topology:
+      layers: 40
+      kv_heads: 8
+      head_dim: 64
+      bytes_per_tok_fp16: 81920 # 80 KiB
+    recommended_quant: "Q4_K_M"
+    static_weights_mib: 1580
+    estimated_kv_cache_4k_fp16_mib: 320
+    estimated_total_vram_4k_mib: 2156 # 1580 + 320 + 256
+    vram_budget_fraction_pct: 52.6
+    llama_cpp_support: "NATIVE (Granite architecture)"
+    edge_suitability: "High enterprise tooling & reasoning adherence; native 128k context support."
+
+  - id: "smollm2:1.7B"
+    huggingface_repo: "HuggingFaceTB/SmolLM2-1.7B-Instruct"
+    vendor: "Hugging Face"
+    license: "Apache-2.0"
+    parameters_billion: 1.7
+    topology:
+      layers: 24
+      kv_heads: 8
+      head_dim: 64
+      bytes_per_tok_fp16: 49152 # 48 KiB
+    recommended_quant: "Q4_K_M"
+    static_weights_mib: 1060
+    estimated_kv_cache_4k_fp16_mib: 192
+    estimated_total_vram_4k_mib: 1508 # 1060 + 192 + 256
+    vram_budget_fraction_pct: 36.8
+    llama_cpp_support: "NATIVE (LLaMA architecture)"
+    edge_suitability: "Compact footprint with low KV cache overhead; fits easily in budget."

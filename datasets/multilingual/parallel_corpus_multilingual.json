@@ -1,0 +1,98 @@
+[
+  {
+    "id": "para_01_everyday_travel",
+    "domain": "everyday",
+    "title": "Regional Train Travel Coordination",
+    "en-US": "I need to confirm whether the express train departing from the central station at half past eight stops at the international airport, and if tickets can be purchased directly on the mobile application without printing paper passes.",
+    "pt-BR": "Preciso confirmar se o trem expresso que parte da estação central às oito e meia faz parada no aeroporto internacional, e se os bilhetes podem ser adquiridos diretamente pelo aplicativo móvel sem necessidade de imprimir passagens em papel.",
+    "zh-CN": "我需要确认八点半从中央车站出发的特快列车是否在国际机场停靠，以及车票是否可以直接在手机应用程序上购买而无需打印纸质车票。"
+  },
+  {
+    "id": "para_02_everyday_weather",
+    "domain": "everyday",
+    "title": "Daily Weather Forecast and Schedule Adjustments",
+    "en-US": "The local meteorological bureau predicts heavy showers and strong winds late this afternoon, so our team decided to move the scheduled outdoor conference into the main auditorium to avoid unexpected interruptions.",
+    "pt-BR": "O instituto meteorológico local prevê pancadas de chuva torrencial e ventos fortes no fim da tarde, de modo que nossa equipe decidiu transferir a conferência ao ar livre para o auditório principal a fim de evitar interrupções inesperadas.",
+    "zh-CN": "当地气象局预测傍晚将有强阵雨和大风，因此我们的团队决定将原定在室外举行的会议转移到主礼堂，以避免意外中断。"
+  },
+  {
+    "id": "para_03_academic_systems",
+    "domain": "academic",
+    "title": "Distributed Consensus Engineering",
+    "en-US": "Distributed consensus protocols establish fault-tolerant state machine replication across unreliable networks by enforcing quorum intersections, formal leader election invariants, and monotonic log sequence numbering to guarantee safety despite crash-recovery failures.",
+    "pt-BR": "Protocolos de consenso distribuído estabelecem replicação tolerante a falhas de máquinas de estados em redes não confiáveis, impondo interseções de quórum, invariantes formais de eleição de líder e numeração monotônica de logs para assegurar consistência sob falhas de parada e recuperação.",
+    "zh-CN": "分布式共识协议通过强制实行法定人数交集、形式化领导者选举不变量和单调递增的日志序号，在不可靠网络中建立容错状态机副本，从而在崩溃恢复故障下确保系统安全性。"
+  },
+  {
+    "id": "para_04_academic_ai",
+    "domain": "academic",
+    "title": "Empirical Neural Attention Evaluation",
+    "en-US": "Rigorous empirical evaluation of neural language models requires sample independence, pre-registered statistical hypothesis testing, and reporting of effect sizes alongside bootstrap confidence intervals to avert false discoveries driven by unmodeled hardware runtime variance.",
+    "pt-BR": "A avaliação empírica rigorosa de modelos neurais de linguagem exige independência amostral, testes estatísticos de hipóteses pré-registrados e reporte de tamanhos de efeito acompanhados de intervalos de confiança bootstrap para evitar falsas descobertas decorrentes de variância não modelada do hardware hospedeiro.",
+    "zh-CN": "对神经语言模型的严格经验评估需要样本独立性、预先注册的统计假设检验，以及在报告效应量时附带自举置信区间，以避免由于未建模的硬件运行时方差而导致的虚假发现。"
+  },
+  {
+    "id": "para_05_technical_linux",
+    "domain": "technical",
+    "title": "Linux Virtual Memory and Buffer Cache",
+    "en-US": "The Linux kernel manages physical page frames using the buddy allocator while resolving virtual memory faults through multi-level page tables, dynamically balancing anonymous dirty pages against the filesystem page cache via writeback background threads.",
+    "pt-BR": "O kernel Linux gerencia molduras de páginas físicas por meio do alocador buddy enquanto resolve falhas de memória virtual via tabelas de páginas multinível, equilibrando dinamicamente páginas anônimas modificadas e o cache de páginas do sistema de arquivos através de threads de escrita em segundo plano.",
+    "zh-CN": "Linux内核使用伙伴分配器管理物理页框，同时通过多级页表解析虚拟内存缺页异常，并通过后台回写线程在匿名脏页与文件系统页缓存之间进行动态平衡。"
+  },
+  {
+    "id": "para_06_technical_cuda",
+    "domain": "technical",
+    "title": "CUDA Kernel Memory Coalescing",
+    "en-US": "Maximizing compute throughput on NVIDIA graphics processors requires coalescing global memory accesses across warps of thirty-two threads, keeping thread divergence minimal, and pre-loading shared memory tiles to saturate available arithmetic functional units.",
+    "pt-BR": "Maximizar a vazão computacional em processadores gráficos NVIDIA requer a coalescência de acessos à memória global ao longo de warps de trinta e duas threads, mantendo a divergência de execução mínima e pré-carregando blocos de memória compartilhada para saturar as unidades funcionais aritméticas.",
+    "zh-CN": "为了在NVIDIA图形处理器上实现最大计算吞吐量，需要在包含三十二个线程的线程束内合并全局内存访问，保持分支分歧最小化，并预加载共享内存块以使可用的算术功能单元达到饱和。"
+  },
+  {
+    "id": "para_07_narrative_city",
+    "domain": "narrative",
+    "title": "Historic Port at Twilight",
+    "en-US": "The ancient stone lighthouse cast long amber beams across the choppy harbor waters as fishing vessels returned to the docks under a fading violet twilight, while street vendors began illuminating small lanterns along cobblestone alleys.",
+    "pt-BR": "O antigo farol de pedra lançava longos fachos de luz âmbar sobre as águas agitadas do porto enquanto os barcos pesqueiros retornavam aos cais sob um crepúsculo violeta que se esvaía, enquanto vendedores ambulantes começavam a acender pequenas lanternas pelas ruelas de paralelepípedos.",
+    "zh-CN": "暮色渐浓，紫色的晚霞逐渐隐去，古老的石砌灯塔在波涛起伏的港湾水面上投下修长的琥珀色光柱，渔船纷纷返回码头，街头小贩也开始沿着鹅卵石铺就的小巷点亮一盏盏小灯笼。"
+  },
+  {
+    "id": "para_08_narrative_storm",
+    "domain": "narrative",
+    "title": "Mountain Ridge Thunderstorm",
+    "en-US": "Sudden cold gusts swept across the exposed mountain ridge, whipping dense gray mist between rugged granite spires moments before heavy rain and rolling thunder compelled the mountaineers to seek shelter inside a shallow cave.",
+    "pt-BR": "Rajadas repentinas de vento gelado varreram a crista exposta da montanha, fustigando uma névoa cinzenta e densa entre agulhas de granito escarpadas instantes antes de chuvas torrenciais e trovões estrondosos forçarem os montanhistas a buscar abrigo no interior de uma caverna rasa.",
+    "zh-CN": "凛冽的冷风骤然席卷暴露的山脊，在陡峭的花岗岩尖峰之间撕扯着浓重灰暗的雾霭，片刻之后，暴雨倾盆，雷声隆隆，迫使登山队员们不得不躲进一处浅岩洞中暂避风雨。"
+  },
+  {
+    "id": "para_09_questions_geopolitics",
+    "domain": "questions",
+    "title": "International Maritime Trade Routes",
+    "en-US": "What are the primary geopolitical and environmental factors currently influencing commercial maritime shipping routes through the Arctic Ocean and the Suez Canal?",
+    "pt-BR": "Quais são os principais fatores geopolíticos e ambientais que influenciam atualmente as rotas de transporte marítimo comercial através do Oceano Ártico e do Canal de Suez?",
+    "zh-CN": "当前影响穿越北冰洋和苏伊士运河的商业海上航运路线的主要地缘政治和环境因素有哪些？"
+  },
+  {
+    "id": "para_10_questions_history",
+    "domain": "questions",
+    "title": "Comparative Industrialization Timelines",
+    "en-US": "How did institutional capital accumulation and domestic resource endowments shape the divergent paths of early industrial mechanization between Britain and Japan in the nineteenth century?",
+    "pt-BR": "Como a acumulação institucional de capital e as dotações de recursos naturais domésticos moldaram os caminhos divergentes da mecanização industrial inicial entre a Grã-Bretanha e o Japão no século XIX?",
+    "zh-CN": "在十九世纪，制度性资本积累与国内自然资源禀赋是如何塑造英国与日本早期工业机械化发展的不同路径的？"
+  },
+  {
+    "id": "para_11_instructions_docker",
+    "domain": "instructions",
+    "title": "Hardened Rootless Container Deployment",
+    "en-US": "Deploy the web service using an unprivileged user namespace, mount the root filesystem read-only with temporary scratch spaces in memory, drop all unnecessary Linux capabilities, and enforce a strict seccomp profile.",
+    "pt-BR": "Implante o serviço web utilizando um namespace de usuário sem privilégios, monte o sistema de arquivos raiz em modo somente leitura com diretórios temporários na memória, descarte todas as capacidades Linux desnecessárias e imponha um perfil seccomp rigoroso.",
+    "zh-CN": "使用非特权用户命名空间部署Web服务，以只读方式挂载根文件系统并将临时工作区保留在内存中，丢弃所有不必要的Linux内核权能，并强制执行严格的seccomp系统调用安全配置。"
+  },
+  {
+    "id": "para_12_instructions_git",
+    "domain": "instructions",
+    "title": "Interactive Git Rebase and History Cleanup",
+    "en-US": "Perform an interactive rebase against the upstream main branch, squash trivial fixup commits into atomic functional units, preserve descriptive conventional commit messages, and verify that all unit test suites pass before pushing.",
+    "pt-BR": "Execute um rebase interativo contra o ramo principal upstream, combine commits triviais de correção em unidades funcionais atômicas, preserve mensagens descritivas no padrão conventional commits e verifique se todas as baterias de testes unitários passam antes de realizar o envio.",
+    "zh-CN": "针对上游主分支执行交互式变基操作，将细碎的修补提交合并为原子的功能单元，保留符合常规提交规范的描述性提交信息，并在推送之前验证所有单元测试套件均已顺利通过。"
+  }
+]
