@@ -141,30 +141,35 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
     plt.close(fig)
 
     # -------------------------------------------------------------
-    # Figure 3: Effective Memory Bandwidth Utilization
+    # Figure 3: Analytical Memory Bandwidth Demand Proxy
     # -------------------------------------------------------------
-    fig, ax = plt.subplots(figsize=(5.5, 3.2), dpi=300)
-    # Effective memory bandwidth: weight footprint read per second during decode (in GB/s)
-    # Weight read per token = model_size_gb (in single batch size 1 memory bound regime)
-    model_sizes_gb = []
-    for m in models_to_plot:
-        entry = empirical_data.get(m, {})
-        # GGUF size in GB
-        vram_mib = entry.get("peak_vram_mib", 2000.0)
-        model_sizes_gb.append((vram_mib - 250.0) / 1024.0) # deduct KV cache & runtime context
+    fig, ax = plt.subplots(figsize=(5.5, 3.4), dpi=300)
+    # Analytical memory bandwidth demand proxy: S_weights * Throughput_decode (in GB/s)
+    # Note: Under speculative decoding (MTP) and batch-1 decode, this is an analytical proxy,
+    # not a direct hardware profiler counter measurement.
+    # Model static weights in GB (from model provenance / GGUF artifacts):
+    exact_weights_gb = {
+        "qwen2.5-0.5b": 0.4692,   # 469.2 MiB static tensor footprint
+        "smollm2-1.7b": 1.0581,   # 1009.1 MiB GGUF weights
+        "gemma4:E2B": 1.7374,     # 1836.5 MiB weights + MTP infrastructure footprint
+        "qwen3.5:2B": 1.3959,     # 1331.2 MiB GGUF weights
+        "llama3.2:3B": 2.0194,    # 1925.9 MiB GGUF weights
+        "qwen3.5:4B": 2.5776,     # 2458.2 MiB GGUF weights
+    }
+    model_sizes_gb = [exact_weights_gb.get(m, 1.5) for m in models_to_plot]
 
     bw_eff = np.array(model_sizes_gb) * tok_s
     theoretical_bw = 112.0
 
-    bars = ax.bar(slm_names, bw_eff, color="#3b528b", alpha=0.85, width=0.52, label="Empirical Bus Traffic")
-    ax.axhline(theoretical_bw, color="red", linestyle="--", linewidth=1.5, label=f"Theoretical Peak ({theoretical_bw:.0f} GB/s)")
+    bars = ax.bar(slm_names, bw_eff, color="#3b528b", alpha=0.85, width=0.52, label="Analytical Demand Proxy (S*tok/s)")
+    ax.axhline(theoretical_bw, color="red", linestyle="--", linewidth=1.5, label=f"Theoretical Hardware Peak ({theoretical_bw:.0f} GB/s)")
 
-    ax.set_ylabel("Memory Bandwidth (GB/s)")
-    ax.set_title("DRAM Bus Saturation (NVIDIA GTX 1050 Ti)")
-    ax.set_ylim(0, 130)
+    ax.set_ylabel("Bandwidth Demand Proxy (GB/s)", fontsize=9.5)
+    ax.set_title("Analytical Bandwidth Demand Proxy (GTX 1050 Ti)", fontsize=10.5, fontweight="bold", pad=10)
+    ax.set_ylim(0, 125)
     ax.set_xticks(range(len(slm_names)))
-    ax.set_xticklabels(slm_names, rotation=18, ha="right")
-    ax.legend(loc="upper right")
+    ax.set_xticklabels(slm_names, rotation=18, ha="right", fontsize=8.5)
+    ax.legend(loc="upper right", fontsize=8)
     ax.grid(axis="y", linestyle="--", alpha=0.5)
 
     for bar, bw in zip(bars, bw_eff):
@@ -205,7 +210,7 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
 
     bars = ax.bar(categories, rates, color=bar_colors, alpha=0.85, width=0.52)
     ax.set_ylabel("Safety Compliance Rate (%)")
-    ax.set_title("Defensive Alignment Across Empirical Domains")
+    ax.set_title("Exploratory Single-Turn Defensive Safety Evaluation (N=10)", fontsize=10.5, fontweight="bold", pad=10)
     ax.set_ylim(0, 120)
     ax.grid(axis="y", linestyle="--", alpha=0.5)
 
