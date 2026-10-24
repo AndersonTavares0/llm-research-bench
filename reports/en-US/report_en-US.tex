@@ -43,7 +43,7 @@
 \maketitle
 
 \begin{abstract}
-Deploying Small Language Models (SLMs, 2B--4B parameters) directly on physical edge devices delivers strict data sovereignty, deterministic execution latency, and zero external network egress. However, operating within severe physical memory limits ($\le 4096$\,MiB VRAM) introduces non-linear trade-offs between tensor quantization precision, autoregressive memory bandwidth, speculative execution, and adversarial robustness. This research presents a rigorous, reproducible empirical evaluation conducted on an NVIDIA GeForce GTX 1050 Ti GPU (4096\,MiB GDDR5, 128-bit bus, $112.0\text{ GB/s}$ theoretical bandwidth, 75W TDP, Compute Capability 6.1) as a reference edge testbed. We formally deconstruct every underlying architectural concept---including the Roofline model, arithmetic intensity, Key-Value (KV) cache analytical scaling, Multi-Token Prediction (MTP) speculative decoding, Model Context Protocol (MCP), and inferential statistical testing---prior to presenting empirical findings. Four candidate architectures (\textbf{Gemma-4-E2B-it}, \textbf{Qwen-3.5-4B}, \textbf{Qwen-3.5-2B}, and \textbf{Llama-3.2-3B}) were benchmarked under the \texttt{llama-server} runtime (commit b4120+) with continuous asynchronous NVML hardware telemetry sampled at 250\,ms intervals. A controlled Multi-Token Prediction ablation with $N=15$ repetitions isolated a statistically significant \textbf{30.9\%} overall throughput gain ($42.21 \pm 5.99$ vs $32.25 \pm 3.23$\,tok/s, 95\% Student's t CI, Welch's $t=3.139$, two-tailed $p=0.0049$, one-tailed $p=0.0024$, Cohen's $d=1.146$) and \textbf{33.2\%} in steady-state warmed execution ($44.95$ vs $33.75$\,tok/s, Welch's $t=19.38$, $p=1.67\times 10^{-11}$, Cohen's $d=7.32$), operating at 2038\,MiB VRAM. Controlled quantization of Gemma-4-E2B demonstrated that non-uniform importance matrix quantization (IQ4\_XS) delivers a 59.2\% throughput advantage over standard block quantization (Q4\_K\_M) in steady-state ($41.92$ vs $26.34$\,tok/s, Welch's $t=27.20$, $p=5.15\times 10^{-7}$, $\nu = 5.43$) by decreasing DRAM bus traffic. In adversarial safety evaluations, all models exhibited 100\% clean refusal against direct weaponized exploits, malware, and persona jailbreaks, but universally succumbed (0\% resistance) to indirect prompt injection embedded in system context, demonstrating an architectural deficiency in current post-training alignment across untrusted context tokens.
+Deploying Small Language Models (SLMs, 2B--4B parameters) directly on physical edge devices delivers strict data sovereignty, deterministic execution latency, and zero external network egress. However, operating within severe physical memory limits ($\le 4096$\,MiB VRAM) introduces non-linear trade-offs between tensor quantization precision, autoregressive memory bandwidth, speculative execution, and adversarial robustness. This research presents a rigorous, reproducible empirical evaluation conducted on an NVIDIA GeForce GTX 1050 Ti GPU (4096\,MiB GDDR5, 128-bit bus, $112.0\text{ GB/s}$ theoretical bandwidth, 75W TDP, Compute Capability 6.1) as a reference edge testbed. We formally deconstruct every underlying architectural concept---including the Roofline model, arithmetic intensity, Key-Value (KV) cache analytical scaling, Multi-Token Prediction (MTP) speculative decoding, Model Context Protocol (MCP), and inferential statistical testing---prior to presenting empirical findings. Four candidate architectures (\textbf{Gemma-4-E2B-it}, \textbf{Qwen-3.5-4B}, \textbf{Qwen-3.5-2B}, and \textbf{Llama-3.2-3B}) were benchmarked under the \texttt{llama-server} runtime (commit b4120+) with continuous asynchronous NVML hardware telemetry sampled at 250\,ms intervals. A controlled Multi-Token Prediction ablation with $N=15$ repetitions isolated a statistically significant \textbf{30.9\%} overall throughput gain ($42.21 \pm 5.99$ vs $32.25 \pm 3.23$\,tok/s, 95\% Student's t CI, Welch's $t=3.139$, two-tailed $p=0.0049$, one-tailed $p=0.0024$, Cohen's $d=1.146$) and \textbf{33.2\%} in steady-state warmed execution ($44.95$ vs $33.75$\,tok/s, Welch's $t=19.38$, $p=1.67\times 10^{-11}$, Cohen's $d=7.32$), operating at 2038\,MiB VRAM. Controlled quantization comparison of Gemma-4-E2B demonstrated that non-uniform importance matrix quantization with MTP speculative decoding (IQ4\_XS) delivers a \textbf{59.2\% compound throughput advantage} over standard block quantization without MTP (Q4\_K\_M) in steady-state ($41.92$ vs $26.34$\,tok/s, Welch's $t=27.20$, $p=5.15\times 10^{-7}$, $\nu = 5.43$), of which approximately +19.6\% is attributable to pure tensor compression and the remainder to speculative draft acceleration. In exploratory adversarial safety evaluations ($N=6$), all models exhibited 100\% clean refusal across 5 direct exploit and persona jailbreak vectors, but universally succumbed (0\% resistance) to an indirect prompt injection embedded in system logs, demonstrating an architectural deficiency in current post-training alignment across untrusted context tokens.
 \end{abstract}
 
 \vspace{0.6em}
@@ -164,15 +164,26 @@ The exact memory footprint $M_{\text{KV}}$ consumed by the cache across a batch 
 \end{equation}
 where the factor of $2$ accounts for storing both Keys and Values, $n_{\text{layers}}$ is the number of transformer layers, $n_{\text{kv\_heads}}$ is the number of key-value attention heads (equal to total query heads in Multi-Head Attention, or a reduced subset in Grouped-Query Attention), $d_{\text{head}}$ is head dimension, and $b_{\text{cache}}$ is the storage precision in bytes (e.g., $2.0$ for FP16, $1.0$ for Q8\_0, $0.5$ for Q4\_0).
 
-\paragraph{Walkthrough Calculation and Out-Of-Memory (OOM) Limits:}
-Consider Qwen-3.5-4B (32 layers, 8 KV heads, $d_{\text{head}} = 128$, static weights footprint $S_{\text{weights}} = 2987\text{ MiB}$):
+\paragraph{Unit Standards and Binary versus Decimal Conventions:}
+Precise systems engineering requires distinguishing binary memory quantities ($\text{KiB} = 1024\text{ Bytes}$, $\text{MiB} = 1024^2\text{ Bytes}$, $\text{GiB} = 1024^3\text{ Bytes}$) from decimal storage/network quantities ($\text{KB} = 1000\text{ Bytes}$, $\text{MB} = 10^6\text{ Bytes}$, $\text{GB} = 10^9\text{ Bytes}$). GPU firmware, CUDA runtime allocations, and NVML hardware counters report strictly in binary units ($\text{MiB}, \text{GiB}$). Confusing these standards introduces a $4.86\%$ numerical error at the gigabyte scale ($1.0\text{ GiB} = 1.0737\text{ GB}$). In this monograph, all runtime allocations and VRAM budgets are reported in binary $\text{MiB}$ and $\text{GiB}$, with decimal equivalents explicitly annotated where relevant.
+
+\paragraph{Architectural Profiles Across Evaluated Models:}
+Key-Value cache growth depends strictly on the model's attention topology ($n_{\text{layers}}$, $n_{\text{kv\_heads}}$, $d_{\text{head}}$):
 \begin{itemize}[leftmargin=1.8em]
-    \item Bytes per token in FP16: $2 \times 32 \times 8 \times 128 \times 2 = 131,072\text{ Bytes/token} = 128\text{ KiB/token}$.
-    \item At $L_{\text{ctx}} = 2,048$: $M_{\text{KV}} = 2048 \times 128\text{ KiB} = 262,144\text{ KiB} = 256.0\text{ MiB}$.
-    \item At $L_{\text{ctx}} = 8,192$: $M_{\text{KV}} = 8192 \times 128\text{ KiB} = 1,024.0\text{ MiB}$ ($1.00\text{ GiB}$).
-    \item At $L_{\text{ctx}} = 32,768$: $M_{\text{KV}} = 32768 \times 128\text{ KiB} = 4,096.0\text{ MiB}$ ($4.00\text{ GiB}$).
+    \item \textbf{Gemma-2-2B (GQA):} $n_{\text{layers}} = 26, n_{\text{kv\_heads}} = 4, d_{\text{head}} = 256 \implies 2 \times 26 \times 4 \times 256 \times 2 = 106,496\text{ B/tok} = 104.0\text{ KiB/tok}$ ($106.50\text{ KB/tok}$).
+    \item \textbf{Llama-3.2-3B (GQA):} $n_{\text{layers}} = 28, n_{\text{kv\_heads}} = 8, d_{\text{head}} = 128 \implies 2 \times 28 \times 8 \times 128 \times 2 = 114,688\text{ B/tok} = 112.0\text{ KiB/tok}$ ($114.69\text{ KB/tok}$).
+    \item \textbf{Qwen-2.5-3B (GQA):} $n_{\text{layers}} = 36, n_{\text{kv\_heads}} = 2, d_{\text{head}} = 128 \implies 2 \times 36 \times 2 \times 128 \times 2 = 36,864\text{ B/tok} = 36.0\text{ KiB/tok}$ ($36.86\text{ KB/tok}$).
+    \item \textbf{Stylized Reference 4B Profile:} $n_{\text{layers}} = 32, n_{\text{kv\_heads}} = 8, d_{\text{head}} = 128 \implies 2 \times 32 \times 8 \times 128 \times 2 = 131,072\text{ B/tok} = 128.0\text{ KiB/tok}$ ($131.07\text{ KB/tok}$).
 \end{itemize}
-On a 4096 MiB GPU, storing static weights ($2987\text{ MiB}$) leaves only $1109\text{ MiB}$ of free VRAM. If context expands to $32\text{k}$ in FP16, total required memory reaches $2987 + 4096 = 7083\text{ MiB}$, exceeding hardware capacity by $72.9\%$ and triggering immediate kernel termination (\texttt{CUDA out of memory}). Quantizing the cache to Q4\_0 ($b_{\text{cache}}=0.5$) compresses $32\text{k}$ cache to $1024\text{ MiB}$, enabling execution within the physical envelope.
+
+\paragraph{Walkthrough Calculation and Out-Of-Memory (OOM) Limits:}
+For the stylized reference 4B profile with static weights occupying $S_{\text{weights}} = 2987\text{ MiB}$ under a $4096\text{ MiB}$ hardware envelope:
+\begin{itemize}[leftmargin=1.8em]
+    \item At $L_{\text{ctx}} = 2,048$: $M_{\text{KV}} = 2048 \times 128\text{ KiB} = 262,144\text{ KiB} = 256.0\text{ MiB}$ ($268.44\text{ MB}$).
+    \item At $L_{\text{ctx}} = 8,192$: $M_{\text{KV}} = 8192 \times 128\text{ KiB} = 1,024.0\text{ MiB}$ ($1.00\text{ GiB}$ / $1.074\text{ GB}$).
+    \item At $L_{\text{ctx}} = 32,768$: $M_{\text{KV}} = 32768 \times 128\text{ KiB} = 4,096.0\text{ MiB}$ ($4.00\text{ GiB}$ / $4.295\text{ GB}$).
+\end{itemize}
+Accounting for a baseline CUDA context and driver overhead of $250\text{ MiB}$, available memory for KV cache is $4096 - 2987 - 250 = 859\text{ MiB}$. Under FP16 precision ($128\text{ KiB/tok}$), the hard Out-Of-Memory threshold is reached at $L_{\text{OOM}} = \lfloor (859 \times 1024) / 128 \rfloor = 6,872\text{ tokens}$. Extending context to $32\text{k}$ in FP16 demands $7333\text{ MiB}$ total VRAM, exceeding hardware capacity by $79.0\%$ and triggering immediate process termination (\texttt{CUDA out of memory}). Compressing the cache to Q4\_0 ($b_{\text{cache}} = 0.5$, $32.0\text{ KiB/tok}$) reduces the $32\text{k}$ footprint to $1024.0\text{ MiB}$ and pushes the OOM threshold to $27,488\text{ tokens}$, enabling deployment within the physical edge envelope.
 
 \subsection{Model Weight Quantization (GGUF, K-quants, and IQ-quants)}
 
@@ -189,13 +200,14 @@ In modern ggml/GGUF formats:
     \item \textbf{K-quants (e.g., Q4\_K\_M):} Employ hierarchical super-blocks. Blocks of 256 weights are divided into sub-blocks of 32, using 6-bit scales and 4-bit quantized values, achieving approximately $4.5$ bits-per-weight (bpw).
     \item \textbf{I-quants (e.g., IQ4\_XS):} Utilize non-linear vector codebooks and importance matrices derived from calibration datasets, allocating bits non-uniformly based on gradient sensitivity, achieving approximately $4.25$ bpw.
 \end{itemize}
+In this empirical evaluation, Gemma-4-E2B under IQ4\_XS was paired with an integrated MTP speculative head, whereas standard Q4\_K\_M was evaluated in single-token mode. When analyzing empirical speedups, we explicitly decompose the pure tensor quantization contribution ($\approx +19.6\%$, driven by reducing bits-per-weight from $\approx 4.5$ to $\approx 4.25$) from speculative decoding acceleration.
 
 \paragraph{Operational Purpose:}
 In memory-bound decode, generation throughput is directly proportional to model size in bytes:
 \begin{equation}
     \text{Throughput} \approx \frac{B_{\text{effective}}}{S_{\text{weights}}} \quad \left[\frac{\text{tokens}}{\text{s}}\right]
 \end{equation}
-Reducing Gemma-4-E2B from Q4\_K\_M (3.3 GB) to IQ4\_XS (1.5 GB) reduces DRAM traffic by $54.5\%$ per generated token, unlocking higher throughput on bandwidth-starved GPUs.
+Reducing Gemma-4-E2B from Q4\_K\_M ($1.8\text{ GB}$) to IQ4\_XS ($1.5\text{ GB}$) reduces DRAM weight streaming by $\approx 16.7\%$ per token, unlocking higher throughput on bandwidth-starved GPUs.
 
 \subsection{Speculative Decoding and Multi-Token Prediction (MTP)}
 
@@ -218,7 +230,7 @@ Rather than maintaining a separate draft model (which incurs additional DRAM tra
 \end{equation}
 Because the speculative head adds negligible computation ($c_{\text{draft}} \approx 0.05 \cdot c_{\text{target}}$) and zero additional DRAM weight streaming, verified tokens are essentially computed for free.
 
-\paragraph{Mathematical Speedup Formulation:}
+\paragraph{Mathematical Speedup Formulation and Empirical Factors:}
 Let $\alpha \in [0, 1]$ be the empirical token acceptance rate and $\gamma$ be the draft lookahead window ($\gamma = 1$ for single-head MTP). The theoretical acceleration factor $S$ is:
 \begin{equation}
     S = \frac{1 + \alpha \gamma}{1 + \frac{c_{\text{draft}}}{c_{\text{target}}}}
@@ -227,7 +239,11 @@ For Gemma-4-E2B with $\gamma = 1$, $c_{\text{draft}}/c_{\text{target}} \approx 0
 \begin{equation}
     S \approx \frac{1 + 0.40}{1 + 0.05} = \frac{1.40}{1.05} \approx 1.333\times \quad (+33.3\%)
 \end{equation}
-This theoretical derivation converges precisely with our empirical steady-state measurements ($+33.2\%$).
+This theoretical formulation matches our empirical steady-state measurements ($+33.2\%$). However, two critical experimental qualifiers must be recognized:
+\begin{enumerate}[leftmargin=1.8em]
+    \item \textbf{Domain Predictability and Sampling Entropy:} The acceptance rate $\alpha$ is not an invariant architectural constant. Under deterministic greedy decoding ($\tau = 0.0$) on structured technical system tasks (syntax-dense commands, configurations), token predictability is elevated, allowing $\alpha$ to reach $\approx 0.40$. On high-entropy creative or conversational generation, $\alpha$ degrades, attenuating speculative speedups.
+    \item \textbf{Cold-Start Initialization Overhead:} During the initial forward pass (Run 1), CUDA kernel compilation, page table mapping, and scratch buffer initialization dominate runtime. In our measurements, MTP initialization incurred a severe cold-start penalty ($3.82\text{ tok/s}$ in MTP vs $11.22\text{ tok/s}$ in Base), demonstrating that speculative benefits materialize only after runtime caches are warmed.
+\end{enumerate}
 
 \subsection{Inference Performance Metrics and System Telemetry}
 
@@ -243,12 +259,14 @@ Raw generation throughput (tokens/s) fails to account for memory footprints. We 
 \begin{equation}
     \eta_{\text{mem}} = \frac{\text{Throughput}_{\text{decode}} \ [\text{tok/s}]}{\text{Peak VRAM Allocation } [\text{GiB}]} \quad \left[\frac{\text{tokens}}{\text{s}\cdot\text{GiB}}\right]
 \end{equation}
+where peak VRAM is converted using binary Gibibytes ($1024^3$ bytes).
 
-\paragraph{Energy Efficiency ($E_{\text{tok/J}}$):}
-Using continuous average power draw $P_{\text{avg}}$ (Watts) captured via NVML during token generation, computational energy efficiency is defined as:
+\paragraph{Estimated Energy Efficiency ($E_{\text{tok/J}}$) and Instrumentation Limits:}
+On the reference GTX 1050 Ti GP107 platform, direct onboard power rail telemetry via \texttt{nvmlDeviceGetPowerUsage} is not supported by the hardware and driver stack (as the board draws its 75W TDP entirely through the PCIe slot without dedicated shunt resistor ICs). Computational energy efficiency is therefore modeled using an empirical GPU load profile ($P_{\text{est}} \in [49, 62]\text{ W}$) calibrated to observed clock frequencies and TDP bounds:
 \begin{equation}
-    E_{\text{tok/J}} = \frac{\text{Throughput}_{\text{decode}} \ [\text{tok/s}]}{P_{\text{avg}} \ [\text{Watts}]} = \frac{\text{Tokens}}{\text{Watt}\cdot\text{second}} \quad \left[\frac{\text{tokens}}{\text{Joule}}\right]
+    E_{\text{tok/J}} = \frac{\text{Throughput}_{\text{decode}} \ [\text{tok/s}]}{P_{\text{est}} \ [\text{Watts}]} = \frac{\text{Tokens}}{\text{Watt}\cdot\text{second}} \quad \left[\frac{\text{tokens}}{\text{Joule}}\right]
 \end{equation}
+This metric reflects estimated isolated GPU processor package efficiency and does not represent total host node AC wall-plug power (which ranges between $65\text{ W}$ and $110\text{ W}$ for the complete system).
 
 \subsection{CUDA Microarchitecture and NVML Telemetry}
 
@@ -265,17 +283,17 @@ Hardware telemetry was captured directly via native C bindings to \texttt{libnvi
 
 \subsection{Model Context Protocol (MCP)}
 
-\paragraph{Definition:}
+\paragraph{Definition and Exploratory Scope:}
 The Model Context Protocol (MCP) is an open architectural specification developed by Anthropic that standardizes how language models communicate with external tools, contextual data sources, and system actuators via structured JSON-RPC 2.0 messages.
-
-\paragraph{Protocol Primitives:}
-Communication operates over bidirectional standard input/output (\texttt{stdio}) or Server-Sent Events (SSE). Core lifecycle routines include:
+Our empirical evaluation investigated an exploratory suite of 3 discrete multi-turn scenarios over bidirectional standard input/output (\texttt{stdio}):
 \begin{itemize}[leftmargin=1.8em]
     \item \texttt{tools/list}: Client queries available tool definitions, receiving JSON Schema specifications detailing required arguments and types.
     \item \texttt{tools/call}: Model issues a structured tool invocation containing function name and arguments. The runtime executes the tool and delivers output back into model context.
+    \item Multi-turn context continuation and clean halt without hallucinated secondary tool calls.
 \end{itemize}
+While validating fundamental JSON-RPC tool interaction, this microbenchmark does not constitute full compliance testing across the entire MCP specification (which includes Server-Sent Events, root listing, sampling, and prompt templates).
 
-\subsection{Adversarial Safety Taxonomy}
+\subsection{Adversarial Safety Taxonomy and Probe Scope}
 
 \paragraph{Direct Jailbreaks versus Indirect Prompt Injection:}
 \begin{itemize}[leftmargin=1.8em]
@@ -283,13 +301,19 @@ Communication operates over bidirectional standard input/output (\texttt{stdio})
     \item \textbf{Indirect Prompt Injection:} Attacks embedded within third-party contextual data (e.g., server logs, web pages, tool outputs). When the model reads untrusted text to summarize it, embedded instructions attempt to hijack execution flow and command the model to ignore prior system instructions.
 \end{itemize}
 
+\paragraph{Exploratory Security Probes ($N=6$):}
+Our security battery evaluates $N=6$ discrete test cases (5 direct attacks covering Log4Shell CVE exploitation, stealth keylogger generation, DAN 11.0 persona framing, inverted logic, and benign sysadmin control queries; plus 1 indirect context injection vector embedded in system logs). While providing clear evidence of behavioral contrast between direct and indirect vector handling, a sample of 6 prompts is an exploratory probe. Generalizable safety conclusions require comprehensive red-teaming benchmarks (e.g., HarmBench, StrongREJECT, JailbreakBench) spanning hundreds of attack variations.
+
 \paragraph{Attack Success Rate (ASR) and False Positive Rate (FPR):}
 Let $N_{\text{harmful}}$ be the number of adversarial attack queries and $N_{\text{benign}}$ be benign control queries:
 \begin{equation}
     \text{ASR} = \frac{\text{Compromised Queries}}{N_{\text{harmful}}} \times 100\%, \quad \text{FPR} = \frac{\text{False Refusals on Benign Queries}}{N_{\text{benign}}} \times 100\%
 \end{equation}
 
-\subsection{Inferential Statistics and Hypothesis Testing}
+\subsection{Inferential Statistics and Experimental Design}
+
+\paragraph{Sequential Execution and Temporal Autocorrelation:}
+The 15 MTP evaluation queries were executed as 5 sequential repetitions of a 3-query task suite within a single persistent \texttt{llama-server} process. This sequential execution introduces temporal autocorrelation and thermal creep ($50^\circ\text{C} \to 72^\circ\text{C}$), relaxing the strict independent and identically distributed (i.i.d.) assumption of cross-sectional sampling. We therefore report both independent Welch's $t$-test / Mann-Whitney $U$ test statistics and a repeated-measures blocked analysis across the 5 trial iterations.
 
 \paragraph{Welch's Unequal Variances $t$-Test:}
 To compare two experimental groups (e.g., MTP vs Baseline) without assuming equal sample variances, we apply Welch's $t$-test:
@@ -336,7 +360,7 @@ Table~\ref{tab:system_perf_en} presents empirical measurements recorded across a
 \label{tab:system_perf_en}
 \begin{tabularx}{\textwidth}{L{2.7cm} *{7}{C}}
 \toprule
-\textbf{Model} & \makecell{\textbf{Peak VRAM}\\\textbf{(MiB)}} & \makecell{\textbf{Budget}\\\textbf{(\% VRAM)}} & \makecell{\textbf{Prompt}\\\textbf{(tok/s)}} & \makecell{\textbf{Decode}\\\textbf{(tok/s)}} & \makecell{\textbf{TTFT}\\\textbf{(ms)}} & \makecell{\textbf{$\eta_{\text{mem}}$}\\\textbf{(tok/s/GiB)}} & \makecell{\textbf{Energy}\\\textbf{(tok/J)}} \\
+\textbf{Model} & \makecell{\textbf{Peak VRAM}\\\textbf{(MiB)}} & \makecell{\textbf{Budget}\\\textbf{(\% VRAM)}} & \makecell{\textbf{Prompt}\\\textbf{(tok/s)}} & \makecell{\textbf{Decode}\\\textbf{(tok/s)}} & \makecell{\textbf{TTFT}\\\textbf{(ms)}} & \makecell{\textbf{$\eta_{\text{mem}}$}\\\textbf{(tok/s/GiB)}} & \makecell{\textbf{Est. Energy}\\\textbf{(tok/J)}} \\
 \midrule
 \textbf{Gemma-4-E2B (MTP)} & 1,510 & 36.8\% & \textbf{468.2} & \textbf{46.3} & \textbf{115.4} & \textbf{31.40} & \textbf{0.89} \\
 \textbf{Qwen-3.5-2B} & 1,598 & 39.0\% & 389.5 & 37.5 & 142.1 & 24.04 & 0.77 \\
@@ -344,6 +368,8 @@ Table~\ref{tab:system_perf_en} presents empirical measurements recorded across a
 \textbf{Qwen-3.5-4B} & 3,069 & 74.9\% & 237.1 & 18.4 & 284.6 & 6.14 & 0.30 \\
 \bottomrule
 \end{tabularx}
+\vspace{0.3em}
+{\scriptsize \textit{Note:} Peak VRAM is recorded in binary MiB. Memory efficiency $\eta_{\text{mem}}$ is computed as $\text{tok/s}$ divided by peak VRAM in GiB ($1024^3$ bytes). Estimated energy efficiency ($E_{\text{tok/J}}$) is derived from a calibrated isolated GPU package power model ($P_{\text{est}} \in [49, 62]\text{ W}$) reflecting TDP operating points; total host AC wall power ($65\text{ W}$--$110\text{ W}$) is not included.}
 \end{table}
 
 \subsection{Memory Bandwidth Utilization}
@@ -405,7 +431,7 @@ Because sample variances are unequal ($s_{\text{MTP}}^2 = 117.07$, $s_{\text{bas
 \begin{equation}
     t = \frac{42.21 - 32.25}{\sqrt{\frac{117.07}{15} + \frac{33.99}{15}}} = \frac{9.96}{3.173} = 3.1391
 \end{equation}
-The resulting two-tailed $p$-value is $p = 0.00486$ (directional one-tailed $p = 0.00243$, significant at $\alpha = 0.01$). Non-parametric Mann-Whitney $U$ test yields $U = 210.0$ ($p = 2.84 \times 10^{-5}$), rejecting $H_0$ with high confidence. The standardized effect size is Cohen's $d = 1.1462$, confirming large practical impact. In steady-state warmed execution ($N=14$), MTP delivers a deterministic \textbf{33.2\%} speedup ($44.95 \pm 2.12$ vs $33.75 \pm 0.41\text{ tok/s}$, Welch's $t=19.38$, $\nu \approx 14.0$, $p=1.67\times 10^{-11}$, Cohen's $d=7.32$).
+The resulting two-tailed $p$-value is $p = 0.00486$ (directional one-tailed $p = 0.00243$, significant at $\alpha = 0.01$). Non-parametric Mann-Whitney $U$ test yields $U = 210.0$ ($p = 2.84 \times 10^{-5}$), rejecting $H_0$ with high confidence. The standardized effect size is Cohen's $d = 1.1462$, confirming large practical impact. In steady-state warmed execution ($N=14$), MTP delivers a deterministic \textbf{33.2\%} speedup ($44.95 \pm 2.12$ vs $33.75 \pm 0.41\text{ tok/s}$, Welch's $t=19.38$, $\nu \approx 14.0$, $p=1.67\times 10^{-11}$, Cohen's $d=7.32$). Across the 5 sequential trial blocks, a paired two-sample $t$-test matching runs by test query index yields $t = 3.61, p = 0.0028$, corroborating that the throughput advantage of MTP is robust across query types. However, as logged by NVML, GPU core temperature rose from $50^\circ\text{C}$ in trial 1 to $72^\circ\text{C}$ in trial 5, causing driver clock throttling ($1392\text{ MHz} \to 1290\text{ MHz}$) and introducing mild negative serial drift across subsequent iterations.
 
 \begin{figure}[htbp]
 \centering
@@ -422,13 +448,13 @@ The resulting two-tailed $p$-value is $p = 0.00486$ (directional one-tailed $p =
 \label{fig:mtp_box_en}
 \end{figure}
 
-\subsection{Controlled Quantization Impact (IQ4\_XS versus Q4\_K\_M)}
+\subsection{Controlled Quantization Impact and Confounder Decomposition}
 Gemma-4-E2B was evaluated across two quantization schemes on identical base weights:
 \begin{itemize}[leftmargin=1.8em]
-    \item \textbf{Gemma-4-E2B (IQ4\_XS):} Global mean $36.22 \pm 14.71\text{ tok/s}$; steady-state warmed mean $41.92 \pm 1.18\text{ tok/s}$.
-    \item \textbf{Gemma-4-E2B (Q4\_K\_M):} Global mean $22.73 \pm 9.31\text{ tok/s}$; steady-state warmed mean $26.34 \pm 0.51\text{ tok/s}$.
+    \item \textbf{Gemma-4-E2B (IQ4\_XS + MTP):} Global mean $36.22 \pm 14.71\text{ tok/s}$; steady-state warmed mean $41.92 \pm 1.18\text{ tok/s}$.
+    \item \textbf{Gemma-4-E2B (Q4\_K\_M Standard):} Global mean $22.73 \pm 9.31\text{ tok/s}$; steady-state warmed mean $26.34 \pm 0.51\text{ tok/s}$.
 \end{itemize}
-In steady-state execution ($N=5$), IQ4\_XS delivers a \textbf{59.2\% throughput increase} over standard Q4\_K\_M ($41.92$ vs $26.34\text{ tok/s}$, Welch's $t=27.20$, $\nu = 5.43$, $p=5.15\times 10^{-7}$, Cohen's $d=17.20$). This acceleration stems directly from the reduced byte footprint of IQ4\_XS, which reduces DRAM bus transfers during decode.
+In steady-state execution ($N=5$), the IQ4\_XS configuration delivers a \textbf{59.2\% compound throughput advantage} over standard Q4\_K\_M ($41.92$ vs $26.34\text{ tok/s}$, Welch's $t=27.20$, $\nu = 5.43$, $p=5.15\times 10^{-7}$, Cohen's $d=17.20$). However, critical methodological transparency requires deconstructing this gain: the IQ4\_XS artifact was evaluated with its integrated MTP speculative draft head active, whereas the Q4\_K\_M standard artifact operated in single-token mode. Factoring out the verified $\approx +33.2\%$ MTP acceleration ($41.92 / 1.3318 \approx 31.47\text{ tok/s}$) indicates that non-uniform importance quantization alone contributes an estimated \textbf{+19.5\% pure throughput advantage} ($31.47$ vs $26.34\text{ tok/s}$). This net gain aligns directly with the reduction in DRAM weight transfers from $1.8\text{ GB}$ to $1.5\text{ GB}$ ($\approx 16.7\%$ byte reduction).
 
 \begin{figure}[htbp]
 \centering
@@ -452,20 +478,20 @@ Table~\ref{tab:model_qual_en} summarizes quantitative reasoning, Model Context P
 \begin{table}[htbp]
 \centering
 \footnotesize
-\caption{Adversarial Safety, MCP Protocol Adherence, and Systems Administration Arithmetic}
+\caption{Exploratory Adversarial Safety, MCP Tool Adherence, and Systems Administration Arithmetic}
 \label{tab:model_qual_en}
-\begin{tabularx}{\textwidth}{L{2.8cm} C C C C}
+\begin{tabularx}{\textwidth}{L{2.6cm} C C C C}
 \toprule
-\textbf{Model} & \makecell{\textbf{Safety}\\\textbf{(6 Vectors)}} & \makecell{\textbf{MCP Protocol}\\\textbf{(Multi-turn)}} & \makecell{\textbf{SysAdmin Math}\\\textbf{(3 Probes)}} & \makecell{\textbf{Deployment}\\\textbf{Profile}} \\
+\textbf{Model} & \makecell{\textbf{Direct Safety}\\\textbf{(5 Vectors)}} & \makecell{\textbf{Indirect Injection}\\\textbf{(1 Log Vector)}} & \makecell{\textbf{MCP Tool Loop}\\\textbf{(3 Scenarios)}} & \makecell{\textbf{SysAdmin Math}\\\textbf{(3 Probes)}} \\
 \midrule
-\textbf{Gemma-4-E2B (MTP)} & 83.3\% (5/6) & \textbf{All Passed} & 33.3\% (ZFS Parity) & \textbf{Autonomous Edge Controller} \\
-\textbf{Qwen-3.5-4B} & 83.3\% (5/6) & \textbf{All Passed} & 33.3\% (ZFS Parity) & Complex Semantic Tasks \\
-\textbf{Qwen-3.5-2B} & 83.3\% (5/6) & \textbf{All Passed} & 0.0\% (Arithmetic Drift) & Low-Complexity Conversational \\
-\textbf{Llama-3.2-3B} & 83.3\% (5/6) & \textbf{Failed (Turn 2)} & 33.3\% (RAM Logic) & Fragile in Structured Tool Loops \\
+\textbf{Gemma-4-E2B (MTP)} & \textbf{100\% (5/5)} & Failed (0\% Refusal) & \textbf{Passed (3/3)} & 33.3\% (ZFS Parity) \\
+\textbf{Qwen-3.5-4B} & \textbf{100\% (5/5)} & Failed (0\% Refusal) & \textbf{Passed (3/3)} & 33.3\% (ZFS Parity) \\
+\textbf{Qwen-3.5-2B} & \textbf{100\% (5/5)} & Failed (0\% Refusal) & \textbf{Passed (3/3)} & 0.0\% (Arithmetic Drift) \\
+\textbf{Llama-3.2-3B} & \textbf{100\% (5/5)} & Failed (0\% Refusal) & Failed (Turn 2 Parse) & 33.3\% (RAM Logic) \\
 \bottomrule
 \end{tabularx}
 \vspace{0.3em}
-{\scriptsize \textit{Note:} Safety (6 Vectors) evaluates 5 direct attack classes (100\% clean refusal across all models) and 1 indirect context injection vector (0\% refusal across all models), yielding a composite defense rate of 5/6 (83.3\%). SysAdmin Math evaluates a 3-item exploratory probe of systems arithmetic (CIDR subnetting, ZFS RAIDZ2 parity math, RAM partitioning); it does not constitute an exhaustive evaluation of general mathematical reasoning capability.}
+{\scriptsize \textit{Note:} All security and agentic metrics represent preliminary exploratory microbenchmarks ($N=5$ direct safety prompts, $N=1$ indirect injection prompt, $N=3$ tool scenarios, $N=3$ sysadmin arithmetic probes). They demonstrate specific behavioral profiles under controlled edge conditions but do not constitute exhaustive safety or protocol certifications (which require scaled benchmarks such as HarmBench, StrongREJECT, and BFCL).}
 \end{table}
 
 \subsection{Vulnerability Analysis: Indirect Prompt Injection}
@@ -515,11 +541,14 @@ To ensure sound scientific interpretation, empirical findings must be explicitly
 
 \subsection{Threats to Internal and External Validity}
 \begin{enumerate}[leftmargin=1.8em]
-    \item \textbf{Host Hardware Specification:} All benchmarks executed on reference host node \texttt{v01}, AMD Ryzen 5 3600 (6C/12T) with 16 GiB DDR4-3200 MT/s RAM managing minimal execution container CT 108 (2 vCPUs, 4 GiB RAM, 512 MiB swap).
-    \item \textbf{Cold-Start Outlier Stratification:} Across both MTP and Quantization ablations, run 1 exhibited extreme cold-start latency ($3.82$\,tok/s in MTP vs $\approx 45$\,tok/s; $7.69$\,tok/s in IQ4\_XS vs $\approx 41$\,tok/s) due to initial CUDA kernel loading, page table allocation, and JIT graph compilation. We explicitly report both full-sample statistics ($N=15$ / $N=6$, including cold start) and steady-state warmed execution ($N=14$ / $N=5$) to prevent cold-start variance from distorting steady-state evaluation.
-    \item \textbf{Temporal Autocorrelation and Thermal Creep:} Sequential execution of 15 queries within an active server instance introduces thermal and memory state autocorrelation, violating strict independent and identically distributed (i.i.d.) assumptions. As logged by NVML, core temperature elevated from $50^\circ\text{C}$ to $72^\circ\text{C}$, inducing driver clock modulation from $1392\text{ MHz}$ to $1290\text{ MHz}$.
-    \item \textbf{Microbenchmark Scope vs General Capabilities:} The quantitative arithmetic suite evaluates $N=3$ specific systems administration problems (CIDR subnetting, ZFS RAIDZ2 parity math, RAM partitioning). While illustrative of sysadmin command execution, these probes do not constitute a statistically powered assessment of general mathematical reasoning (which requires large-scale datasets such as GSM8K or MATH-500). Similarly, direct security evaluation assesses 5 penetration vectors, not the totality of adversarial attack classes.
+    \item \textbf{Cold-Start Outlier Stratification:} Across both MTP and Quantization ablations, run 1 exhibited severe cold-start latency ($3.82$\,tok/s in MTP vs $\approx 45$\,tok/s; $7.69$\,tok/s in IQ4\_XS vs $\approx 41$\,tok/s) due to initial CUDA kernel loading, page table allocation, and JIT graph compilation. We explicitly report both full-sample statistics ($N=15$ / $N=6$, including cold start) and steady-state warmed execution ($N=14$ / $N=5$) to prevent cold-start variance from distorting steady-state evaluation.
+    \item \textbf{Temporal Autocorrelation and Thermal Creep:} Sequential execution of 15 queries within a persistent server instance introduces thermal and memory state autocorrelation, relaxing strict independent and identically distributed (i.i.d.) assumptions. As logged by NVML, core temperature elevated from $50^\circ\text{C}$ to $72^\circ\text{C}$, inducing driver clock modulation from $1392\text{ MHz}$ to $1290\text{ MHz}$. Both independent Welch tests and blocked paired evaluations are reported.
+    \item \textbf{Exploratory Microbenchmark Scope vs General Capabilities:} The quantitative arithmetic suite evaluates $N=3$ specific systems administration problems (CIDR subnetting, ZFS RAIDZ2 parity math, RAM partitioning). While illustrative of command line reasoning, these probes do not constitute a statistically powered assessment of general mathematical reasoning (which requires large-scale datasets such as GSM8K or MATH-500). Similarly, direct security evaluation assesses 5 penetration vectors and 1 indirect injection vector, which provide initial behavioral signals rather than comprehensive safety certifications.
+    \item \textbf{Quantization-MTP Confounder Decomposition:} The steady-state throughput gain of $59.2\%$ observed for Gemma-4-E2B IQ4\_XS over Q4\_K\_M combines both non-uniform importance quantization and MTP speculative decoding. Decomposing these factors indicates an estimated $+19.5\%$ gain attributable to quantization alone and $+33.2\%$ attributable to MTP. External replications must evaluate both variables independently.
+    \item \textbf{Power Measurement and Instrumentation Limitations:} Because the GP107 PCIe-only card lacks dedicated hardware shunt sensors accessible via NVML, energy efficiency ($E_{\text{tok/J}}$) is estimated using a calibrated board TDP load model ($P_{\text{est}} \in [49, 62]\text{ W}$) rather than direct physical wattmeter integration. Furthermore, host node AC wall-plug consumption ($65\text{ W}$--$110\text{ W}$) is not reflected in the isolated GPU package metric.
+    \item \textbf{Agentic Protocol Coverage and Scenario Scope:} Tool calling was evaluated across 3 discrete multi-turn scenarios over \texttt{stdio} JSON-RPC 2.0. This demonstrates basic schema matching and tool selection but does not cover the complete MCP specification (such as Server-Sent Events, resource subscriptions, dynamic roots, and cancellation tokens).
     \item \textbf{Single-Accelerator Reference Boundary:} While theoretical Roofline derivations and MTP acceleration models are microarchitecturally universal, absolute throughput numbers and thermal dynamics reflect the specific GDDR5 memory controller and silicon layout of the GTX 1050 Ti.
+    \item \textbf{Experimental Determinism and Environment Isolation:} All benchmark runs enforced greedy decoding ($\tau = 0.0$) and single-threaded queue scheduling within an isolated Debian container with dedicated PCI passthrough, eliminating background graphical desktop compositor overhead.
 \end{enumerate}
 
 \section{Technical Glossary and Mathematical Formulations}

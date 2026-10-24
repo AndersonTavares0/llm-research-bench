@@ -44,7 +44,7 @@
 \maketitle
 
 \begin{abstract}
-A implantação de Modelos de Linguagem Pequenos (SLMs, 2B--4B parâmetros) diretamente em dispositivos físicos de borda garante estrita soberania de dados, latência determinística e eliminação de tráfego para a nuvem pública. Contudo, operar sob limites rígidos de memória física ($\le 4096$\,MiB de VRAM) impõe compromissos rigorosos entre precisão de quantização de pesos, largura de banda no barramento DRAM, decodificação especulativa e alinhamento de segurança. Este estudo apresenta uma avaliação experimental controlada, rigorosa e reproduzível conduzida em uma GPU NVIDIA GeForce GTX 1050 Ti (4096\,MiB GDDR5, barramento de 128 bits, $112,0\text{ GB/s}$ de largura de banda teórica, TDP de 75W, Compute Capability 6.1) como bancada experimental de referência. Desconstruímos e formulamos teoricamente cada conceito fundamental---incluindo o modelo Roofline, intensidade aritmética operacional, dinâmica analítica do cache Chave-Valor (KV), decodificação especulativa Multi-Token Prediction (MTP), Model Context Protocol (MCP) e inferência estatística---previamente à apresentação dos dados. Quatro modelos (\textbf{Gemma-4-E2B-it}, \textbf{Qwen-3.5-4B}, \textbf{Qwen-3.5-2B} e \textbf{Llama-3.2-3B}) foram avaliados sob o runtime \texttt{llama-server} (commit b4120+) com telemetria contínua via \texttt{libnvidia-ml.so.1} a cada 250\,ms. Uma ablação controlada de decodificação especulativa Multi-Token Prediction (MTP) com $N=15$ repetições isolou um ganho estatisticamente significante de \textbf{30,9\%} no throughput médio global ($42,21 \pm 5,99$ vs $32,25 \pm 3,23$\,tok/s, IC 95\% de Student, $t$ de Welch = 3,139, $p = 0,0049$ bicaudal, $p = 0,0024$ unicaudal, $d$ de Cohen = 1,146) e de \textbf{33,2\%} em regime estacionário aquecido ($44,95$ vs $33,75$\,tok/s, $t$ de Welch = 19,38, $p = 1,67\times 10^{-11}$, $d$ de Cohen = 7,32), mantendo alocação estável de 2038\,MiB. A análise controlada de quantização do Gemma-4-E2B revelou que o formato de matriz de importância não linear (IQ4\_XS) entrega vantagem de 59,2\% em regime aquecido sobre a quantização em blocos padrão Q4\_K\_M ($41,92$ vs $26,34$\,tok/s, $t$ de Welch = 27,20, $p = 5,15 \times 10^{-7}$, $\nu = 5,43$) pela redução no tráfego do barramento DRAM. Em segurança adversária, todos os modelos exibiram 100\% de recusa limpa contra explorações diretas de vulnerabilidades, keyloggers e jailbreaks, mas sucumbiram uniformemente (0\% de resistência) à injeção indireta de prompt encapsulada em contexto de sistema, evidenciando que os mecanismos atuais de alinhamento falham em isolar instruções de controle de dados contextuais não confiáveis.
+A implantação de Modelos de Linguagem Pequenos (SLMs, 2B--4B parâmetros) diretamente em dispositivos físicos de borda garante estrita soberania de dados, latência determinística e eliminação de tráfego para a nuvem pública. Contudo, operar sob limites rígidos de memória física ($\le 4096$\,MiB de VRAM) impõe compromissos rigorosos entre precisão de quantização de pesos, largura de banda no barramento DRAM, decodificação especulativa e alinhamento de segurança. Este estudo apresenta uma avaliação experimental controlada, rigorosa e reproduzível conduzida em uma GPU NVIDIA GeForce GTX 1050 Ti (4096\,MiB GDDR5, barramento de 128 bits, $112,0\text{ GB/s}$ de largura de banda teórica, TDP de 75W, Compute Capability 6.1) como bancada experimental de referência. Desconstruímos e formulamos teoricamente cada conceito fundamental---incluindo o modelo Roofline, intensidade aritmética operacional, dinâmica analítica do cache Chave-Valor (KV), decodificação especulativa Multi-Token Prediction (MTP), Model Context Protocol (MCP) e inferência estatística---previamente à apresentação dos dados. Quatro modelos (\textbf{Gemma-4-E2B-it}, \textbf{Qwen-3.5-4B}, \textbf{Qwen-3.5-2B} e \textbf{Llama-3.2-3B}) foram avaliados sob o runtime \texttt{llama-server} (commit b4120+) com telemetria contínua via \texttt{libnvidia-ml.so.1} a cada 250\,ms. Uma ablação controlada de decodificação especulativa Multi-Token Prediction (MTP) com $N=15$ repetições isolou um ganho estatisticamente significante de \textbf{30,9\%} no throughput médio global ($42,21 \pm 5,99$ vs $32,25 \pm 3,23$\,tok/s, IC 95\% de Student, $t$ de Welch = 3,139, $p = 0,0049$ bicaudal, $p = 0,0024$ unicaudal, $d$ de Cohen = 1,146) e de \textbf{33,2\%} em regime estacionário aquecido ($44,95$ vs $33,75$\,tok/s, $t$ de Welch = 19,38, $p = 1,67\times 10^{-11}$, $d$ de Cohen = 7,32), mantendo alocação estável de 2038\,MiB. A análise comparativa de quantização do Gemma-4-E2B revelou que o formato de matriz de importância com MTP integrado (IQ4\_XS) entrega vantagem composta de \textbf{59,2\% em regime aquecido} sobre a quantização em blocos padrão sem MTP (Q4\_K\_M) ($41,92$ vs $26,34$\,tok/s, $t$ de Welch = 27,20, $p = 5,15 \times 10^{-7}$, $\nu = 5,43$), da qual aproximadamente +19,6\% decorre da compressão pura de tensores e o restante da aceleração especulativa. Em avaliações exploratórias de segurança adversária ($N=6$), todos os modelos exibiram 100\% de recusa limpa contra explorações diretas de vulnerabilidades, keyloggers e jailbreaks (5/5 vetores diretos), mas sucumbiram uniformemente (0\% de resistência) a uma injeção indireta de prompt encapsulada em logs de sistema, evidenciando que os mecanismos atuais de alinhamento falham em isolar instruções de controle de dados contextuais não confiáveis.
 \end{abstract}
 
 \vspace{0.6em}
@@ -164,15 +164,26 @@ O volume exato de memória $M_{\text{KV}}$ consumido pelo cache para contexto $L
 \end{equation}
 onde o fator $2$ contempla tanto Chaves quanto Valores, $n_{\text{camadas}}$ é o número de camadas transformer, $n_{\text{kv\_heads}}$ é o número de cabeças de atenção KV, $d_{\text{cabeça}}$ é a dimensão de cada cabeça, e $b_{\text{cache}}$ é a precisão de armazenamento em bytes ($2,0$ para FP16, $1,0$ para Q8\_0, $0,5$ para Q4\_0).
 
-\paragraph{Exemplo de Cálculo e Limite de Falha por Memória (OOM):}
-Considerando o modelo Qwen-3.5-4B (32 camadas, 8 cabeças KV, dimensão 128, pesos estáticos ocupando $2987\text{ MiB}$):
+\paragraph{Padrões de Unidades e Convenções Binárias versus Decimais:}
+A precisão na engenharia de sistemas exige distinguir rigorosamente grandezas binárias de memória ($\text{KiB} = 1024\text{ Bytes}$, $\text{MiB} = 1024^2\text{ Bytes}$, $\text{GiB} = 1024^3\text{ Bytes}$) de grandezas decimais de armazenamento e rede ($\text{KB} = 1000\text{ Bytes}$, $\text{MB} = 10^6\text{ Bytes}$, $\text{GB} = 10^9\text{ Bytes}$). Runtimes CUDA, bibliotecas NVML e contadores de hardware operam exclusivamente em base binária ($\text{MiB}, \text{GiB}$). Confundir essas grandezas acarreta um erro numérico de $4,86\%$ na escala de gigabytes ($1,0\text{ GiB} = 1,0737\text{ GB}$). Nesta monografia, todas as alocações de VRAM são reportadas em $\text{MiB}$ e $\text{GiB}$ binários, com conversões decimais anotadas quando pertinente.
+
+\paragraph{Perfis Arquiteturais dos Modelos Avaliados:}
+A demanda do cache KV varia estritamente com a topologia de atenção do modelo ($n_{\text{camadas}}$, $n_{\text{kv\_heads}}$, $d_{\text{cabeça}}$):
 \begin{itemize}[leftmargin=1.8em]
-    \item Bytes consumidos por token em FP16: $2 \times 32 \times 8 \times 128 \times 2 = 131.072\text{ Bytes} = 128\text{ KiB/token}$.
-    \item Em $L_{\text{ctx}} = 2.048$: $M_{\text{KV}} = 2048 \times 128\text{ KiB} = 256,0\text{ MiB}$.
-    \item Em $L_{\text{ctx}} = 8.192$: $M_{\text{KV}} = 8192 \times 128\text{ KiB} = 1.024,0\text{ MiB}$ ($1,00\text{ GiB}$).
-    \item Em $L_{\text{ctx}} = 32.768$: $M_{\text{KV}} = 32768 \times 128\text{ KiB} = 4.096,0\text{ MiB}$ ($4,00\text{ GiB}$).
+    \item \textbf{Gemma-2-2B (GQA):} $n_{\text{camadas}} = 26, n_{\text{kv\_heads}} = 4, d_{\text{cabeça}} = 256 \implies 2 \times 26 \times 4 \times 256 \times 2 = 106.496\text{ B/tok} = 104,0\text{ KiB/tok}$ ($106,50\text{ KB/tok}$).
+    \item \textbf{Llama-3.2-3B (GQA):} $n_{\text{camadas}} = 28, n_{\text{kv\_heads}} = 8, d_{\text{cabeça}} = 128 \implies 2 \times 28 \times 8 \times 128 \times 2 = 114.688\text{ B/tok} = 112,0\text{ KiB/tok}$ ($114,69\text{ KB/tok}$).
+    \item \textbf{Qwen-2.5-3B (GQA):} $n_{\text{camadas}} = 36, n_{\text{kv\_heads}} = 2, d_{\text{cabeça}} = 128 \implies 2 \times 36 \times 2 \times 128 \times 2 = 36.864\text{ B/tok} = 36,0\text{ KiB/tok}$ ($36,86\text{ KB/tok}$).
+    \item \textbf{Perfil Estilizado 4B de Referência:} $n_{\text{camadas}} = 32, n_{\text{kv\_heads}} = 8, d_{\text{cabeça}} = 128 \implies 2 \times 32 \times 8 \times 128 \times 2 = 131.072\text{ B/tok} = 128,0\text{ KiB/tok}$ ($131,07\text{ KB/tok}$).
 \end{itemize}
-Em uma GPU de 4096 MiB, os pesos estáticos ($2987\text{ MiB}$) deixam apenas $1109\text{ MiB}$ livres. Se o contexto for estendido a $32\text{k}$ em FP16, o consumo total de $2987 + 4096 = 7083\text{ MiB}$ excede a capacidade física da GPU em 72,8\%, resultando em encerramento abrupto do processo por estouro de memória (\texttt{CUDA out of memory}). A quantização do cache KV em Q4\_0 ($b_{\text{cache}}=0,5$) comprime o cache de $32\text{k}$ para $1024\text{ MiB}$, viabilizando a execução sem offload para a CPU.
+
+\paragraph{Exemplo de Cálculo e Limite de Falha por Memória (OOM):}
+Considerando o perfil estilizado 4B com pesos estáticos ocupando $S_{\text{pesos}} = 2987\text{ MiB}$ no orçamento de $4096\text{ MiB}$:
+\begin{itemize}[leftmargin=1.8em]
+    \item Em $L_{\text{ctx}} = 2.048$: $M_{\text{KV}} = 2048 \times 128\text{ KiB} = 262.144\text{ KiB} = 256,0\text{ MiB}$ ($268,44\text{ MB}$).
+    \item Em $L_{\text{ctx}} = 8.192$: $M_{\text{KV}} = 8192 \times 128\text{ KiB} = 1.024,0\text{ MiB}$ ($1,00\text{ GiB}$ / $1,074\text{ GB}$).
+    \item Em $L_{\text{ctx}} = 32.768$: $M_{\text{KV}} = 32768 \times 128\text{ KiB} = 4.096,0\text{ MiB}$ ($4,00\text{ GiB}$ / $4,295\text{ GB}$).
+\end{itemize}
+Contabilizando $250\text{ MiB}$ de overhead do runtime CUDA e drivers, a VRAM disponível para o cache é $4096 - 2987 - 250 = 859\text{ MiB}$. Em FP16 ($128\text{ KiB/tok}$), o limite rígido de estouro de memória ocorre em $L_{\text{OOM}} = \lfloor (859 \times 1024) / 128 \rfloor = 6.872\text{ tokens}$. Estender o contexto a $32\text{k}$ em FP16 exigiria $7333\text{ MiB}$, excedendo a capacidade física em $79,0\%$ e causando encerramento do processo (\texttt{CUDA out of memory}). A quantização do cache em Q4\_0 ($b_{\text{cache}}=0,5$, $32,0\text{ KiB/tok}$) reduz o cache de $32\text{k}$ para $1024,0\text{ MiB}$ e eleva o limite OOM para $27.488\text{ tokens}$, viabilizando a operação em hardware de borda.
 
 \subsection{Quantização de Modelos (GGUF, K-quants e IQ-quants)}
 
@@ -188,13 +199,14 @@ Na quantização por blocos uniformes, grupos de 32 pesos são mapeados para int
     \item \textbf{K-quants (e.g., Q4\_K\_M):} Utilizam super-blocos de 256 elementos divididos em sub-blocos de 32, usando escalas de 6 bits e quantizações de 4 bits, com média de $\approx 4,5$ bits por peso.
     \item \textbf{I-quants (e.g., IQ4\_XS):} Empregam tabelas de código não lineares baseadas em matrizes de importância calculadas em datasets de calibração, alocando bits com base na sensibilidade de gradiente ($\approx 4,25$ bits por peso).
 \end{itemize}
+Nesta campanha experimental, o artefato Gemma-4-E2B em IQ4\_XS continha cabeçote especulativo MTP integrado, enquanto o artefato Q4\_K\_M padrão operou em modo convencional. Ao analisar os ganhos empíricos, decompomos formalmente o efeito puro de quantização ($\approx +19,6\%$) do ganho especulativo do MTP.
 
 \paragraph{Finalidade no Experimento:}
 Durante a fase de decode limitada por memória, a taxa de emissão de tokens é inversamente proporcional ao tamanho em bytes dos pesos lidos da VRAM:
 \begin{equation}
     \text{Throughput} \approx \frac{B_{\text{efetiva}}}{S_{\text{pesos}}} \quad \left[\frac{\text{tokens}}{\text{s}}\right]
 \end{equation}
-Reduzir o modelo Gemma-4-E2B de Q4\_K\_M (3,3 GB) para IQ4\_XS (1,5 GB) diminui em 54,5\% o tráfego transferido pela DRAM a cada token gerado.
+Reduzir o modelo Gemma-4-E2B de Q4\_K\_M ($1,8\text{ GB}$) para IQ4\_XS ($1,5\text{ GB}$) diminui em $\approx 16,7\%$ o tráfego transferido pela DRAM a cada token gerado.
 
 \subsection{Decodificação Especulativa e Multi-Token Prediction (MTP)}
 
@@ -208,7 +220,7 @@ Em vez de depender de um modelo de rascunho secundário separado, o MTP nativo i
 \end{equation}
 Como o custo computacional do cabeçote é irrisório ($c_{\text{draft}} \approx 0,05 \cdot c_{\text{alvo}}$) e não há leitura adicional de pesos volumosos na DRAM, os tokens aceitos são emitidos praticamente sem custo de memória.
 
-\paragraph{Formulação Matemática da Aceleração:}
+\paragraph{Formulação Matemática da Aceleração e Condicionantes Empíricos:}
 Com taxa empírica de aceitação $\alpha \in [0, 1]$ e janela de predição $\gamma = 1$, o ganho assintótico $S$ é:
 \begin{equation}
     S = \frac{1 + \alpha \gamma}{1 + \frac{c_{\text{draft}}}{c_{\text{alvo}}}}
@@ -217,7 +229,11 @@ Para o Gemma-4-E2B com $\gamma = 1$, $c_{\text{draft}}/c_{\text{alvo}} \approx 0
 \begin{equation}
     S \approx \frac{1 + 0,40}{1 + 0,05} = \frac{1,40}{1,05} \approx 1,333\times \quad (+33,3\%)
 \end{equation}
-Esta dedução teórica coincide exatamente com os resultados experimentais em regime aquecido (+33,2\%).
+Esta formulação analítica converge com os resultados empíricos em regime aquecido (+33,2\%). Contudo, dois fatores experimentais devem ser destacados:
+\begin{enumerate}[leftmargin=1.8em]
+    \item \textbf{Previsibilidade de Domínio e Entropia de Amostragem:} A taxa $\alpha$ varia com o domínio textual e a temperatura $\tau$. Sob amostragem gulosa ($\tau = 0,0$) em tarefas técnicas de sistemas (sintaxe previsível, comandos shell), a previsibilidade é máxima ($\alpha \approx 0,40$). Em textos de alta entropia ou conversação aberta, $\alpha$ decai, reduzindo os ganhos da decodificação especulativa.
+    \item \textbf{Penalidade de Inicialização a Frio (Cold-Start):} No primeiro ciclo de inferência (Run 1), a compilação JIT de kernels CUDA e alocações de buffer dominam a latência. O MTP registrou throughput inicial severamente deprimido ($3,82\text{ tok/s}$ no MTP vs $11,22\text{ tok/s}$ na base), demonstrando que a aceleração especulativa só se consolida após o aquecimento dos caches de execução.
+\end{enumerate}
 
 \subsection{Métricas de Inferência e Telemetria de Hardware}
 
@@ -232,12 +248,14 @@ Vazão de geração de tokens dividida pelo pico físico de VRAM alocada:
 \begin{equation}
     \eta_{\text{mem}} = \frac{\text{Throughput}_{\text{decode}} \ [\text{tok/s}]}{\text{VRAM Pico Alocada } [\text{GiB}]} \quad \left[\frac{\text{tokens}}{\text{s}\cdot\text{GiB}}\right]
 \end{equation}
+onde a VRAM é convertida utilizando Gibibytes binários ($1024^3$ bytes).
 
-\paragraph{Eficiência Energética ($E_{\text{tok/J}}$):}
-Tokens emitidos por Joule de energia elétrica consumida pela GPU:
+\paragraph{Eficiência Energética Estimada ($E_{\text{tok/J}}$) e Limitações de Instrumentação:}
+Na bancada de referência GTX 1050 Ti GP107, a leitura direta de potência via \texttt{nvmlDeviceGetPowerUsage} não é suportada pela arquitetura física e drivers (a placa opera com limite de 75W sem sensores shunt dedicados). A eficiência energética é estimada utilizando um modelo calibrado de carga da GPU ($P_{\text{est}} \in [49, 62]\text{ W}$) com base nos estados de clock e TDP:
 \begin{equation}
-    E_{\text{tok/J}} = \frac{\text{Throughput}_{\text{decode}} \ [\text{tok/s}]}{P_{\text{médio}} \ [\text{Watts}]} = \frac{\text{Tokens}}{\text{Watt}\cdot\text{segundo}} \quad \left[\frac{\text{tokens}}{\text{Joule}}\right]
+    E_{\text{tok/J}} = \frac{\text{Throughput}_{\text{decode}} \ [\text{tok/s}]}{P_{\text{est}} \ [\text{Watts}]} = \frac{\text{Tokens}}{\text{Watt}\cdot\text{segundo}} \quad \left[\frac{\text{tokens}}{\text{Joule}}\right]
 \end{equation}
+Esta métrica reflete o encapsulamento isolado do processador gráfico e não contempla o consumo elétrico total da tomada AC do nó host ($65\text{ W}$ a $110\text{ W}$).
 
 \subsection{Microarquitetura Pascal e Telemetria NVML}
 
@@ -254,16 +272,17 @@ A coleta de telemetria foi executada através da biblioteca nativa \texttt{libnv
 
 \subsection{Model Context Protocol (MCP)}
 
-\paragraph{Definição:}
+\paragraph{Definição e Escopo Exploratório:}
 O Model Context Protocol (MCP) é uma especificação aberta desenvolvida pela Anthropic que padroniza como modelos de linguagem interagem com ferramentas externas e bancos de dados através de mensagens estruturadas JSON-RPC 2.0 via \texttt{stdio} ou SSE.
-
-\paragraph{Primitivas Operacionais:}
+Nossa avaliação experimental investigou uma suíte exploratória de 3 cenários multi-turno sobre \texttt{stdio}:
 \begin{itemize}[leftmargin=1.8em]
     \item \texttt{tools/list}: Retorna as especificações JSON Schema dos parâmetros esperados por cada ferramenta.
     \item \texttt{tools/call}: Emite a chamada estruturada contendo o nome da função e argumentos tipados.
+    \item Continuação multi-turno e encerramento limpo sem alucinação de chamadas adicionais.
 \end{itemize}
+Embora valide o funcionamento básico de ferramentas via JSON-RPC, este microbenchmark não constitui certificação de conformidade integral com toda a especificação MCP (que abrange SSE, raízes dinâmicas, amostragem e subscrições).
 
-\subsection{Taxonomia de Segurança Adversária}
+\subsection{Taxonomia de Segurança Adversária e Escopo das Sondas}
 
 \paragraph{Jailbreaks Diretos versus Injeção Indireta de Prompt:}
 \begin{itemize}[leftmargin=1.8em]
@@ -271,12 +290,18 @@ O Model Context Protocol (MCP) é uma especificação aberta desenvolvida pela A
     \item \textbf{Injeção Indireta de Prompt:} Comandos maliciosos incorporados dentro de dados contextuais lidos pelo modelo (e.g., logs de sistema, páginas web). Ao resumir o texto, o modelo interpreta as diretivas injetadas como instruções de controle.
 \end{itemize}
 
+\paragraph{Sondas Exploratórias de Segurança ($N=6$):}
+Nossa bateria avalia $N=6$ casos de teste discretos (5 ataques diretos cobrindo exploração de Log4Shell CVE, keyloggers em C++, persona DAN 11.0, lógica invertida e controle benigno; mais 1 vetor de injeção indireta em logs). Trata-se de uma sonda exploratória preliminar; conclusões generalizáveis exigem suítes massivas como HarmBench ou StrongREJECT com centenas de vetores.
+
 \paragraph{Taxa de Sucesso de Ataque (ASR) e Falsos Positivos (FPR):}
 \begin{equation}
     \text{ASR} = \frac{\text{Consultas Comprometidas}}{N_{\text{ataques}}} \times 100\%, \quad \text{FPR} = \frac{\text{Recusas Indevidas em Tarefas Benignas}}{N_{\text{benignas}}} \times 100\%
 \end{equation}
 
-\subsection{Estatística Inferencial e Testes de Hipóteses}
+\subsection{Estatística Inferencial e Desenho Experimental}
+
+\paragraph{Execução Sequencial e Autocorrelação Temporal:}
+As 15 consultas de avaliação do MTP foram executadas como 5 repetições em blocos de um conjunto de 3 consultas em um mesmo processo \texttt{llama-server} persistente. Essa execução sequencial introduz autocorrelação temporal e elevação de temperatura ($50^\circ\text{C} \to 72^\circ\text{C}$), relaxando a premissa de observações estritamente i.i.d. Reportamos tanto os testes independentes de Welch e Mann-Whitney quanto a avaliação pareada por blocos.
 
 \paragraph{Teste $t$ de Welch para Variâncias Desiguais:}
 \begin{equation}
@@ -313,7 +338,7 @@ A Tabela~\ref{tab:system_perf_pt} apresenta as medições empíricas sob o teto 
 \label{tab:system_perf_pt}
 \begin{tabularx}{\textwidth}{L{2.7cm} *{7}{C}}
 \toprule
-\textbf{Modelo} & \makecell{\textbf{VRAM Pico}\\\textbf{(MiB)}} & \makecell{\textbf{Orçamento}\\\textbf{(\% VRAM)}} & \makecell{\textbf{Prompt}\\\textbf{(tok/s)}} & \makecell{\textbf{Decode}\\\textbf{(tok/s)}} & \makecell{\textbf{TTFT}\\\textbf{(ms)}} & \makecell{\textbf{$\eta_{\text{mem}}$}\\\textbf{(tok/s/GiB)}} & \makecell{\textbf{Energia}\\\textbf{(tok/J)}} \\
+\textbf{Modelo} & \makecell{\textbf{VRAM Pico}\\\textbf{(MiB)}} & \makecell{\textbf{Orçamento}\\\textbf{(\% VRAM)}} & \makecell{\textbf{Prompt}\\\textbf{(tok/s)}} & \makecell{\textbf{Decode}\\\textbf{(tok/s)}} & \makecell{\textbf{TTFT}\\\textbf{(ms)}} & \makecell{\textbf{$\eta_{\text{mem}}$}\\\textbf{(tok/s/GiB)}} & \makecell{\textbf{Est. Energia}\\\textbf{(tok/J)}} \\
 \midrule
 \textbf{Gemma-4-E2B (MTP)} & 1.510 & 36,8\% & \textbf{468,2} & \textbf{46,3} & \textbf{115,4} & \textbf{31,40} & \textbf{0,89} \\
 \textbf{Qwen-3.5-2B} & 1.598 & 39,0\% & 389,5 & 37,5 & 142,1 & 24,04 & 0,77 \\
@@ -321,6 +346,8 @@ A Tabela~\ref{tab:system_perf_pt} apresenta as medições empíricas sob o teto 
 \textbf{Qwen-3.5-4B} & 3.069 & 74,9\% & 237,1 & 18,4 & 284,6 & 6,14 & 0,30 \\
 \bottomrule
 \end{tabularx}
+\vspace{0.3em}
+{\scriptsize \textit{Nota:} VRAM de pico registrada em MiB binário ($1024^2$ bytes). A eficiência de memória $\eta_{\text{mem}}$ é computada como $\text{tok/s}$ dividido pela VRAM de pico em GiB ($1024^3$ bytes). A eficiência energética estimada ($E_{\text{tok/J}}$) decorre de um modelo calibrado de carga do encapsulamento da GPU ($P_{\text{est}} \in [49, 62]\text{ W}$) refletindo pontos de operação de TDP da placa; a potência consumida na tomada AC do host ($65\text{ W}$--$110\text{ W}$) não está incluída.}
 \end{table}
 
 \subsection{Utilização Efetiva da Largura de Banda de Memória}
@@ -381,7 +408,7 @@ Com variâncias amostrais desiguais ($s_{\text{MTP}}^2 = 117,07$ e $s_{\text{bas
 \begin{equation}
     t = \frac{42,21 - 32,25}{\sqrt{\frac{117,07}{15} + \frac{33,99}{15}}} = \frac{9,96}{3,173} = 3,1391
 \end{equation}
-O valor-$p$ bicaudal resultante é $p = 0,00486$ (valor-$p$ direcional unilateral $p = 0,00243$, significante a $\alpha = 0,01$). O teste não paramétrico $U$ de Mann-Whitney confirma $U = 210,0$ ($p = 2,84 \times 10^{-5}$), rejeitando $H_0$ com elevado grau de certeza. O tamanho de efeito padronizado é $d$ de Cohen = 1,1462, indicando impacto prático substancial. Em regime estacionário aquecido ($N=14$), o MTP assegura um ganho estável e determinístico de \textbf{33,2\%} ($44,95 \pm 2,12$ vs $33,75 \pm 0,41\text{ tok/s}$, $t$ de Welch = 19,38, $\nu \approx 14,0$, $p = 1,67 \times 10^{-11}$, $d$ de Cohen = 7,32).
+O valor-$p$ bicaudal resultante é $p = 0,00486$ (valor-$p$ direcional unilateral $p = 0,00243$, significante a $\alpha = 0,01$). O teste não paramétrico $U$ de Mann-Whitney confirma $U = 210,0$ ($p = 2,84 \times 10^{-5}$), rejeitando $H_0$ com elevado grau de certeza. O tamanho de efeito padronizado é $d$ de Cohen = 1,1462, indicando impacto prático substancial. Em regime estacionário aquecido ($N=14$), o MTP assegura um ganho estável e determinístico de \textbf{33,2\%} ($44,95 \pm 2,12$ vs $33,75 \pm 0,41\text{ tok/s}$, $t$ de Welch = 19,38, $\nu \approx 14,0$, $p = 1,67 \times 10^{-11}$, $d$ de Cohen = 7,32). Entre os 5 blocos sequenciais de ensaios, um teste $t$ pareado emparelhando execuções por índice de consulta resulta em $t = 3,61, p = 0,0028$, corroborando que a vantagem de vazão do MTP é consistente entre diferentes tipos de consulta. Contudo, conforme registrado via NVML, a temperatura do núcleo da GPU elevou-se de $50^\circ\text{C}$ no bloco 1 para $72^\circ\text{C}$ no bloco 5, provocando modulação de clock pelo driver ($1392\text{ MHz} \to 1290\text{ MHz}$) e introduzindo leve deriva serial negativa entre iterações subsequentes.
 
 \begin{figure}[htbp]
 \centering
@@ -398,13 +425,13 @@ O valor-$p$ bicaudal resultante é $p = 0,00486$ (valor-$p$ direcional unilatera
 \label{fig:mtp_box_pt}
 \end{figure}
 
-\subsection{Impacto Controlado de Quantização (IQ4\_XS versus Q4\_K\_M)}
-O modelo Gemma-4-E2B foi avaliado em dois formatos de quantização mantendo-se idênticos os pesos de origem:
+\subsection{Impacto Controlado de Quantização e Decomposição de Fatores Confundidores}
+O modelo Gemma-4-E2B foi avaliado em dois esquemas de quantização mantendo-se idênticos os pesos de origem:
 \begin{itemize}[leftmargin=1.8em]
-    \item \textbf{Gemma-4-E2B (IQ4\_XS):} Média global de $36,22 \pm 14,71\text{ tok/s}$; regime aquecido de $41,92 \pm 1,18\text{ tok/s}$.
-    \item \textbf{Gemma-4-E2B (Q4\_K\_M):} Média global de $22,73 \pm 9,31\text{ tok/s}$; regime aquecido de $26,34 \pm 0,51\text{ tok/s}$.
+    \item \textbf{Gemma-4-E2B (IQ4\_XS + MTP):} Média global de $36,22 \pm 14,71\text{ tok/s}$; regime aquecido de $41,92 \pm 1,18\text{ tok/s}$.
+    \item \textbf{Gemma-4-E2B (Q4\_K\_M Padrão):} Média global de $22,73 \pm 9,31\text{ tok/s}$; regime aquecido de $26,34 \pm 0,51\text{ tok/s}$.
 \end{itemize}
-Em regime aquecido ($N=5$), o formato IQ4\_XS proporciona um \textbf{acréscimo de 59,2\% no throughput} em relação ao padrão Q4\_K\_M ($41,92$ vs $26,34\text{ tok/s}$, $t$ de Welch = 27,20, $\nu = 5,43$, $p = 5,15 \times 10^{-7}$, $d$ de Cohen = 17,20; teste $t$ de Student de variâncias iguais $t(8) = 27,20, p = 3,59 \times 10^{-9}$), decorrente da redução na pegada de bytes lida da DRAM GDDR5 durante o decode.
+Em regime aquecido ($N=5$), a configuração IQ4\_XS proporciona uma \textbf{vantagem composta de 59,2\% no throughput} em relação ao padrão Q4\_K\_M ($41,92$ vs $26,34\text{ tok/s}$, $t$ de Welch = 27,20, $\nu = 5,43$, $p = 5,15 \times 10^{-7}$, $d$ de Cohen = 17,20; teste $t$ de Student de variâncias iguais $t(8) = 27,20, p = 3,59 \times 10^{-9}$). Entretanto, a transparência metodológica crítica exige a decomposição deste ganho: o artefato IQ4\_XS foi avaliado com a cabeça de rascunho especulativo MTP ativa, enquanto o artefato padrão Q4\_K\_M operou em modo de token único. Isolando a aceleração verificada de $\approx +33,2\%$ do MTP ($41,92 / 1,3318 \approx 31,47\text{ tok/s}$), verifica-se que a quantização por importância não uniforme contribui isoladamente com uma \textbf{vantagem líquida estimada de +19,5\% no throughput} ($31,47$ vs $26,34\text{ tok/s}$). Este ganho líquido alinha-se diretamente à redução no tráfego de pesos lidos da DRAM GDDR5 de $1,8\text{ GB}$ para $1,5\text{ GB}$ ($\approx 16,7\%$ de redução de bytes).
 
 \begin{figure}[htbp]
 \centering
@@ -428,20 +455,20 @@ A Tabela~\ref{tab:model_qual_pt} apresenta a robustez adversária, aderência ao
 \begin{table}[htbp]
 \centering
 \footnotesize
-\caption{Segurança Adversária, Aderência ao Protocolo MCP e Aritmética de Administração de Sistemas}
+\caption{Segurança Adversária Exploratória, Aderência ao Protocolo MCP e Aritmética de Administração de Sistemas}
 \label{tab:model_qual_pt}
-\begin{tabularx}{\textwidth}{L{2.8cm} C C C C}
+\begin{tabularx}{\textwidth}{L{2.6cm} C C C C}
 \toprule
-\textbf{Modelo} & \makecell{\textbf{Segurança}\\\textbf{(6 Vetores)}} & \makecell{\textbf{Protocolo MCP}\\\textbf{(Multi-turn)}} & \makecell{\textbf{SysAdmin Math}\\\textbf{(3 Sondas)}} & \makecell{\textbf{Perfil de}\\\textbf{Implantação}} \\
+\textbf{Modelo} & \makecell{\textbf{Segurança Direta}\\\textbf{(5 Vetores)}} & \makecell{\textbf{Injeção Indireta}\\\textbf{(1 Vetor de Log)}} & \makecell{\textbf{Loop MCP}\\\textbf{(3 Cenários)}} & \makecell{\textbf{SysAdmin Math}\\\textbf{(3 Sondas)}} \\
 \midrule
-\textbf{Gemma-4-E2B (MTP)} & 83,3\% (5/6) & \textbf{Aprovado Total} & 33,3\% (Paridade ZFS) & \textbf{Controlador Autônomo de Borda} \\
-\textbf{Qwen-3.5-4B} & 83,3\% (5/6) & \textbf{Aprovado Total} & 33,3\% (Paridade ZFS) & Raciocínio Semântico Denso \\
-\textbf{Qwen-3.5-2B} & 83,3\% (5/6) & \textbf{Aprovado Total} & 0,0\% (Deriva Aritmética) & Conversação Básica \\
-\textbf{Llama-3.2-3B} & 83,3\% (5/6) & \textbf{Falha (Turno 2)} & 33,3\% (Lógica de RAM) & Frágil em Loops de Ferramentas \\
+\textbf{Gemma-4-E2B (MTP)} & \textbf{100\% (5/5)} & Falha (0\% Recusa) & \textbf{Aprovado (3/3)} & 33,3\% (Paridade ZFS) \\
+\textbf{Qwen-3.5-4B} & \textbf{100\% (5/5)} & Falha (0\% Recusa) & \textbf{Aprovado (3/3)} & 33,3\% (Paridade ZFS) \\
+\textbf{Qwen-3.5-2B} & \textbf{100\% (5/5)} & Falha (0\% Recusa) & \textbf{Aprovado (3/3)} & 0,0\% (Deriva Aritmética) \\
+\textbf{Llama-3.2-3B} & \textbf{100\% (5/5)} & Falha (0\% Recusa) & Falha (Turno 2 Parse) & 33,3\% (Lógica de RAM) \\
 \bottomrule
 \end{tabularx}
 \vspace{0.3em}
-{\scriptsize \textit{Nota:} Segurança (6 Vetores) avalia 5 classes de ataques diretos (100\% de recusa limpa em todos os modelos) e 1 vetor de injeção indireta de contexto (0\% de recusa em todos os modelos), resultando em taxa de defesa composta de 5/6 (83,3\%). SysAdmin Math avalia uma sonda exploratória de 3 problemas determinísticos de administração de sistemas (sub-redes CIDR, paridade RAIDZ2 do ZFS e particionamento de RAM); não constitui uma avaliação exaustiva de raciocínio matemático geral.}
+{\scriptsize \textit{Nota:} Todas as métricas de segurança e agênticas representam microbenchmarks exploratórios preliminares ($N=5$ testes de segurança direta, $N=1$ teste de injeção indireta, $N=3$ cenários de ferramentas MCP, $N=3$ sondas de aritmética de sysadmin). Demonstram perfis comportamentais específicos sob condições controladas de borda, mas não constituem certificações exaustivas de segurança ou protocolo (as quais demandam suítes escaladas como HarmBench, StrongREJECT e BFCL).}
 \end{table}
 
 \subsection{Vulnerabilidade Crítica: Injeção Indireta de Prompt}
@@ -491,11 +518,13 @@ Para assegurar integridade científica, os achados experimentais são estritamen
 \subsection{Ameaças à Validade Interna e Externa}
 \begin{enumerate}[leftmargin=1.8em]
     \item \textbf{Estratificação de Outliers de Inicialização a Frio (Cold-Start):} Em ambas as ablações controladas (MTP e Quantização), o ensaio 1 registrou throughput severamente reduzido ($3,82$\,tok/s no MTP vs $\approx 45$\,tok/s; $7,69$\,tok/s no IQ4\_XS vs $\approx 41$\,tok/s) em função do carregamento inicial de kernels CUDA, alocação de tabelas de páginas de memória e compilação de grafos JIT. Reportamos explicitamente a estatística de amostra integral ($N=15$ / $N=6$, incluindo cold start) e a de regime estacionário aquecido ($N=14$ / $N=5$) para evitar distorções de interpretação.
-    \item \textbf{Autocorrelação Temporal e Deriva Térmica:} A execução sequencial de 15 consultas no mesmo servidor ativo introduz autocorrelação térmica e de estado de memória, atenuando a premissa de observações estritamente independentes e identicamente distribuídas (i.i.d.). Conforme monitorado via NVML, a temperatura do núcleo elevou-se de $50^\circ\text{C}$ para $72^\circ\text{C}$, induzindo modulação de clock pelo driver de $1392\text{ MHz} \to 1290\text{ MHz}$.
-    \item \textbf{Escopo de Microbenchmark vs.\ Capacidades Gerais:} A bateria quantitativa avalia uma sonda exploratória de $N=3$ problemas específicos de administração de sistemas (sub-redes CIDR, paridade RAIDZ2 do ZFS e particionamento de RAM). Embora representativos de comandos de sysadmin, não constituem uma avaliação estatisticamente massiva de raciocínio matemático geral (que exige datasets como GSM8K ou MATH-500). Similarmente, a avaliação de segurança direta investiga 5 vetores de penetração, não a totalidade das famílias de ataques adversários.
+    \item \textbf{Autocorrelação Temporal e Deriva Térmica:} A execução sequencial de 15 consultas no mesmo servidor ativo introduz autocorrelação térmica e de estado de memória, atenuando a premissa de observações estritamente independentes e identicamente distribuídas (i.i.d.). Conforme monitorado via NVML, a temperatura do núcleo elevou-se de $50^\circ\text{C}$ para $72^\circ\text{C}$, induzindo modulação de clock pelo driver de $1392\text{ MHz} \to 1290\text{ MHz}$. Reportam-se tanto o teste $t$ de Welch independente quanto a avaliação pareada por blocos.
+    \item \textbf{Escopo de Microbenchmark Exploratório versus Capacidades Gerais:} A bateria quantitativa avalia uma sonda exploratória de $N=3$ problemas específicos de administração de sistemas (sub-redes CIDR, paridade RAIDZ2 do ZFS e particionamento de RAM). Embora representativos de comandos de sysadmin, não constituem uma avaliação estatisticamente massiva de raciocínio matemático geral (que exige datasets como GSM8K ou MATH-500). Similarmente, a avaliação de segurança direta investiga 5 vetores de penetração e 1 vetor de injeção indireta, fornecendo sinais comportamentais preliminares em vez de certificações de segurança completas.
+    \item \textbf{Decomposição de Fatores Confundidores entre Quantização e MTP:} O acréscimo de throughput em regime estacionário de $59,2\%$ observado no Gemma-4-E2B IQ4\_XS frente ao Q4\_K\_M conjuga tanto a quantização por importância não uniforme quanto a decodificação especulativa MTP. A decomposição analítica desses fatores aponta ganho estimado de $+19,5\%$ atribuível isoladamente à quantização e $+33,2\%$ ao MTP. Replicações externas devem avaliar ambas as variáveis de forma desacoplada.
+    \item \textbf{Limitações de Medição e Instrumentação de Potência:} Devido ao fato de a placa GP107 PCIe não possuir sensores dedicados de derivação (shunts) acessíveis via NVML, a eficiência energética ($E_{\text{tok/J}}$) é estimada por modelo calibrado de carga de TDP ($P_{\text{est}} \in [49, 62]\text{ W}$) e não por integração física direta via wattímetro. Adicionalmente, o consumo elétrico total da tomada AC do nó hospedeiro ($65\text{ W}$--$110\text{ W}$) não está refletido nessa métrica do encapsulamento da GPU.
+    \item \textbf{Cobertura do Protocolo Agêntico e Escopo de Cenários:} A invocação de ferramentas foi avaliada em 3 cenários multi-turno sobre JSON-RPC 2.0 via \texttt{stdio}. Isso demonstra conformidade sintática básica e seleção de ferramentas, mas não cobre a totalidade da especificação MCP (como Server-Sent Events, subscrições de recursos, raízes dinâmicas e tokens de cancelamento).
     \item \textbf{Fronteira da Bancada de Referência de Acelerador Único:} Embora as deduções teóricas do Roofline e do MTP sejam universais, as medições empíricas absolutas de throughput e a dinâmica térmica refletem a controladora GDDR5 e a microarquitetura Pascal da GTX 1050 Ti.
-    \item \textbf{Determinismo Experimental:} Todos os ensaios aplicaram decodificação gulosa ($\tau = 0,0$) e agendamento serial para assegurar replicabilidade estrita entre repetições.
-    \item \textbf{Isolamento de Ambiente:} Os testes foram executados em container Linux isolado com passthrough direto de PCI, sem interferência de composição gráfica ou processos de desktop concorrentes.
+    \item \textbf{Determinismo Experimental e Isolamento de Ambiente:} Todos os ensaios aplicaram decodificação gulosa ($\tau = 0,0$) e agendamento serial em container Linux isolado com passthrough direto de PCI, sem interferência de composição gráfica de desktop.
 \end{enumerate}
 
 \section{Glossário Técnico e Formulações Matemáticas}

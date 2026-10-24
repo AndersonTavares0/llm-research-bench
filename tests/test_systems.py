@@ -38,6 +38,22 @@ class TestSystemsProfilers(unittest.TestCase):
         )
         self.assertEqual(size_mib, 28.0)
 
+    def test_calculate_kv_cache_mb_vs_mib(self):
+        # 117,440,512 bytes = 112.0 MiB = 117.44 MB (decimal)
+        size_mib = self.kv_profiler.calculate_kv_cache_mib(28, 4, 128, 2048, "fp16")
+        size_mb = self.kv_profiler.calculate_kv_cache_mb(28, 4, 128, 2048, "fp16")
+        self.assertEqual(size_mib, 112.0)
+        self.assertEqual(size_mb, 117.44)
+
+    def test_known_architectures_kv_scaling(self):
+        # Llama-3.2-3B: 28 layers, 8 kv heads, 128 head_dim -> 114,688 bytes/tok (fp16) = 112 KiB/tok
+        arch = self.kv_profiler.KNOWN_ARCHITECTURES["llama-3.2-3b"]
+        b_tok = self.kv_profiler.calculate_bytes_per_token(
+            arch["n_layers"], arch["n_kv_heads"], arch["d_head"], "fp16"
+        )
+        self.assertEqual(b_tok, 114688)
+        self.assertEqual(b_tok / 1024, 112.0)
+
     def test_find_oom_threshold_context(self):
         # Model weights: 1500 MiB. Budget: 4096 MiB. Overhead: 250 MiB.
         # Remaining for KV Cache: 4096 - 1500 - 250 = 2346 MiB.

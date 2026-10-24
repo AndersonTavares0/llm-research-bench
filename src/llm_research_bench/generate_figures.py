@@ -241,7 +241,7 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
     # Figure 7: Controlled Quantization Comparison (IQ4_XS vs Q4_K_M)
     # -------------------------------------------------------------
     fig, ax = plt.subplots(figsize=(5.2, 3.2), dpi=300)
-    quant_labels = ["IQ4_XS (with MTP)", "Q4_K_M (Standard)"]
+    quant_labels = ["IQ4_XS (with MTP)", "Q4_K_M (Base, No MTP)"]
     mean_quant = [float(np.mean(runs_iq4)), float(np.mean(runs_q4km))]
     warm_quant = [float(np.mean(runs_iq4[1:])), float(np.mean(runs_q4km[1:]))]
 
@@ -252,7 +252,7 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
     bars2 = ax.bar(x + width/2, warm_quant, width, label="Steady-State Warmed (tok/s)", color="#5ec962", alpha=0.85)
 
     ax.set_ylabel("Generation Throughput (tokens/s)")
-    ax.set_title("Quantization Impact on Gemma-4-E2B (GTX 1050 Ti)")
+    ax.set_title("Compound Quantization & MTP Impact on Gemma-4-E2B")
     ax.set_xticks(x)
     ax.set_xticklabels(quant_labels)
     ax.set_ylim(0, 52)
@@ -279,12 +279,13 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
         "llama3.2:3B": 55.0,
         "qwen3.5:4B": 62.0,
     }
+    # Estimated GPU package power model (49W - 62W under load; excludes AC wall plug host power)
     powers = np.array([power_map.get(m["model"], 55.0) for m in sys_metrics])
     energy_eff = tok_s / powers
 
     bars = ax.bar(slm_names, energy_eff, color="#2b83ba", alpha=0.85, width=0.5)
-    ax.set_ylabel("Energy Efficiency (tokens / Joule)")
-    ax.set_title("Computational Energy Efficiency (NVML Telemetry)")
+    ax.set_ylabel("Estimated Energy Efficiency (tok / Joule)")
+    ax.set_title("Estimated GPU Package Efficiency (Board Power Model)")
     ax.set_xticks(range(len(slm_names)))
     ax.set_xticklabels(slm_names, rotation=15, ha="right")
     ax.set_ylim(0, 1.1)

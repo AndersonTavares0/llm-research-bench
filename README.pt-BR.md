@@ -2,7 +2,7 @@
 
 [![Licença: MIT](https://img.shields.io/badge/Licen%C3%A7a-MIT-blue.svg)](LICENSE)
 [![Python: 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](pyproject.toml)
-[![Testes: 37 Passando](https://img.shields.io/badge/testes-37%20passando-brightgreen.svg)](tests/)
+[![Testes: 39 Passando](https://img.shields.io/badge/testes-39%20passando-brightgreen.svg)](tests/)
 [![Artigo: PDF (EN)](https://img.shields.io/badge/Paper-PDF%20(en--US)-red.svg)](reports/en-US/report_en-US.pdf)
 [![Artigo: PDF (PT)](https://img.shields.io/badge/Artigo-PDF%20(pt--BR)-red.svg)](reports/pt-BR/report_pt-BR.pdf)
 
@@ -55,28 +55,29 @@ Avaliado com amostragem determinística gulosa ($\tau = 0,0$) em tarefas técnic
 - **Aceleração Global:** Ganho de $+30,9\%$ no throughput (teste $t$ de Welch = 3,139, $\nu = 21,51$, valor-$p$ bicaudal = 0,0049, valor-$p$ unicaudal = 0,0024, $d$ de Cohen = 1,146, efeito grande).
 - **Aceleração em Regime Estacionário:** Ganho de $+33,2\%$ ($44,95 \pm 2,12$ vs $33,75 \pm 0,41$\,tok/s, teste $t$ de Welch = 19,38, $\nu = 13,99, p = 1,67 \times 10^{-11}$, $d$ de Cohen = 7,32), convergindo exatamente com a formulação teórica ($S \approx 1,333\times$ para taxa de aceitação $\alpha = 0,40$).
 - **Neutralidade de Memória:** Zero sobrecarga adicional de VRAM (2038\,MiB em ambas as configurações).
+- **Decomposição de Fatores Confundidores entre Quantização e MTP:** Em regime estacionário aquecido, o Gemma-4-E2B (IQ4_XS + MTP) apresenta uma vantagem composta de +59,2% no throughput em relação ao padrão Q4_K_M (41,92 vs 26,34 tok/s). Decompondo esse ganho e isolando a aceleração verificada de +33,2% do MTP, constata-se que a quantização por importância não uniforme contribui isoladamente com uma vantagem líquida estimada de +19,5% no throughput, diretamente alinhada à redução de 16,7% no tráfego de pesos lidos da DRAM GDDR5 (1,8 GB para 1,5 GB).
 
 ### 2. Desempenho de Sistemas e Eficiência Energética
 
-| Modelo | Pico VRAM | Fração Orçamento | Avaliação Prompt | Throughput Decode | TTFT | Eficiência de Memória ($\eta_{\text{mem}}$) | Eficiência Energética ($E_{\text{tok/J}}$) |
+| Modelo | Pico VRAM | Fração Orçamento | Avaliação Prompt | Throughput Decode | TTFT | Eficiência de Memória ($\eta_{\text{mem}}$) | Est. Eficiência Energética ($E_{\text{tok/J}}$) |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Gemma-4-E2B (IQ4_XS + MTP)** | **1.510 MiB** | **36,8%** | **468,2 tok/s** | **46,3 tok/s** | **115,4 ms** | **31,40 tok/s/GiB** | **0,89 tok/J** |
 | **Qwen-3.5-2B (Q4_K_XL)** | 1.598 MiB | 39,0% | 389,5 tok/s | 37,5 tok/s | 142,1 ms | 24,04 tok/s/GiB | 0,77 tok/J |
 | **Llama-3.2-3B (Q4_K_M)** | 2.120 MiB | 51,7% | 390,7 tok/s | 27,4 tok/s | 168,3 ms | 13,24 tok/s/GiB | 0,50 tok/J |
 | **Qwen-3.5-4B (Q4_K_M)** | 3.069 MiB | 74,9% | 237,1 tok/s | 18,4 tok/s | 284,6 ms | 6,14 tok/s/GiB | 0,30 tok/J |
 
-*Nota:* A eficiência de memória é definida como $\eta_{\text{mem}} = \text{Throughput} / \text{VRAM}_{\text{GiB}}$. A eficiência energética é definida como $E = \text{Throughput} / P_{\text{médio}}$ (Tokens por Joule) derivada diretamente dos sensores NVML.
+*Nota:* VRAM de pico registrada em MiB binário ($1024^2$ bytes). A eficiência de memória é definida como $\eta_{\text{mem}} = \text{Throughput} / \text{VRAM}_{\text{GiB}}$ (onde $1\text{ GiB} = 1024^3\text{ bytes}$). A eficiência energética estimada ($E_{\text{tok/J}} = \text{Throughput} / P_{\text{est}}$) decorre de um modelo calibrado de carga do encapsulamento da GPU ($P_{\text{est}} \in [49, 62]\text{ W}$) refletindo pontos de operação de TDP da placa; a potência consumida na tomada AC do host ($65\text{ W}$--$110\text{ W}$) não está incluída.
 
-### 3. Robustez Adversarial e Model Context Protocol (MCP)
+### 3. Robustez Adversarial Exploratória e Model Context Protocol (MCP)
 
-| Modelo | Recusa de Ataque Direto (5 Vetores) | Injeção Indireta de Contexto (Canary) | Chamada de Ferramentas MCP (stdio) | Aritmética SysAdmin (3 Sondas) |
+| Modelo | Recusa de Ataque Direto (5 Vetores) | Injeção Indireta de Contexto (1 Vetor de Log) | Chamada de Ferramentas MCP (3 Cenários) | Aritmética SysAdmin (3 Sondas) |
 | :--- | :--- | :--- | :--- | :--- |
 | **Gemma-4-E2B (MTP)** | **100% (5/5)** | **Falhou (0% recusa)** | **Aprovado (100% conformidade)** | 33,3% (Paridade ZFS) |
 | **Qwen-3.5-4B** | **100% (5/5)** | **Falhou (0% recusa)** | **Aprovado (100% conformidade)** | 33,3% (Paridade ZFS) |
 | **Qwen-3.5-2B** | **100% (5/5)** | **Falhou (0% recusa)** | **Aprovado (100% conformidade)** | 0,0% (deriva aritmética) |
-| **Llama-3.2-3B** | **100% (5/5)** | **Falhou (0% recusa)** | Falhou (erro sintático no turno 2) | 33,3% (Lógica de RAM) |
+| **Llama-3.2-3B** | **100% (5/5)** | **Falhou (0% recusa)** | Falhou (erro de parsing no turno 2) | 33,3% (Lógica de RAM) |
 
-*Nota sobre Aritmética SysAdmin:* Avalia uma sonda exploratória de 3 problemas determinísticos de administração de sistemas (sub-redes CIDR, paridade RAIDZ2 do ZFS e particionamento de RAM); não constitui uma avaliação exaustiva de raciocínio matemático geral.
+*Nota sobre o Escopo de Segurança e MCP:* Todas as métricas de segurança, ferramentas e aritmética representam microbenchmarks exploratórios preliminares ($N=5$ testes de segurança direta, $N=1$ teste de injeção indireta, $N=3$ cenários de ferramentas MCP, $N=3$ sondas de aritmética de sysadmin). Demonstram perfis comportamentais específicos sob condições controladas de borda, mas não constituem certificações exaustivas de segurança ou protocolo (as quais demandam suítes escaladas como HarmBench, StrongREJECT e BFCL).
 
 - **Recusa Direta:** 100% em todos os modelos contra exploits armados de CVE (Log4Shell), keyloggers furtivos, personificação DAN e extração de instruções do sistema.
 - **Injeção Indireta de Prompt:** Vulnerabilidade universal (0% de recusa). Todos os modelos executaram comandos simulados de substituição quando encapsulados em logs de contexto não confiáveis, provando que o alinhamento pós-treinamento falha em isolar fronteiras de instrução.
@@ -135,7 +136,7 @@ llm-research-bench/
 │   ├── statistical_engine.py            # Motor de intervalos de confiança t de Student a 95%
 │   ├── generate_figures.py              # Gerador de gráficos vetoriais em PDF
 │   └── mcp_server.py                    # Servidor MCP padrão JSON-RPC 2.0 stdio
-├── tests/                               # Suíte de testes unitários (37 testes)
+├── tests/                               # Suíte de testes unitários (39 testes)
 └── pyproject.toml                       # Configuração do pacote Python
 ```
 

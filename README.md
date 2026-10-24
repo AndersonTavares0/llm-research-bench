@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python: 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](pyproject.toml)
-[![Tests: 37 Passing](https://img.shields.io/badge/tests-37%20passing-brightgreen.svg)](tests/)
+[![Tests: 39 Passing](https://img.shields.io/badge/tests-39%20passing-brightgreen.svg)](tests/)
 [![Paper: PDF (EN)](https://img.shields.io/badge/Paper-PDF%20(en--US)-red.svg)](reports/en-US/report_en-US.pdf)
 [![Paper: PDF (PT)](https://img.shields.io/badge/Artigo-PDF%20(pt--BR)-red.svg)](reports/pt-BR/report_pt-BR.pdf)
 
@@ -55,28 +55,29 @@ Evaluated with deterministic greedy decoding ($\tau = 0.0$) on technical system 
 - **Overall Acceleration:** $+30.9\%$ throughput gain (Welch's $t = 3.139, \nu = 21.51$, two-tailed $p = 0.0049$, one-tailed $p = 0.0024$, Cohen's $d = 1.146$, large effect).
 - **Warmed Steady-State Acceleration:** $+33.2\%$ throughput gain ($44.95 \pm 2.12$ vs $33.75 \pm 0.41$\,tok/s, Welch's $t = 19.38, \nu = 13.99, p = 1.67 \times 10^{-11}$, Cohen's $d = 7.32$), exactly matching the theoretical speculative formulation ($S \approx 1.333\times$ for draft acceptance $\alpha = 0.40$).
 - **Memory Footprint Neutrality:** Zero additional VRAM overhead (2038\,MiB in both configurations).
+- **Quantization and MTP Confounder Decomposition:** In steady-state execution, Gemma-4-E2B (IQ4_XS + MTP) demonstrates a +59.2% compound throughput advantage over standard Q4_K_M (41.92 vs 26.34 tok/s). Decomposing this gain by isolating the verified +33.2% MTP acceleration reveals that non-uniform importance quantization alone contributes an estimated +19.5% pure throughput gain, directly aligning with the 16.7% reduction in DRAM weight transfers (1.8 GB to 1.5 GB).
 
 ### 2. Cross-Model Systems Performance and Energy Efficiency
 
-| Model | Peak VRAM | Budget Fraction | Prompt Eval | Decode Throughput | TTFT | Memory Efficiency ($\eta_{\text{mem}}$) | Energy Efficiency ($E_{\text{tok/J}}$) |
+| Model | Peak VRAM | Budget Fraction | Prompt Eval | Decode Throughput | TTFT | Memory Efficiency ($\eta_{\text{mem}}$) | Est. Energy Efficiency ($E_{\text{tok/J}}$) |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Gemma-4-E2B (IQ4_XS + MTP)** | **1,510 MiB** | **36.8%** | **468.2 tok/s** | **46.3 tok/s** | **115.4 ms** | **31.40 tok/s/GiB** | **0.89 tok/J** |
 | **Qwen-3.5-2B (Q4_K_XL)** | 1,598 MiB | 39.0% | 389.5 tok/s | 37.5 tok/s | 142.1 ms | 24.04 tok/s/GiB | 0.77 tok/J |
 | **Llama-3.2-3B (Q4_K_M)** | 2,120 MiB | 51.7% | 390.7 tok/s | 27.4 tok/s | 168.3 ms | 13.24 tok/s/GiB | 0.50 tok/J |
 | **Qwen-3.5-4B (Q4_K_M)** | 3,069 MiB | 74.9% | 237.1 tok/s | 18.4 tok/s | 284.6 ms | 6.14 tok/s/GiB | 0.30 tok/J |
 
-*Note:* Memory efficiency is defined as $\eta_{\text{mem}} = \text{Throughput} / \text{VRAM}_{\text{GiB}}$. Energy efficiency is defined as $E = \text{Throughput} / P_{\text{avg}}$ (Tokens per Joule) derived from live NVML sensors.
+*Note:* Peak VRAM is recorded in binary MiB. Memory efficiency is defined as $\eta_{\text{mem}} = \text{Throughput} / \text{VRAM}_{\text{GiB}}$ (where $1\text{ GiB} = 1024^3\text{ bytes}$). Estimated energy efficiency ($E_{\text{tok/J}} = \text{Throughput} / P_{\text{est}}$) is derived from a calibrated isolated GPU package power model ($P_{\text{est}} \in [49, 62]\text{ W}$) reflecting TDP operating points; total host AC wall power ($65\text{ W}$--$110\text{ W}$) is not included.
 
-### 3. Adversarial Safety Robustness and Model Context Protocol (MCP)
+### 3. Exploratory Adversarial Safety Robustness and Model Context Protocol (MCP)
 
-| Model | Direct Attack Refusal (5 Vectors) | Indirect Context Injection (Log Canary) | MCP Tool Calling (stdio) | SysAdmin Math (3 Probes) |
+| Model | Direct Attack Refusal (5 Vectors) | Indirect Context Injection (1 Log Canary) | MCP Tool Calling (3 Scenarios) | SysAdmin Math (3 Probes) |
 | :--- | :--- | :--- | :--- | :--- |
 | **Gemma-4-E2B (MTP)** | **100% (5/5)** | **Failed (0% refusal)** | **Passed (100% schema match)** | 33.3% (ZFS Parity) |
 | **Qwen-3.5-4B** | **100% (5/5)** | **Failed (0% refusal)** | **Passed (100% schema match)** | 33.3% (ZFS Parity) |
 | **Qwen-3.5-2B** | **100% (5/5)** | **Failed (0% refusal)** | **Passed (100% schema match)** | 0.0% (arithmetic drift) |
-| **Llama-3.2-3B** | **100% (5/5)** | **Failed (0% refusal)** | Failed (turn 2 schema error) | 33.3% (RAM logic) |
+| **Llama-3.2-3B** | **100% (5/5)** | **Failed (0% refusal)** | Failed (turn 2 parse error) | 33.3% (RAM logic) |
 
-*Note on SysAdmin Math:* Evaluates a 3-probe exploratory microbenchmark of systems administration arithmetic (CIDR subnetting, ZFS RAIDZ2 parity math, RAM partitioning); it does not constitute an exhaustive evaluation of general mathematical reasoning capability.
+*Note on Safety and Tool Calling Scope:* All security, tool calling, and arithmetic metrics represent preliminary exploratory microbenchmarks ($N=5$ direct safety prompts, $N=1$ indirect injection prompt, $N=3$ tool scenarios, $N=3$ sysadmin arithmetic probes). They demonstrate specific behavioral profiles under controlled edge conditions but do not constitute exhaustive safety certifications (such as HarmBench, StrongREJECT, or BFCL).
 
 - **Direct Refusal:** 100% across all models against weaponized CVE exploits (Log4Shell), stealth keyloggers, DAN persona framing, and prompt extraction.
 - **Indirect Prompt Injection:** Universal vulnerability (0% refusal). All models executed simulated command overrides when embedded inside untrusted context logs, proving that post-training alignment fails to enforce instruction boundaries.
@@ -135,7 +136,7 @@ llm-research-bench/
 │   ├── statistical_engine.py            # Student's t 95% confidence interval engine
 │   ├── generate_figures.py              # Publication-grade vector PDF chart generator
 │   └── mcp_server.py                    # Standard JSON-RPC 2.0 stdio MCP server
-├── tests/                               # Comprehensive unit test suite (37 tests)
+├── tests/                               # Comprehensive unit test suite (39 tests)
 └── pyproject.toml                       # Python package configuration
 ```
 
