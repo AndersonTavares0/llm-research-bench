@@ -31,10 +31,10 @@ Evaluated with greedy decoding ($\tau = 0.0$) on technical system prompts over 5
 
 | Configuration | Mean Throughput | Standard Deviation | 95% CI Margin | 95% CI Range | Steady-State Speed | Peak VRAM |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| Gemma-4-E2B (with MTP draft) | 42.21 tok/s | 10.82 | ±7.18 | [35.0, 49.4] tok/s | 46.5 tok/s | 2038 MiB |
-| Gemma-4-E2B (without MTP draft) | 32.25 tok/s | 5.83 | ±3.87 | [28.4, 36.1] tok/s | 33.9 tok/s | 2038 MiB |
+| Gemma-4-E2B (with MTP draft) | 42.21 tok/s | 10.82 | ±5.99 | [36.2, 48.2] tok/s | 44.95 tok/s | 2038 MiB |
+| Gemma-4-E2B (without MTP draft) | 32.25 tok/s | 5.83 | ±3.23 | [29.0, 35.5] tok/s | 33.75 tok/s | 2038 MiB |
 
-MTP speculative decoding increases generation throughput by 30.9% overall and 37.1% during steady-state runs without increasing VRAM consumption.
+MTP speculative decoding increases generation throughput by 30.9% overall ($t = 3.139, p = 0.0024$) and 33.2% during steady-state runs ($44.95$ vs $33.75$ tok/s, $t = 21.05, p < 10^{-13}$) without increasing VRAM consumption.
 
 ### 2. Hardware Performance across Models
 

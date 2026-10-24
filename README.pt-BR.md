@@ -31,10 +31,10 @@ Avaliado com decodificação gulosa ($\tau = 0,0$) sobre prompts técnicos em 5 
 
 | Condição | Vazão Média | Desvio Padrão | Margem IC 95% | Faixa IC 95% | Regime Estável | VRAM Pico |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| Gemma-4-E2B (com draft MTP) | 42,21 tok/s | 10,82 | ±7,18 | [35,0; 49,4] tok/s | 46,5 tok/s | 2038 MiB |
-| Gemma-4-E2B (sem draft MTP) | 32,25 tok/s | 5,83 | ±3,87 | [28,4; 36,1] tok/s | 33,9 tok/s | 2038 MiB |
+| Gemma-4-E2B (com draft MTP) | 42,21 tok/s | 10,82 | ±5,99 | [36,2; 48,2] tok/s | 44,95 tok/s | 2038 MiB |
+| Gemma-4-E2B (sem draft MTP) | 32,25 tok/s | 5,83 | ±3,23 | [29,0; 35,5] tok/s | 33,75 tok/s | 2038 MiB |
 
-A decodificação especulativa MTP amplia o throughput em 30,9% na média geral e 37,1% em regime aquecido sem aumentar o consumo de VRAM.
+A decodificação especulativa MTP amplia o throughput em 30,9% na média geral ($t = 3,139, p = 0,0024$) e 33,2% em regime aquecido ($44,95$ vs $33,75$ tok/s, $t = 21,05, p < 10^{-13}$) sem aumentar o consumo de VRAM.
 
 ### 2. Desempenho de Hardware por Modelo
 

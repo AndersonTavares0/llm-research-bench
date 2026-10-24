@@ -12,9 +12,9 @@
       "stats_tok_s": {
         "mean": 42.21,
         "std_dev": 10.82,
-        "ci_95_margin": 7.18,
-        "ci_low": 35.03,
-        "ci_high": 49.39,
+        "ci_95_margin": 5.99,
+        "ci_low": 36.22,
+        "ci_high": 48.2,
         "n": 15
       },
       "hardware_telemetry": {
@@ -51,9 +51,9 @@
       "stats_tok_s": {
         "mean": 32.25,
         "std_dev": 5.83,
-        "ci_95_margin": 3.87,
-        "ci_low": 28.38,
-        "ci_high": 36.12,
+        "ci_95_margin": 3.23,
+        "ci_low": 29.02,
+        "ci_high": 35.48,
         "n": 15
       },
       "hardware_telemetry": {

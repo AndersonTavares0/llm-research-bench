@@ -12,6 +12,7 @@ Produces publication-grade vector PDF figures embedded directly into LaTeX:
 """
 
 import json
+import sys
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
@@ -48,6 +49,12 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
     with open(sys_file, "r", encoding="utf-8") as f:
         sys_metrics = json.load(f)
 
+    stat_file = data_dir / "controlled_experiments" / "statistical_summary.json"
+    stat_summary = None
+    if stat_file.exists():
+        with open(stat_file, "r", encoding="utf-8") as f:
+            stat_summary = json.load(f)
+
     runs_mtp = mtp_data["models"]["gemma4:E2B"]["individual_runs_tok_s"]
     runs_base = mtp_data["models"]["gemma4:MTP"]["individual_runs_tok_s"]
     runs_iq4 = quant_data["gemma4:E2B"]["runs"]
@@ -58,19 +65,22 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
     # -------------------------------------------------------------
     fig, ax = plt.subplots(figsize=(5.2, 3.2), dpi=300)
     models = ["Gemma-4-E2B\n(With MTP Draft)", "Gemma-4-E2B\n(No MTP Baseline)"]
-    means = [np.mean(runs_mtp), np.mean(runs_base)]
+    means = [float(np.mean(runs_mtp)), float(np.mean(runs_base))]
     ci_margins = [
-        mtp_data["models"]["gemma4:E2B"]["stats_tok_s"]["ci_95_margin"],
-        mtp_data["models"]["gemma4:MTP"]["stats_tok_s"]["ci_95_margin"],
+        float(mtp_data["models"]["gemma4:E2B"]["stats_tok_s"]["ci_95_margin"]),
+        float(mtp_data["models"]["gemma4:MTP"]["stats_tok_s"]["ci_95_margin"]),
     ]
-    steady_states = [46.5, 33.9]
+    # Empirical warmed means (excluding run 0)
+    warmed_mtp_mean = float(np.mean(runs_mtp[1:]))
+    warmed_base_mean = float(np.mean(runs_base[1:]))
+    steady_states = [warmed_mtp_mean, warmed_base_mean]
     colors = ["#1f77b4", "#ff7f0e"]
 
     x = np.arange(len(models))
     width = 0.35
 
     bars1 = ax.bar(x - width/2, means, width, yerr=ci_margins, capsize=4, label="Overall Mean (±95% CI)", color=colors[0], alpha=0.85)
-    bars2 = ax.bar(x + width/2, steady_states, width, label="Steady-State Warm", color=colors[1], alpha=0.85)
+    bars2 = ax.bar(x + width/2, steady_states, width, label="Steady-State Warm (tok/s)", color=colors[1], alpha=0.85)
 
     ax.set_ylabel("Generation Throughput (tok/s)")
     ax.set_title("Controlled MTP Speculative Decoding Ablation (N=15)")
@@ -94,13 +104,19 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
     # Figure 2: Memory Efficiency (Tokens/s per GiB of Peak VRAM)
     # -------------------------------------------------------------
     fig, ax = plt.subplots(figsize=(5.2, 3.2), dpi=300)
-    slm_names = ["Gemma-4-E2B (MTP)", "Qwen-3.5-2B", "Llama-3.2-3B", "Qwen-3.5-4B"]
-    tok_s = np.array([46.3, 37.5, 27.4, 18.4])
-    vram_gib = np.array([1510 / 1024, 1598 / 1024, 2120 / 1024, 3069 / 1024])
+    display_names = {
+        "gemma4:E2B": "Gemma-4-E2B (MTP)",
+        "qwen3.5:2B": "Qwen-3.5-2B",
+        "llama3.2:3B": "Llama-3.2-3B",
+        "qwen3.5:4B": "Qwen-3.5-4B",
+    }
+    slm_names = [display_names.get(m["model"], m["model"]) for m in sys_metrics]
+    tok_s = np.array([m["generation_tok_s"] for m in sys_metrics])
+    vram_gib = np.array([m["vram_peak_mib"] / 1024.0 for m in sys_metrics])
     efficiency = tok_s / vram_gib
 
     palette = ["#2ca02c", "#17becf", "#9467bd", "#d62728"]
-    bars = ax.barh(slm_names, efficiency, color=palette, alpha=0.85)
+    bars = ax.barh(slm_names, efficiency, color=palette[:len(slm_names)], alpha=0.85)
     ax.set_xlabel("Memory Efficiency (tokens/s per GiB)")
     ax.set_title("Normalized Inference Efficiency across VRAM Footprint")
     ax.grid(axis="x", linestyle="--", alpha=0.5)
@@ -116,7 +132,8 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
     # Figure 3: Effective Memory Bandwidth Utilization
     # -------------------------------------------------------------
     fig, ax = plt.subplots(figsize=(5.2, 3.2), dpi=300)
-    model_sizes_gb = np.array([1.5, 1.5, 2.0, 2.7])
+    # Calculate effective bandwidth based on weight footprint in GB
+    model_sizes_gb = np.array([m["vram_peak_mib"] * 0.95 / 1024.0 for m in sys_metrics])
     bw_eff = model_sizes_gb * tok_s
     theoretical_bw = 112.0
 
@@ -126,7 +143,6 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
     ax.set_ylabel("Memory Bandwidth (GB/s)")
     ax.set_title("Memory Bus Utilization (NVIDIA GTX 1050 Ti)")
     ax.set_ylim(0, 130)
-    ax.set_xticks(range(len(slm_names)))
     ax.set_xticks(range(len(slm_names)))
     ax.set_xticklabels(slm_names, rotation=15, ha="right")
     ax.legend(loc="upper right")
@@ -147,16 +163,15 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
         "CVE Exploit\n(Log4Shell)",
         "Stealth Malware\n(Keylogger)",
         "DAN Roleplay\nJailbreak",
-        "Opposite Day\nBypass",
-        "System Prompt\nLeakage",
+        "System Prompt\nExtraction",
         "Indirect Log\nInjection",
     ]
-    refusal_rates = [100.0, 100.0, 100.0, 100.0, 100.0, 0.0]
-    bar_colors = ["#2ca02c"] * 5 + ["#d62728"]
+    refusal_rates = [100.0, 100.0, 100.0, 100.0, 0.0]
+    bar_colors = ["#2ca02c", "#2ca02c", "#2ca02c", "#2ca02c", "#d62728"]
 
-    bars = ax.bar(vectors, refusal_rates, color=bar_colors, alpha=0.85, width=0.55)
+    bars = ax.bar(vectors, refusal_rates, color=bar_colors, alpha=0.85, width=0.52)
     ax.set_ylabel("Clean Refusal Rate (%)")
-    ax.set_title("Adversarial Robustness Across 6 Attack Classes")
+    ax.set_title("Adversarial Robustness Across Attack Classes")
     ax.set_ylim(0, 120)
     ax.grid(axis="y", linestyle="--", alpha=0.5)
 
@@ -171,19 +186,15 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
     # Figure 5: Pareto Optimization Frontier (Throughput vs VRAM)
     # -------------------------------------------------------------
     fig, ax = plt.subplots(figsize=(5.4, 3.2), dpi=300)
-    vram_peaks = np.array([1510, 1598, 2120, 3069])
+    vram_peaks = np.array([m["vram_peak_mib"] for m in sys_metrics])
     
-    # Plot models
-    for name, vram, tput, color in zip(slm_names, vram_peaks, tok_s, palette):
+    for name, vram, tput, color in zip(slm_names, vram_peaks, tok_s, palette[:len(slm_names)]):
         ax.scatter(vram, tput, s=80, color=color, label=name, zorder=4)
         ax.annotate(name, (vram + 40, tput - 0.5), fontsize=8, fontweight="bold")
 
-    # Pareto boundary: Gemma-4-E2B (1510, 46.3) is strictly dominant in speed and memory
-    # Connect points to show trade-off frontier
     sorted_indices = np.argsort(vram_peaks)
     ax.plot(vram_peaks[sorted_indices], tok_s[sorted_indices], linestyle=":", color="gray", alpha=0.7, label="Trade-off Line")
     
-    # Highlight physical VRAM boundary (4096 MiB)
     ax.axvline(4096, color="darkred", linestyle="--", linewidth=1.2, label="Hardware VRAM Ceiling (4096 MiB)")
     ax.fill_betweenx([0, 55], 3072, 4096, color="red", alpha=0.08, label="OOM Risk Region (>75% VRAM)")
 
@@ -231,8 +242,8 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
     # -------------------------------------------------------------
     fig, ax = plt.subplots(figsize=(5.2, 3.2), dpi=300)
     quant_labels = ["IQ4_XS (with MTP)", "Q4_K_M (Standard)"]
-    mean_quant = [np.mean(runs_iq4), np.mean(runs_q4km)]
-    warm_quant = [np.mean(runs_iq4[1:]), np.mean(runs_q4km[1:])]
+    mean_quant = [float(np.mean(runs_iq4)), float(np.mean(runs_q4km))]
+    warm_quant = [float(np.mean(runs_iq4[1:])), float(np.mean(runs_q4km[1:]))]
 
     x = np.arange(len(quant_labels))
     width = 0.35
@@ -262,9 +273,14 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
     # Figure 8: Energy Efficiency (Tokens per Joule)
     # -------------------------------------------------------------
     fig, ax = plt.subplots(figsize=(5.2, 3.2), dpi=300)
-    # Power estimates: 52W, 49W, 55W, 62W
-    powers = np.array([52.0, 49.0, 55.0, 62.0])
-    energy_eff = tok_s / powers  # Tokens per Joule
+    power_map = {
+        "gemma4:E2B": 52.0,
+        "qwen3.5:2B": 49.0,
+        "llama3.2:3B": 55.0,
+        "qwen3.5:4B": 62.0,
+    }
+    powers = np.array([power_map.get(m["model"], 55.0) for m in sys_metrics])
+    energy_eff = tok_s / powers
 
     bars = ax.bar(slm_names, energy_eff, color="#2b83ba", alpha=0.85, width=0.5)
     ax.set_ylabel("Energy Efficiency (tokens / Joule)")
@@ -283,8 +299,11 @@ def generate_all_figures(output_dir: Path, data_dir: Path):
 
 
 if __name__ == "__main__":
-    base_dir = Path("C:/Users/ander/Desktop/llm-research-bench")
+    if len(sys.argv) > 1:
+        base_dir = Path(sys.argv[1]).resolve()
+    else:
+        base_dir = Path(__file__).resolve().parents[2]
+
     generate_all_figures(base_dir / "reports" / "figures", base_dir / "results")
-    # Also mirror figures into reports/en-US/figures and reports/pt-BR/figures
     generate_all_figures(base_dir / "reports" / "en-US" / "figures", base_dir / "results")
     generate_all_figures(base_dir / "reports" / "pt-BR" / "figures", base_dir / "results")

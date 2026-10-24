@@ -9,13 +9,20 @@ Loads empirical experimental results and computes:
 """
 
 import json
+import sys
 from pathlib import Path
 import numpy as np
-import pandas as pd
 from scipy import stats
 
 
 def compute_sample_stats(data: list) -> dict:
+    if not data:
+        return {
+            "n": 0, "mean": 0.0, "std": 0.0, "sem": 0.0,
+            "ci_95_margin": 0.0, "ci_low": 0.0, "ci_high": 0.0,
+            "median": 0.0, "q1": 0.0, "q3": 0.0, "iqr": 0.0,
+            "min": 0.0, "max": 0.0,
+        }
     arr = np.array(data, dtype=float)
     n = len(arr)
     mean = float(np.mean(arr))
@@ -241,7 +248,10 @@ def run_full_statistical_analysis(repo_dir: Path) -> dict:
 
 
 if __name__ == "__main__":
-    repo_path = Path("C:/Users/ander/Desktop/llm-research-bench")
+    if len(sys.argv) > 1:
+        repo_path = Path(sys.argv[1]).resolve()
+    else:
+        repo_path = Path(__file__).resolve().parents[2]
     summary = run_full_statistical_analysis(repo_path)
     print("MTP speedup overall:", summary["mtp_ablation"]["overall_speedup_ratio"])
     print("MTP t-stat:", summary["mtp_ablation"]["welch_t_test"]["t_statistic"], "p-val:", summary["mtp_ablation"]["welch_t_test"]["p_value_two_tailed"])

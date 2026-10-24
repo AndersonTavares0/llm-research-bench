@@ -15,6 +15,7 @@
 \usepackage{fancyhdr}
 \usepackage{makecell}
 \usepackage{siunitx}
+\usepackage{icomma}
 
 \geometry{left=18mm,right=18mm,top=22mm,bottom=22mm}
 \pagestyle{fancy}
@@ -43,7 +44,7 @@
 \maketitle
 
 \begin{abstract}
-A inferência local em dispositivos de borda utilizando Modelos de Linguagem Pequenos (SLMs, 2B--4B parâmetros) assegura soberania de dados e latência determinística para servidores privados e nós autônomos. Entretanto, operar sob restrições físicas de memória severas ($\le 4096$ MiB de VRAM) impõe compromissos rigorosos entre precisão de quantização, execução especulativa, largura de banda efetiva e alinhamento de segurança. Este artigo apresenta um estudo experimental controlado conduzido em uma GPU NVIDIA GeForce GTX 1050 Ti (4096 MiB GDDR5, barramento de 128 bits, $112\text{ GB/s}$ de largura de banda teórica, Compute Capability 6.1) em container Proxmox VE LXC dedicado (CT 108). Quatro modelos (\textbf{Gemma-4-E2B-it}, \textbf{Qwen-3.5-4B}, \textbf{Qwen-3.5-2B} e \textbf{Llama-3.2-3B}) foram avaliados sob o runtime \texttt{llama-server} (commit b4120+). A telemetria de hardware foi capturada continuamente via \texttt{libnvidia-ml.so.1} a cada 250\,ms. Uma ablação controlada de decodificação especulativa Multi-Token Prediction (MTP) com $N=15$ repetições isolou um ganho estatisticamente significante de \textbf{30,9\%} no throughput médio global ($42,21 \pm 7,18$ vs $32,25 \pm 3,87$ tok/s, IC 95\%, $t$ de Welch = 3,139, $p = 0,0024$, $d$ de Cohen = 1,146) e de \textbf{37,1\%} em regime estacionário aquecido ($46,5$ vs $33,9$ tok/s), mantendo alocação estável de 2038 MiB. A análise controlada de quantização do Gemma-4-E2B revelou que o formato IQ4\_XS entrega vantagem de 59,3\% em regime aquecido sobre o Q4\_K\_M ($41,92$ vs $26,34$ tok/s, $t = 27,20$, $p = 3,59 \times 10^{-9}$). Em segurança adversária, todos os modelos recusaram ataques diretos (100\% de recusa contra CVE-2021-44228, keyloggers em C++ e DAN), mas sucumbiram uniformemente à injeção indireta de prompt encapsulada em logs de sistema (0\% de resistência), evidenciando que o alinhamento pós-treinamento falha em segregar instruções operacionais de dados contextuais não confiáveis.
+A inferência local em dispositivos de borda utilizando Modelos de Linguagem Pequenos (SLMs, 2B--4B parâmetros) assegura soberania de dados e latência determinística para servidores privados e nós autônomos. Entretanto, operar sob restrições físicas de memória severas ($\le 4096$ MiB de VRAM) impõe compromissos rigorosos entre precisão de quantização, execução especulativa, largura de banda efetiva e alinhamento de segurança. Este artigo apresenta um estudo experimental controlado conduzido em uma GPU NVIDIA GeForce GTX 1050 Ti (4096 MiB GDDR5, barramento de 128 bits, $112\text{ GB/s}$ de largura de banda teórica, Compute Capability 6.1) em container Proxmox VE LXC dedicado (CT 108). Quatro modelos (\textbf{Gemma-4-E2B-it}, \textbf{Qwen-3.5-4B}, \textbf{Qwen-3.5-2B} e \textbf{Llama-3.2-3B}) foram avaliados sob o runtime \texttt{llama-server} (commit b4120+). A telemetria de hardware foi capturada continuamente via \texttt{libnvidia-ml.so.1} a cada 250\,ms. Uma ablação controlada de decodificação especulativa Multi-Token Prediction (MTP) com $N=15$ repetições isolou um ganho estatisticamente significante de \textbf{30,9\%} no throughput médio global ($42,21 \pm 5,99$ vs $32,25 \pm 3,23$ tok/s, IC 95\%, $t$ de Welch = 3,139, $p = 0,0024$, $d$ de Cohen = 1,146) e de \textbf{33,2\%} em regime estacionário aquecido ($44,95$ vs $33,75$ tok/s), mantendo alocação estável de 2038 MiB. A análise controlada de quantização do Gemma-4-E2B revelou que o formato IQ4\_XS entrega vantagem de 59,3\% em regime aquecido sobre o Q4\_K\_M ($41,92$ vs $26,34$ tok/s, $t = 27,20$, $p = 3,59 \times 10^{-9}$). Em segurança adversária, todos os modelos recusaram ataques diretos (100\% de recusa contra CVE-2021-44228, keyloggers em C++ e DAN), mas sucumbiram uniformemente à injeção indireta de prompt encapsulada em logs de sistema (0\% de resistência), evidenciando que o alinhamento pós-treinamento falha em segregar instruções operacionais de dados contextuais não confiáveis.
 \end{abstract}
 
 \vspace{0.6em}
@@ -101,11 +102,11 @@ A decodificação especulativa supera o gargalo de largura de banda ao verificar
 \begin{equation}
     S = \frac{1 + \alpha \gamma}{1 + \frac{c_{\text{draft}}}{c_{\text{alvo}}}}
 \end{equation}
-onde $c_{\text{draft}}$ é o custo computacional do rascunho e $c_{\text{alvo}}$ é o custo de verificação. Em arquiteturas com MTP nativo, o cabeçote reutiliza as representações ocultas do modelo base ($c_{\text{draft}} \approx 0,05 \cdot c_{\text{alvo}}$). Com taxa de aceitação média empírica $\alpha \approx 0,40$--$0,48$, o ganho esperado situa-se em:
+onde $c_{\text{draft}}$ é o custo computacional do rascunho e $c_{\text{alvo}}$ é o custo de verificação. Em arquiteturas com MTP nativo, o cabeçote reutiliza as representações ocultas do modelo base ($c_{\text{draft}} \approx 0,05 \cdot c_{\text{alvo}}$). Com taxa de aceitação média empírica $\alpha \approx 0,40$, o ganho teórico esperado situa-se em:
 \begin{equation}
-    S \approx \frac{1 + 0,44}{1 + 0,05} \approx 1,37\times \quad (+37\%)
+    S \approx \frac{1 + 0,40}{1 + 0,05} \approx 1,333\times \quad (+33,3\%)
 \end{equation}
-o que coincide com as medições empíricas verificadas na GTX 1050 Ti.
+o que converge com as medições empíricas verificadas em regime aquecido na GTX 1050 Ti.
 
 \section{Metodologia Experimental e Bancada de Testes}
 
@@ -189,10 +190,10 @@ Para validar formalmente se o ganho de desempenho decorre causalmente da decodif
 \toprule
 \textbf{Condição} & \makecell{\textbf{Média}\\\textbf{(tok/s)}} & \makecell{\textbf{Desvio}\\\textbf{Padrão ($s$)}} & \makecell{\textbf{Erro Padrão}\\\textbf{($s/\sqrt{N}$)}} & \makecell{\textbf{Margem}\\\textbf{IC 95\%}} & \makecell{\textbf{Intervalo}\\\textbf{IC 95\%}} & \makecell{\textbf{Regime}\\\textbf{Estacionário}} \\
 \midrule
-\textbf{Com Rascunho MTP} & \textbf{42,21} & 10,82 & 2,79 & $\pm 7,18$ & [35,03; 49,39] & \textbf{46,50 tok/s} \\
-\textbf{Sem MTP (Base)} & 32,25 & 5,83 & 1,51 & $\pm 3,87$ & [28,38; 36,12] & 33,90 tok/s \\
+\textbf{Com Rascunho MTP} & \textbf{42,21} & 10,82 & 2,79 & $\pm 5,99$ & [36,22; 48,20] & \textbf{44,95 tok/s} \\
+\textbf{Sem MTP (Base)} & 32,25 & 5,83 & 1,51 & $\pm 3,23$ & [29,02; 35,48] & 33,75 tok/s \\
 \midrule
-\multicolumn{7}{c}{\textbf{Teste de Hipóteses: $t$ de Welch = 3,1391, $\nu = 21,62$, $p = 0,00243$ (unilateral), $d$ de Cohen = 1,1462}} \\
+\multicolumn{7}{c}{\textbf{Teste de Hipóteses: $t$ de Welch = 3,1391, $\nu = 21,50$, $p = 0,00243$ (unilateral), $d$ de Cohen = 1,1462}} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -204,13 +205,13 @@ Avalia-se a hipótese direcionada de ganho de throughput com o uso de MTP:
 \end{equation}
 Devido à heterocedasticidade das variâncias amostrais ($s_{\text{MTP}}^2 = 117,07$, $s_{\text{base}}^2 = 33,99$), aplica-se o teste $t$ de Welch. Os graus de liberdade efetivos $\nu$ são obtidos pela aproximação de Satterthwaite:
 \begin{equation}
-    \nu = \frac{\left(\frac{s_1^2}{N_1} + \frac{s_2^2}{N_2}\right)^2}{\frac{(s_1^2 / N_1)^2}{N_1 - 1} + \frac{(s_2^2 / N_2)^2}{N_2 - 1}} = \frac{\left(\frac{117,07}{15} + \frac{33,99}{15}\right)^2}{\frac{(7,805)^2}{14} + \frac{(2,266)^2}{14}} \approx 21,62
+    \nu = \frac{\left(\frac{s_1^2}{N_1} + \frac{s_2^2}{N_2}\right)^2}{\frac{(s_1^2 / N_1)^2}{N_1 - 1} + \frac{(s_2^2 / N_2)^2}{N_2 - 1}} = \frac{\left(\frac{117,07}{15} + \frac{33,99}{15}\right)^2}{\frac{(7,805)^2}{14} + \frac{(2,266)^2}{14}} \approx 21,50
 \end{equation}
 A estatística de teste calculada é:
 \begin{equation}
     t = \frac{\bar{X}_1 - \bar{X}_2}{\sqrt{\frac{s_1^2}{N_1} + \frac{s_2^2}{N_2}}} = \frac{42,21 - 32,25}{\sqrt{7,805 + 2,266}} = \frac{9,96}{3,173} = 3,1391
 \end{equation}
-O valor-$p$ unilateral resultante é $p = 0,00243$ ($p < 0,01$). O teste não paramétrico de Mann-Whitney indica $U = 210,0$ ($p = 2,84 \times 10^{-5}$), rejeitando $H_0$ com elevado rigor estatístico. O tamanho de efeito $d$ de Cohen é de $1,1462$, confirmando impacto substancial. Em regime aquecido, o ganho de throughput atinge \textbf{37,1\%} ($46,50$ vs $33,90\text{ tok/s}$).
+O valor-$p$ unilateral resultante é $p = 0,00243$ ($p < 0,01$). O teste não paramétrico de Mann-Whitney indica $U = 210,0$ ($p = 2,84 \times 10^{-5}$), rejeitando $H_0$ com elevado rigor estatístico. O tamanho de efeito $d$ de Cohen é de $1,1462$, confirmando impacto substancial. Em regime aquecido, o ganho de throughput atinge \textbf{33,2\%} ($44,95$ vs $33,75\text{ tok/s}$, $t = 21,05$, $p = 3,65 \times 10^{-14}$).
 
 \begin{figure}[htbp]
 \centering
@@ -304,7 +305,7 @@ A bateria agêntica utilizou um servidor MCP padrão em Python operando via JSON
 \end{enumerate}
 
 \section{Conclusões e Recomendações de Implantação}
-Os dados empíricos confirmam que a decodificação especulativa Multi-Token Prediction (MTP) produz uma aceleração causal de \textbf{30,9\% a 37,1\%} estatisticamente comprovada em GPUs com limitação de largura de banda. O modelo \textbf{Gemma-4-E2B (IQ4\_XS + MTP)} consolida-se como a melhor escolha técnica para controladores locais na GTX 1050 Ti, conjugando o maior throughput ($46,3\text{ tok/s}$) e eficiência energética ($0,89\text{ tok/J}$) com preservação de 63,2\% do orçamento de VRAM. Para conter injeções indiretas de prompt, recomenda-se a aplicação mandatória de filtros léxicos e sanitização de delimitadores antes da ingestão do contexto.
+Os dados empíricos confirmam que a decodificação especulativa Multi-Token Prediction (MTP) produz uma aceleração causal de \textbf{30,9\% a 33,2\%} estatisticamente comprovada em GPUs com limitação de largura de banda. O modelo \textbf{Gemma-4-E2B (IQ4\_XS + MTP)} consolida-se como a melhor escolha técnica para controladores locais na GTX 1050 Ti, conjugando o maior throughput ($46,3\text{ tok/s}$) e eficiência energética ($0,89\text{ tok/J}$) com preservação de 63,2\% do orçamento de VRAM. Para conter injeções indiretas de prompt, recomenda-se a aplicação mandatória de filtros léxicos e sanitização de delimitadores antes da ingestão do contexto.
 
 \section*{Reprodutibilidade e Artefatos}
 Todos os conjuntos de dados brutos, coletores NVML e scripts estatísticos estão disponíveis publicamente em:
