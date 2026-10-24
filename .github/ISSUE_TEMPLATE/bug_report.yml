@@ -1,0 +1,40 @@
+name: Bug Report
+description: Create a report to help us fix a bug or reproducibility issue in the benchmark suite
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue! Please provide as much detail as possible to reproduce the bug.
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Exact commands, models, or configurations used.
+      placeholder: |
+        1. Run 'python src/llm_research_bench/ablation_runner.py ...'
+        2. Inspect output in 'results/...'
+        3. See error
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment Details
+      description: Operating System, Python version, GPU model, VRAM, and llama.cpp commit.
+      placeholder: "Ubuntu 24.04 / Windows 11, Python 3.11, GTX 1050 Ti 4GB, llama-server b4120"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs or Tracebacks
+      description: Paste any terminal logs or stack traces here.
+      render: shell

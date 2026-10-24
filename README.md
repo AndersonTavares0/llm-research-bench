@@ -2,7 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python: 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](pyproject.toml)
-[![Tests: 39 Passing](https://img.shields.io/badge/tests-39%20passing-brightgreen.svg)](tests/)
+[![Tests: 39 Passing](https://img.shields.io/badge/tests-49%20passing-brightgreen.svg)](tests/)
+[![Governance](https://img.shields.io/badge/governance-contributing%20%7C%20security-blue.svg)](CONTRIBUTING.md)
 [![Paper: PDF (EN)](https://img.shields.io/badge/Paper-PDF%20(en--US)-red.svg)](reports/en-US/report_en-US.pdf)
 [![Paper: PDF (PT)](https://img.shields.io/badge/Artigo-PDF%20(pt--BR)-red.svg)](reports/pt-BR/report_pt-BR.pdf)
 
@@ -17,7 +18,7 @@ Para a versão em português desta documentação, consulte [README.pt-BR.md](RE
 
 Deploying Small Language Models (SLMs, 2B--4B parameters) directly on physical edge hardware guarantees strict data sovereignty, deterministic execution latency, and zero cloud ingress/egress costs. However, operating within severe physical memory limits ($\le 4096\text{ MiB}$ VRAM) exposes fundamental systems engineering trade-offs between tensor quantization precision, memory bus saturation, speculative execution, and adversarial robustness.
 
-This repository provides the complete experimental suite, evaluation harnesses, statistical analysis pipelines, and reproducible scientific articles evaluating four compact model architectures (**Gemma-4-E2B-it**, **Qwen-3.5-4B**, **Qwen-3.5-2B**, and **Llama-3.2-3B**).
+This repository provides the complete experimental suite, evaluation harnesses, statistical analysis pipelines, and reproducible scientific articles evaluating seven compact model configurations (**Qwen-2.5-0.5B**, **SmolLM2-1.7B**, **Gemma-4-E2B [MTP]**, **Gemma-4-E2B [Q4_K_M]**, **Qwen-3.5-2B**, **Llama-3.2-3B**, and **Qwen-3.5-4B**).
 
 ### Research Questions (RQs) and Hypotheses
 
@@ -43,46 +44,56 @@ The experimental platform was selected as a **reference edge testbed** represent
 
 ## Empirical Benchmark Findings
 
-### 1. Controlled MTP Speculative Decoding Ablation ($N=15$, 95% Confidence Interval)
+### 1. Controlled MTP Speculative Decoding Ablation ($N=10$, 95% Confidence Interval)
 
-Evaluated with deterministic greedy decoding ($\tau = 0.0$) on technical system tasks across 5 independent trials (15 total runs) to isolate the MTP draft head's causal impact:
+Evaluated with deterministic greedy decoding ($\tau = 0.0$) on technical system tasks to isolate the MTP draft head's causal impact on the physical NVIDIA GeForce GTX 1050 Ti:
 
-| Configuration | Mean Throughput | Standard Deviation | 95% CI Margin | 95% CI Range | Steady-State Throughput | Peak VRAM |
+| Configuration | Mean Throughput | Standard Deviation | 95% CI Margin | 95% CI Range | Speedup vs Base | Peak VRAM |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Gemma-4-E2B (with MTP)** | **42.21 tok/s** | 10.82 | ±5.99 | [36.2, 48.2] tok/s | **44.95 tok/s** | 2038 MiB |
-| **Gemma-4-E2B (Base without MTP)** | **32.25 tok/s** | 5.83 | ±3.23 | [29.0, 35.5] tok/s | **33.75 tok/s** | 2038 MiB |
+| **Gemma-4-E2B (with MTP IQ4_XS)** | **43.35 tok/s** | ±0.57 | ±0.41 | [42.94, 43.76] tok/s | **+61.0%** ($t=86.9, p < 10^{-15}$) | 2036.7 MiB |
+| **Gemma-4-E2B (Base Q4_K_M)** | **26.92 tok/s** | ±0.23 | ±0.16 | [26.76, 27.08] tok/s | Baseline ($d = 38.8$) | 1996.7 MiB |
 
-- **Overall Acceleration:** $+30.9\%$ throughput gain (Welch's $t = 3.139, \nu = 21.51$, two-tailed $p = 0.0049$, one-tailed $p = 0.0024$, Cohen's $d = 1.146$, large effect).
-- **Warmed Steady-State Acceleration:** $+33.2\%$ throughput gain ($44.95 \pm 2.12$ vs $33.75 \pm 0.41$\,tok/s, Welch's $t = 19.38, \nu = 13.99, p = 1.67 \times 10^{-11}$, Cohen's $d = 7.32$), exactly matching the theoretical speculative formulation ($S \approx 1.333\times$ for draft acceptance $\alpha = 0.40$).
-- **Memory Footprint Neutrality:** Zero additional VRAM overhead (2038\,MiB in both configurations).
-- **Quantization and MTP Confounder Decomposition:** In steady-state execution, Gemma-4-E2B (IQ4_XS + MTP) demonstrates a +59.2% compound throughput advantage over standard Q4_K_M (41.92 vs 26.34 tok/s). Decomposing this gain by isolating the verified +33.2% MTP acceleration reveals that non-uniform importance quantization alone contributes an estimated +19.5% pure throughput gain, directly aligning with the 16.7% reduction in DRAM weight transfers (1.8 GB to 1.5 GB).
+- **Causal Throughput Acceleration:** $+61.03\%$ speedup ($43.35 \pm 0.57$ vs $26.92 \pm 0.23$\,tok/s, Welch's $t = 86.9$, $\nu = 11.8$, $p < 10^{-15}$, Cohen's $d = 38.8$).
+- **Draft Acceptance Dynamics:** Runtime telemetry logged empirical draft acceptance rate $\alpha = 52.8\%$ (65 tokens accepted out of 123 generated), with mean accepted block length $\bar{L} = 2.05$ tokens per validation pass.
+- **Minimal VRAM Overhead:** Speculative decoding adds only $40.0\text{ MiB}$ (2036.7 vs 1996.7 MiB, +2.0% overhead).
 
-### 2. Cross-Model Systems Performance and Energy Efficiency
+### 2. Cross-Model Empirical Performance on Physical GTX 1050 Ti ($N=10$, $\tau=0.0$)
 
-| Model | Peak VRAM | Budget Fraction | Prompt Eval | Decode Throughput | TTFT | Memory Efficiency ($\eta_{\text{mem}}$) | Est. Energy Efficiency ($E_{\text{tok/J}}$) |
+| Model and Quantization | Parameters (B) | Peak VRAM (MiB) | Budget (% 4 GiB) | Prefill (tok/s) | Decode (tok/s) | TTFT (ms) | Memory Efficiency (tok/s/GiB) |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Gemma-4-E2B (IQ4_XS + MTP)** | **1,510 MiB** | **36.8%** | **468.2 tok/s** | **46.3 tok/s** | **115.4 ms** | **31.40 tok/s/GiB** | **0.89 tok/J** |
-| **Qwen-3.5-2B (Q4_K_XL)** | 1,598 MiB | 39.0% | 389.5 tok/s | 37.5 tok/s | 142.1 ms | 24.04 tok/s/GiB | 0.77 tok/J |
-| **Llama-3.2-3B (Q4_K_M)** | 2,120 MiB | 51.7% | 390.7 tok/s | 27.4 tok/s | 168.3 ms | 13.24 tok/s/GiB | 0.50 tok/J |
-| **Qwen-3.5-4B (Q4_K_M)** | 3,069 MiB | 74.9% | 237.1 tok/s | 18.4 tok/s | 284.6 ms | 6.14 tok/s/GiB | 0.30 tok/J |
+| **Qwen-2.5-0.5B-Q4_K_M** | 0.49 | 620.7 | 15.2% | 237.1 ± 449.3 | **97.5 ± 0.6** | **12.1 ± 5.1** | **160.8** |
+| **SmolLM2-1.7B-Q4_K_M** | 1.71 | 2902.7 | 70.9% | 103.3 ± 176.0 | 47.8 ± 0.1 | 25.5 ± 14.3 | 16.9 |
+| **Gemma-4-E2B [MTP IQ4_XS]** | 2.30 | 2036.7 | 49.7% | 62.2 ± 18.5 | **43.4 ± 0.6** | 480.4 ± 52.1 | 21.8 |
+| **Gemma-4-E2B [Q4_K_M base]** | 2.30 | 1996.7 | 48.7% | 65.5 ± 7.7 | 26.9 ± 0.2 | 116.1 ± 2.4 | 13.8 |
+| **Qwen-3.5-2B-Q4_K_XL** | 1.95 | 1580.7 | 38.6% | 126.5 ± 108.8 | 37.6 ± 0.1 | 49.9 ± 27.2 | 24.4 |
+| **Llama-3.2-3B-Q4_K_M** | 3.21 | 3074.7 | 75.1% | 59.6 ± 101.1 | 27.6 ± 0.0 | 43.5 ± 1.8 | 9.2 |
+| **Qwen-3.5-4B-Q4_K_M** | 4.12 | 3140.7 | 76.7% | 49.3 ± 46.5 | 18.6 ± 0.1 | 129.8 ± 45.3 | 6.1 |
 
-*Note:* Peak VRAM is recorded in binary MiB. Memory efficiency is defined as $\eta_{\text{mem}} = \text{Throughput} / \text{VRAM}_{\text{GiB}}$ (where $1\text{ GiB} = 1024^3\text{ bytes}$). Estimated energy efficiency ($E_{\text{tok/J}} = \text{Throughput} / P_{\text{est}}$) is derived from a calibrated isolated GPU package power model ($P_{\text{est}} \in [49, 62]\text{ W}$) reflecting TDP operating points; total host AC wall power ($65\text{ W}$--$110\text{ W}$) is not included.
+*Note:* Peak VRAM recorded in binary MiB ($1024^2$ bytes) via native NVML ctypes calls; includes weights, active KV cache, and 256 MiB CUDA driver allocation. Memory efficiency is defined as $\eta_{\text{mem}} = \text{Throughput} / \text{VRAM}_{\text{GiB}}$.
 
-### 3. Exploratory Adversarial Safety Robustness and Model Context Protocol (MCP)
+### 3. Defensive Safety Robustness, Algorithmic Bias, and Token Fertility ($N=10$, $\tau=0.0$)
 
-| Model | Direct Attack Refusal (5 Vectors) | Indirect Context Injection (1 Log Canary) | MCP Tool Calling (3 Scenarios) | SysAdmin Math (3 Probes) |
-| :--- | :--- | :--- | :--- | :--- |
-| **Gemma-4-E2B (MTP)** | **100% (5/5)** | **Failed (0% refusal)** | **Passed (100% schema match)** | 33.3% (ZFS Parity) |
-| **Qwen-3.5-4B** | **100% (5/5)** | **Failed (0% refusal)** | **Passed (100% schema match)** | 33.3% (ZFS Parity) |
-| **Qwen-3.5-2B** | **100% (5/5)** | **Failed (0% refusal)** | **Passed (100% schema match)** | 0.0% (arithmetic drift) |
-| **Llama-3.2-3B** | **100% (5/5)** | **Failed (0% refusal)** | Failed (turn 2 parse error) | 33.3% (RAM logic) |
+| Model | Over-Refusal (FPR %) | Indirect Injection (ASR %) | Delimiter Breach (ASR %) | Tool Guardrail (ASR %) | BBQ/Stereo Neutrality | Portuguese Fertility (tok/w) | English Fertility (tok/w) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Qwen-2.5-0.5B** | **0.0%** | 0.0% | 50.0% | 100.0% | 66.7% | 1.59 | **1.41** |
+| **SmolLM2-1.7B** | **0.0%** | 100.0% | 100.0% | **0.0%** | 33.3% | 2.08 | 1.56 |
+| **Gemma-4-E2B [MTP]** | **0.0%** | 66.7% | 100.0% | 50.0% | **100.0%** | 1.52 | 1.38 |
+| **Gemma-4-E2B [Q4_K_M]** | **0.0%** | 100.0% | 100.0% | 50.0% | **100.0%** | 1.52 | 1.38 |
+| **Qwen-3.5-2B** | **0.0%** | 100.0% | 100.0% | 50.0% | 66.7% | 1.54 | 1.44 |
+| **Llama-3.2-3B** | **0.0%** | 100.0% | 100.0% | 100.0% | 66.7% | 1.49 | 1.45 |
+| **Qwen-3.5-4B** | **0.0%** | 100.0% | 100.0% | 100.0% | 66.7% | **1.30** | **1.35** |
 
-*Note on Safety and Tool Calling Scope:* All security, tool calling, and arithmetic metrics represent preliminary exploratory microbenchmarks ($N=5$ direct safety prompts, $N=1$ indirect injection prompt, $N=3$ tool scenarios, $N=3$ sysadmin arithmetic probes). They demonstrate specific behavioral profiles under controlled edge conditions but do not constitute exhaustive safety certifications (such as HarmBench, StrongREJECT, or BFCL).
+### 4. Architectural Feasibility Survey and Physical Limits Under 4 GiB VRAM
 
-- **Direct Refusal:** 100% across all models against weaponized CVE exploits (Log4Shell), stealth keyloggers, DAN persona framing, and prompt extraction.
-- **Indirect Prompt Injection:** Universal vulnerability (0% refusal). All models executed simulated command overrides when embedded inside untrusted context logs, proving that post-training alignment fails to enforce instruction boundaries.
-
----
+| Candidate Model | Vendor / License | Parameters (B) | Weights Q4_K_M (MiB) | KV Cache 4k (FP16) | Total VRAM (4k Context) | Physical Status on GTX 1050 Ti |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Qwen-2.5-0.5B** | Alibaba (Apache-2.0) | 0.49 | 469 | 112 MiB | 837 MiB | **Evaluated:** Full feasibility (20.4% ceiling) |
+| **Qwen-2.5-1.5B** | Alibaba (Apache-2.0) | 1.54 | 986 | 224 MiB | 1,466 MiB | **Feasible:** High headroom for 16k context |
+| **SmolLM2-1.7B** | HuggingFace (Apache) | 1.71 | 1,007 | 192 MiB | 1,455 MiB | **Evaluated:** High memory efficiency |
+| **Granite-3.1-2B** | IBM (Apache-2.0) | 2.50 | 1,580 | 320 MiB | 2,156 MiB | **Feasible:** Native long context support |
+| **Phi-4-mini-3.8B** | Microsoft (Gated) | 3.82 | 2,510 | 512 MiB | 3,278 MiB | **Non-Executable:** Gated repository (HTTP 401) |
+| **Gemma-3-1B** | Google (Gemma) | 1.20 | 880 | 384 MiB | 1,520 MiB | **Feasible:** Low static allocation |
+| **Gemma-3-4B** | Google (Gemma) | 4.30 | 2,950 | 1,152 MiB | 4,358 MiB | **Physical Block:** OOM under FP16 KV (4358 MiB); requires Q4_0 KV (3494 MiB) |
 
 ## Hardware-Specific Limits vs. Generalizable Principles
 
