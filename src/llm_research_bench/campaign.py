@@ -602,6 +602,43 @@ def run_command(cmd: list[str], log_path: Path, timeout: int | None = None) -> i
     return proc.returncode
 
 
+def parse_llama_bench_output(text: str) -> list[dict[str, Any]]:
+    """Extract llama-bench's JSON array from stdout that may include diagnostics."""
+    decoder = json.JSONDecoder()
+    for index, char in enumerate(text):
+        if char != "[":
+            continue
+        try:
+            payload, _ = decoder.raw_decode(text[index:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, list) and payload and all(
+            isinstance(row, dict)
+            and isinstance(row.get("avg_ts"), (int, float))
+            and (row.get("n_prompt", 0) or row.get("n_gen", 0))
+            for row in payload
+        ):
+            return payload
+    raise ValueError("llama-bench output contains no valid JSON result records")
+
+
+def valid_llama_bench_json(path: Path) -> bool:
+    try:
+        records = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return bool(
+        isinstance(records, list)
+        and records
+        and all(
+            isinstance(row, dict)
+            and isinstance(row.get("avg_ts"), (int, float))
+            and (row.get("n_prompt", 0) or row.get("n_gen", 0))
+            for row in records
+        )
+    )
+
+
 def check_tasks_available(groups: list[TaskGroup]) -> None:
     """Fail before touching the GPU if a task id is wrong for this harness version."""
     wanted = sorted({task for group in groups for task in group.tasks})
@@ -686,7 +723,15 @@ def run_campaign(
             bench_dir = model_dir / "llama-bench"
             bench_json = bench_dir / "results.json"
             bench_meta = bench_dir / "meta.json"
-            if force or not bench_json.exists():
+            try:
+                prior_bench_meta = json.loads(bench_meta.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                prior_bench_meta = {}
+            if (
+                force
+                or prior_bench_meta.get("status") != "measured"
+                or not valid_llama_bench_json(bench_json)
+            ):
                 bench_dir.mkdir(parents=True, exist_ok=True)
                 cmd = build_bench_cmd(llama_bench, model_path, spec.bench)
                 started = utc_now()
@@ -702,12 +747,22 @@ def run_campaign(
                     "status": "measured" if code == 0 else "failed",
                 }
                 if code == 0:
-                    shutil.copyfile(bench_dir / "run.log", bench_json)
-                bench_meta.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-                if code != 0:
+                    try:
+                        records = parse_llama_bench_output(
+                            (bench_dir / "run.log").read_text(encoding="utf-8", errors="replace")
+                        )
+                        bench_json.write_text(json.dumps(records, indent=2), encoding="utf-8")
+                    except (OSError, ValueError) as exc:
+                        manifest["status"] = "failed"
+                        manifest["error"] = str(exc)
+                if manifest["status"] != "measured":
                     manifest["stderr_tail"] = _tail(bench_dir / "run.log")
-                    summary["bench"].append({"model": model.name, "error": manifest["stderr_tail"]})
+                    bench_meta.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+                    summary["bench"].append(
+                        {"model": model.name, "error": manifest.get("error", manifest["stderr_tail"])}
+                    )
                 else:
+                    bench_meta.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
                     summary["bench"].append({"model": model.name, "raw": str(bench_json)})
             else:
                 summary["bench"].append({"model": model.name, "raw": str(bench_json)})
@@ -842,6 +897,8 @@ def summarize(out_dir: Path) -> dict[str, Any]:
             payload = json.loads(results_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             continue
+        if not isinstance(payload, dict):
+            continue
         results = payload.get("results") or {}
         limit = (meta.get("evaluation") or {}).get("limit")
         model = (meta.get("model") or {}).get("name") or group_dir.parent.name
@@ -883,12 +940,19 @@ def summarize(out_dir: Path) -> dict[str, Any]:
         records = payload.get("results") if isinstance(payload, dict) else payload
         if not isinstance(records, list):
             continue
+        try:
+            meta = json.loads((bench_path.parent / "meta.json").read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            meta = {}
+        if meta.get("status") != "measured":
+            continue
         for record in records:
             if not isinstance(record, dict):
                 continue
             bench_rows.append(
                 {
-                    "campaign": bench_path.parts[-4],
+                    "campaign": meta.get("campaign", bench_path.parents[3].name),
+                    "hardware_profile": meta.get("hardware_profile", bench_path.parents[2].name),
                     "model": bench_path.parent.parent.name,
                     "n_prompt": record.get("n_prompt"),
                     "n_gen": record.get("n_gen"),
@@ -1034,7 +1098,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
     if not args.skip_task_check:
         check_tasks_available(spec.task_groups)
     summary = run_campaign(
-        spec,
+        spec=spec,
         out_dir=Path(args.out),
         models_dir=Path(args.models_dir),
         llama_server=args.llama_server,
@@ -1044,8 +1108,14 @@ def _cmd_run(args: argparse.Namespace) -> int:
         evaluate=not args.no_eval,
     )
     failed = [g for g in summary["groups"] if g.get("status") == "failed"]
-    print(json.dumps({"campaign": spec.campaign, "failed": failed}, indent=2))
-    return 1 if failed else 0
+    failed_bench = [b for b in summary["bench"] if b.get("error")]
+    print(
+        json.dumps(
+            {"campaign": spec.campaign, "failed": failed, "failed_bench": failed_bench},
+            indent=2,
+        )
+    )
+    return 1 if failed or failed_bench else 0
 
 
 def _cmd_summary(args: argparse.Namespace) -> int:

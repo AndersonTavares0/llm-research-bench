@@ -5,6 +5,7 @@ the resume key, the official-CLI command shapes and the aggregation of already
 produced JSON.
 """
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -128,6 +129,42 @@ def test_server_and_bench_commands_use_official_flags(tmp_path):
     assert bench[bench.index("-p") + 1] == "512"
 
 
+def test_llama_bench_output_extracts_json_after_diagnostics():
+    records = [{"n_prompt": 512, "n_gen": 0, "avg_ts": 847.7}]
+    output = "ggml_cuda_init: CUDA0\n" + json.dumps(records) + "\n"
+    assert campaign.parse_llama_bench_output(output) == records
+    with pytest.raises(ValueError, match="no valid JSON"):
+        campaign.parse_llama_bench_output("benchmark failed")
+
+
+def test_run_command_returns_failure_for_bench_error(monkeypatch, tmp_path):
+    spec = campaign.CampaignSpec(
+        campaign="c",
+        hardware_profile="h",
+        models=[campaign.ModelSpec("m", "m.gguf", "Q4_K_M")],
+        task_groups=[campaign.TaskGroup("g", "gguf", ["arc_challenge"])],
+    )
+    monkeypatch.setattr(campaign, "load_spec", lambda _: spec)
+    monkeypatch.setattr(campaign, "check_tasks_available", lambda _: None)
+    monkeypatch.setattr(
+        campaign,
+        "run_campaign",
+        lambda **kwargs: {"groups": [], "bench": [{"model": "m", "error": "invalid output"}]},
+    )
+    args = argparse.Namespace(
+        spec="unused",
+        skip_task_check=False,
+        out=str(tmp_path),
+        models_dir=str(tmp_path),
+        llama_server="llama-server",
+        llama_bench="llama-bench",
+        force=False,
+        no_bench=False,
+        no_eval=False,
+    )
+    assert campaign._cmd_run(args) == 1
+
+
 def test_lm_eval_command_matrix():
     evaluation = {"limit": 20, "seed": 42, "num_fewshot": 0, "batch_size": 1}
     mcq = campaign.build_lm_eval_cmd(
@@ -202,6 +239,26 @@ def test_summarize_uses_harness_metrics_and_skips_failures(tmp_path):
     markdown = campaign.render_markdown(summary)
     assert "| campanha | hardware | modelo" in markdown
     assert "não autorizam ranking" in markdown
+
+
+def test_summarize_includes_only_measured_llama_bench_json(tmp_path):
+    bench_dir = tmp_path / "campaign-x" / "hw-x" / "model-x" / "llama-bench"
+    bench_dir.mkdir(parents=True)
+    records = [
+        {"n_prompt": 512, "n_gen": 0, "avg_ts": 800.0, "stddev_ts": 2.0, "backends": "CUDA"}
+    ]
+    (bench_dir / "results.json").write_text(json.dumps(records), encoding="utf-8")
+    (bench_dir / "meta.json").write_text(
+        json.dumps({"status": "measured", "campaign": "campaign-x", "hardware_profile": "hw-x"}),
+        encoding="utf-8",
+    )
+    summary = campaign.summarize(tmp_path)
+    assert summary["performance"][0]["campaign"] == "campaign-x"
+    assert summary["performance"][0]["hardware_profile"] == "hw-x"
+    assert summary["performance"][0]["avg_ts"] == 800.0
+
+    (bench_dir / "meta.json").write_text(json.dumps({"status": "failed"}), encoding="utf-8")
+    assert campaign.summarize(tmp_path)["performance"] == []
 
 
 def test_find_results_json_picks_harness_file(tmp_path):
