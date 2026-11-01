@@ -12,6 +12,9 @@ LIBS=(
   libc.so.6 libm.so.6 libpthread.so.0 libdl.so.2 librt.so.1
   libstdc++.so.6 libgcc_s.so.1 libgomp.so.1
   libz.so.1 libzstd.so.1 libssl.so.3 libcrypto.so.3
+  # libcuda dlopen()s the driver's PTX JIT at kernel-launch time; Pascal (6.1)
+  # needs it because the CUDA build has no SASS for that architecture.
+  libnvidia-ptxjitcompiler.so.1
 )
 
 mkdir -p "$DEST"

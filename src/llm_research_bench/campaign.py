@@ -707,8 +707,10 @@ def run_campaign(
                 if code != 0:
                     manifest["stderr_tail"] = _tail(bench_dir / "run.log")
                     summary["bench"].append({"model": model.name, "error": manifest["stderr_tail"]})
-                    continue
-            summary["bench"].append({"model": model.name, "raw": str(bench_json)})
+                else:
+                    summary["bench"].append({"model": model.name, "raw": str(bench_json)})
+            else:
+                summary["bench"].append({"model": model.name, "raw": str(bench_json)})
         if not evaluate:
             continue
 
