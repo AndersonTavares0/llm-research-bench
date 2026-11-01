@@ -115,6 +115,7 @@ if [ "$(cat "$VENV/.lm-eval-ref" 2>/dev/null || true)" != "$LM_EVAL_REF" ]; then
   echo "$LM_EVAL_REF" > "$VENV/.lm-eval-ref"
 fi
 export PATH="$VENV/bin:$PATH"
+"$VENV/bin/python" -m pip install --quiet "tenacity==9.1.2"
 "$VENV/bin/python" -c "import importlib.metadata as m; print('lm-eval', m.version('lm-eval'))"
 
 SPEC_VALUES="$("$VENV/bin/python" - "$SPEC" <<'PY'
