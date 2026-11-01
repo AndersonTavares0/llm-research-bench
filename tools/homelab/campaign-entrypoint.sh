@@ -6,11 +6,26 @@
 # Everything is idempotent, so a re-run resumes instead of re-downloading.
 set -euo pipefail
 
+GPU_LAB_TASK="${GPU_LAB_TASK:-campaign}"
+case "$GPU_LAB_TASK" in
+  campaign) ;;
+  gsm8k-paired) ;;
+  *) echo "unsupported GPU_LAB_TASK: $GPU_LAB_TASK" >&2; exit 2 ;;
+esac
+
 WORKSPACE="${WORKSPACE:-/workspace}"
-REPO="${REPO:-$WORKSPACE/repo}"
-SPEC="${SPEC:-$REPO/configs/campaigns/smoke-qwen3-1.7b.yaml}"
-MODELS_DIR="${MODELS_DIR:-/models}"
-LLAMA_RELEASE="${LLAMA_RELEASE:-b12024}"
+if [ "$GPU_LAB_TASK" = "gsm8k-paired" ]; then
+  REPO="$WORKSPACE/repo"
+  SPEC="$REPO/configs/campaigns/smoke-qwen3-1.7b.yaml"
+  MODELS_DIR=/models
+  LLAMA_RELEASE=b12024
+  LM_EVAL_REF=d6de81643928d653435c431bae19945d41d32520
+else
+  REPO="${REPO:-$WORKSPACE/repo}"
+  SPEC="${SPEC:-$REPO/configs/campaigns/smoke-qwen3-1.7b.yaml}"
+  MODELS_DIR="${MODELS_DIR:-/models}"
+  LLAMA_RELEASE="${LLAMA_RELEASE:-b12024}"
+fi
 TOOLS="$WORKSPACE/tools"
 VENV="$WORKSPACE/venv"
 RESULTS="$WORKSPACE/results/campaigns"
@@ -134,6 +149,11 @@ if [ ! -f "$MODELS_DIR/$HF_FILE" ]; then
   log "downloading $HF_REPO/$HF_FILE @ $HF_REV"
   mkdir -p "$MODELS_DIR"
   hf download "$HF_REPO" "$HF_FILE" --revision "$HF_REV" --local-dir "$MODELS_DIR"
+fi
+
+if [ "$GPU_LAB_TASK" = "gsm8k-paired" ]; then
+  log "running fixed GSM8K zero-shot/five-shot diagnostic"
+  exec bash "$REPO/tools/homelab/gsm8k-diagnostic.sh"
 fi
 
 cd "$REPO"
