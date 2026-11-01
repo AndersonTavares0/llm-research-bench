@@ -482,7 +482,10 @@ def build_lm_eval_cmd(
     else:
         model_args = (
             f"model={model_alias},base_url=http://127.0.0.1:{port}/v1/chat/completions"
+            f",max_gen_toks={evaluation.get('max_gen_toks', 256)}"
         )
+        if evaluation.get("eos_string"):
+            model_args += f",eos_string={evaluation['eos_string']}"
     cmd += ["--model_args", model_args]
     if task_group.backend == "local-chat-completions":
         cmd.append("--apply_chat_template")

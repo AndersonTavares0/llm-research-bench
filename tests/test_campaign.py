@@ -166,7 +166,14 @@ def test_run_command_returns_failure_for_bench_error(monkeypatch, tmp_path):
 
 
 def test_lm_eval_command_matrix():
-    evaluation = {"limit": 20, "seed": 42, "num_fewshot": 0, "batch_size": 1}
+    evaluation = {
+        "limit": 20,
+        "seed": 42,
+        "num_fewshot": 0,
+        "batch_size": 1,
+        "max_gen_toks": 384,
+        "eos_string": "<|im_end|>",
+    }
     mcq = campaign.build_lm_eval_cmd(
         campaign.TaskGroup("k", "gguf", ["arc_challenge"]), "alias", 8090, evaluation, Path("raw")
     )
@@ -183,8 +190,10 @@ def test_lm_eval_command_matrix():
         Path("raw"),
     )
     args = chat[chat.index("--model_args") + 1]
-    assert args.endswith("base_url=http://127.0.0.1:8090/v1/chat/completions")
+    assert "base_url=http://127.0.0.1:8090/v1/chat/completions" in args
     assert "model=alias" in args
+    assert "max_gen_toks=384" in args
+    assert "eos_string=<|im_end|>" in args
     assert "--apply_chat_template" in chat
     assert "--apply_chat_template" not in mcq
     assert chat[chat.index("--limit") + 1] == "20"
