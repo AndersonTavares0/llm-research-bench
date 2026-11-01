@@ -34,6 +34,7 @@ with socket.socket() as sock:
 
 base = f"http://127.0.0.1:{server_port}"
 records = []
+active_condition = {"name": None}
 record_lock = threading.Lock()
 
 class Proxy(http.server.BaseHTTPRequestHandler):
@@ -60,8 +61,9 @@ class Proxy(http.server.BaseHTTPRequestHandler):
             reasoning = message.pop("reasoning_content", None)
             message["reasoning_content_present"] = reasoning is not None
             message["reasoning_content_chars"] = len(reasoning or "")
-        record = {"request": request, "status": status, "response": saved}
         with record_lock:
+            record = {"condition": active_condition["name"], "request": request,
+                      "status": status, "response": saved}
             records.append(record)
         body = response_bytes
         self.send_response(status)
@@ -128,21 +130,24 @@ try:
     harness_ref = harness_ref_path.read_text(encoding="utf-8").strip() if harness_ref_path.exists() else None
     if harness_ref != "d6de81643928d653435c431bae19945d41d32520":
         raise RuntimeError(f"unexpected lm-eval source revision: {harness_ref!r}")
-    eval_out = out / "harness"
-    eval_out.mkdir()
-    command = [
-        str(workspace / "venv/bin/python"), "-m", "lm_eval",
-        "--model", "local-chat-completions", "--tasks", "gsm8k",
-        "--limit", "20", "--seed", "42", "--num_fewshot", "0",
-        "--batch_size", "1", "--output_path", str(eval_out), "--log_samples",
-        "--model_args",
-        f"model=qwen3-1.7b,base_url=http://127.0.0.1:{proxy_port}/v1/chat/completions,max_gen_toks=384,eos_string=<|im_end|>",
-        "--apply_chat_template",
-    ]
-    result = subprocess.run(command, stdout=(out / "lm-eval.log").open("wb"),
-                            stderr=subprocess.STDOUT, timeout=900, check=False)
-    if result.returncode:
-        raise RuntimeError(f"lm-eval exited with {result.returncode}; inspect lm-eval.log")
+    for condition, num_fewshot in (("zero-shot", 0), ("five-shot", 5)):
+        active_condition["name"] = condition
+        eval_out = out / "harness" / condition
+        eval_out.mkdir(parents=True)
+        command = [
+            str(workspace / "venv/bin/python"), "-m", "lm_eval",
+            "--model", "local-chat-completions", "--tasks", "gsm8k",
+            "--limit", "20", "--seed", "42", "--num_fewshot", str(num_fewshot),
+            "--batch_size", "1", "--output_path", str(eval_out), "--log_samples",
+            "--model_args",
+            f"model=qwen3-1.7b,base_url=http://127.0.0.1:{proxy_port}/v1/chat/completions,max_gen_toks=384,eos_string=<|im_end|>",
+            "--apply_chat_template",
+        ]
+        with (out / f"lm-eval-{condition}.log").open("wb") as log:
+            result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT,
+                                    timeout=900, check=False)
+        if result.returncode:
+            raise RuntimeError(f"lm-eval {condition} exited with {result.returncode}")
 finally:
     proxy.shutdown()
     proxy.server_close()
@@ -158,91 +163,98 @@ finally:
     "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in records),
     encoding="utf-8",
 )
-sample_files = list(eval_out.rglob("samples_gsm8k_*.jsonl"))
-if len(sample_files) != 1:
-    raise RuntimeError(f"expected one GSM8K sample file, found {len(sample_files)}")
-samples = [json.loads(line) for line in sample_files[0].read_text(encoding="utf-8").splitlines()]
-if len(records) != 20 or len(samples) != 40 or len({r["doc_id"] for r in samples}) != 20:
-    raise RuntimeError(f"expected 20 requests/docs; captured {len(records)} requests and {len(samples)} sample rows")
+conditions = {}
+doc_sets = {}
+for condition, num_fewshot in (("zero-shot", 0), ("five-shot", 5)):
+    condition_records = [r for r in records if r["condition"] == condition]
+    eval_out = out / "harness" / condition
+    sample_files = list(eval_out.rglob("samples_gsm8k_*.jsonl"))
+    if len(sample_files) != 1:
+        raise RuntimeError(f"{condition}: expected one GSM8K sample file, found {len(sample_files)}")
+    samples = [json.loads(line) for line in sample_files[0].read_text(encoding="utf-8").splitlines()]
+    doc_ids = {str(r["doc_id"]) for r in samples}
+    if len(condition_records) != 20 or len(samples) != 40 or len(doc_ids) != 20:
+        raise RuntimeError(f"{condition}: expected 20 requests/docs and 40 filter rows; got {len(condition_records)}/{len(doc_ids)}/{len(samples)}")
+    doc_sets[condition] = doc_ids
 
-def captured_for(question):
-    matches = [r for r in records if any(
-        m.get("role") == "user" and question in m.get("content", "")
-        for m in r["request"].get("messages", [])
-    )]
-    if len(matches) != 1:
-        raise RuntimeError(f"expected one captured request for doc question; found {len(matches)}")
-    return matches[0]
+    def captured_for(question):
+        matches = [r for r in condition_records if any(
+            m.get("role") == "user" and question in m.get("content", "")
+            for m in r["request"].get("messages", [])
+        )]
+        if len(matches) != 1:
+            raise RuntimeError(f"{condition}: expected one captured request for question; found {len(matches)}")
+        return matches[0]
 
-per_doc = {}
-for sample in samples:
-    doc_id = sample["doc_id"]
-    question = sample["doc"]["question"]
-    capture = captured_for(question)
-    choice = capture["response"].get("choices", [{}])[0]
-    message = choice.get("message", {})
-    harness_response = sample.get("resps", [[""]])[0][0]
-    row = per_doc.setdefault(str(doc_id), {
-        "doc_id": doc_id,
-        "api_content": message.get("content"),
-        "reasoning_content_present": message.get("reasoning_content_present", False),
-        "reasoning_content_chars": message.get("reasoning_content_chars", 0),
-        "finish_reason": choice.get("finish_reason"),
-        "usage": capture["response"].get("usage"),
-        "content_matches_harness": True,
-        "formats": [],
-    })
-    row["content_matches_harness"] &= message.get("content") == harness_response
-    row["formats"].append({
-        "filter": sample.get("filter"),
-        "harness_response": harness_response,
-        "extracted": sample.get("filtered_resps"),
-        "invalid": "[invalid]" in sample.get("filtered_resps", []),
-        "has_gsm8k_marker": "####" in (message.get("content") or ""),
-    })
+    per_doc = {}
+    for sample in samples:
+        doc_id = sample["doc_id"]
+        question = sample["doc"]["question"]
+        target = sample["doc"]["answer"].rsplit("####", 1)[-1].strip()
+        capture = captured_for(question)
+        choice = capture["response"].get("choices", [{}])[0]
+        message = choice.get("message", {})
+        harness_response = sample.get("resps", [[""]])[0][0]
+        row = per_doc.setdefault(str(doc_id), {
+            "doc_id": doc_id, "question": question, "target_final_answer": target,
+            "api_content": message.get("content"),
+            "reasoning_content_present": message.get("reasoning_content_present", False),
+            "reasoning_content_chars": message.get("reasoning_content_chars", 0),
+            "finish_reason": choice.get("finish_reason"),
+            "usage": capture["response"].get("usage"),
+            "content_matches_harness": True, "formats": [],
+        })
+        row["content_matches_harness"] &= message.get("content") == harness_response
+        row["formats"].append({
+            "filter": sample.get("filter"), "harness_response": harness_response,
+            "extracted": sample.get("filtered_resps"),
+            "invalid": "[invalid]" in sample.get("filtered_resps", []),
+        })
 
-filters = sorted({f["filter"] for doc in per_doc.values() for f in doc["formats"]})
-if filters != ["flexible-extract", "strict-match"] or any(
-    len(doc["formats"]) != 2 for doc in per_doc.values()
-):
-    raise RuntimeError(f"expected strict and flexible filter outputs for every doc; got {filters}")
-filter_stats = {}
-for name in filters:
-    rows = [f for doc in per_doc.values() for f in doc["formats"] if f["filter"] == name]
-    filter_stats[name] = {
-        "n": len(rows), "invalid_n": sum(r["invalid"] for r in rows),
-        "invalid_rate": sum(r["invalid"] for r in rows) / len(rows),
-        "extracted_counts": {},
+    filters = sorted({f["filter"] for doc in per_doc.values() for f in doc["formats"]})
+    if filters != ["flexible-extract", "strict-match"] or any(
+        len(doc["formats"]) != 2 for doc in per_doc.values()
+    ):
+        raise RuntimeError(f"{condition}: missing official filter outputs: {filters}")
+    filter_stats = {}
+    for name in filters:
+        rows = [f for doc in per_doc.values() for f in doc["formats"] if f["filter"] == name]
+        filter_stats[name] = {"n": len(rows), "invalid_n": sum(r["invalid"] for r in rows),
+                              "invalid_rate": sum(r["invalid"] for r in rows) / len(rows),
+                              "extracted_counts": {}}
+        for item in rows:
+            value = json.dumps(item["extracted"], ensure_ascii=False)
+            counts = filter_stats[name]["extracted_counts"]
+            counts[value] = counts.get(value, 0) + 1
+    finish_counts = {}
+    for item in per_doc.values():
+        reason = item["finish_reason"] or "null"
+        finish_counts[reason] = finish_counts.get(reason, 0) + 1
+    conditions[condition] = {
+        "n_examples": len(per_doc), "n_api_requests": len(condition_records),
+        "parameters": {"enable_thinking": False, "max_gen_toks": 384,
+                        "eos_string": "<|im_end|>", "num_fewshot": num_fewshot,
+                        "stop": ["Question:", "</s>", "<|im_end|>"],
+                        "limit": 20, "seed": 42, "batch_size": 1},
+        "finish_reason_counts": finish_counts,
+        "reasoning_content_present_n": sum(d["reasoning_content_present"] for d in per_doc.values()),
+        "content_matches_harness_n": sum(d["content_matches_harness"] for d in per_doc.values()),
+        "gsm8k_marker_n": sum("####" in (d["api_content"] or "") for d in per_doc.values()),
+        "filters": filter_stats, "items": list(per_doc.values()),
     }
-    for row in rows:
-        value = json.dumps(row["extracted"], ensure_ascii=False)
-        filter_stats[name]["extracted_counts"][value] = filter_stats[name]["extracted_counts"].get(value, 0) + 1
 
+if doc_sets["zero-shot"] != doc_sets["five-shot"]:
+    raise RuntimeError("zero-shot and five-shot runs evaluated different GSM8K documents")
 report = {
-    "n_examples": len(per_doc), "n_api_requests": len(records),
-    "parameters": {
-        "enable_thinking": False, "max_gen_toks": 384,
-        "eos_string": "<|im_end|>", "num_fewshot": 0,
-        "stop": ["Question:", "</s>", "<|im_end|>"],
-        "limit": 20, "seed": 42, "batch_size": 1,
-    },
-    "lm_eval_version": version,
-    "lm_eval_source_ref": harness_ref,
+    "lm_eval_version": version, "lm_eval_source_ref": harness_ref,
     "llama_cpp_version": props.get("build_info"),
     "llama_cpp_version_source": "server-props.build_info",
     "chat_template_observed": props["chat_template_observed"],
     "template_sha256": props["chat_template_sha256"],
-    "finish_reason_counts": {},
-    "reasoning_content_present_n": sum(d["reasoning_content_present"] for d in per_doc.values()),
-    "content_matches_harness_n": sum(d["content_matches_harness"] for d in per_doc.values()),
-    "gsm8k_marker_n": sum("####" in (d["api_content"] or "") for d in per_doc.values()),
-    "filters": filter_stats,
-    "items": list(per_doc.values()),
+    "same_document_set": True, "conditions": conditions,
 }
-for item in per_doc.values():
-    reason = item["finish_reason"] or "null"
-    report["finish_reason_counts"][reason] = report["finish_reason_counts"].get(reason, 0) + 1
 (out / "analysis.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-print(json.dumps({k: v for k, v in report.items() if k != "items"}, ensure_ascii=False))
+print(json.dumps({name: {k: v for k, v in result.items() if k != "items"}
+                  for name, result in conditions.items()}, ensure_ascii=False))
 print(f"DIAGNOSTIC_OUTPUT={out}")
 PY
