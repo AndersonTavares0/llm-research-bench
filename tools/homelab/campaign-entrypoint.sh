@@ -101,11 +101,19 @@ esac
 
 # lm-eval sees the image's torch/transformers/datasets as satisfied because the
 # venv inherits system site-packages; only the harness and its small deps install.
-LM_EVAL_VERSION="${LM_EVAL_VERSION:-0.4.13}"
+# Pin a harness commit: 0.4.13's gguf backend still expects the legacy
+# `token_logprobs` payload, which llama.cpp releases since 2025 no longer send.
+LM_EVAL_REF="${LM_EVAL_REF:-d6de81643928d653435c431bae19945d41d32520}"
 if [ ! -x "$VENV/bin/python" ]; then
   python3 -m venv --system-site-packages "$VENV"
 fi
-"$VENV/bin/python" -m pip install --quiet "lm-eval==$LM_EVAL_VERSION"
+if [ "$(cat "$VENV/.lm-eval-ref" 2>/dev/null || true)" != "$LM_EVAL_REF" ]; then
+  log "installing lm-eval @ $LM_EVAL_REF"
+  fetch_url "https://codeload.github.com/EleutherAI/lm-evaluation-harness/tar.gz/$LM_EVAL_REF" \
+    "$TOOLS/lm-eval.tar.gz"
+  "$VENV/bin/python" -m pip install --quiet "$TOOLS/lm-eval.tar.gz"
+  echo "$LM_EVAL_REF" > "$VENV/.lm-eval-ref"
+fi
 export PATH="$VENV/bin:$PATH"
 "$VENV/bin/python" -c "import importlib.metadata as m; print('lm-eval', m.version('lm-eval'))"
 
