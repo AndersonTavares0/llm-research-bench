@@ -219,3 +219,27 @@ def test_audit_reports_missing_legacy_provenance(tmp_path):
     findings = [f for f in campaign.audit_results(tmp_path) if f["format"] == "legacy"]
     assert findings and "seed" in findings[0]["missing"]
     assert "timestamp" in findings[0]["missing"]
+
+
+def test_llama_device_listing_is_parsed_when_nvidia_smi_is_absent(monkeypatch):
+    listing = "Available devices:\n  CUDA0: NVIDIA GeForce GTX 1050 Ti (4023 MiB, 3975 MiB free)\n"
+
+    class FakeProc:
+        stdout = listing
+        stderr = ""
+        returncode = 0
+
+    monkeypatch.setattr(
+        campaign.shutil, "which", lambda name: None if name == "nvidia-smi" else "/usr/bin/" + name
+    )
+    monkeypatch.setattr(campaign.subprocess, "run", lambda *a, **k: FakeProc())
+    gpu = campaign.query_gpu()
+    assert gpu["source"] == "llama-server --list-devices"
+    assert gpu["devices"] == [
+        {
+            "id": "CUDA0",
+            "name": "NVIDIA GeForce GTX 1050 Ti",
+            "memory_total": "4023 MiB",
+            "memory_free": "3975 MiB",
+        }
+    ]

@@ -18,13 +18,50 @@ RESULTS="$WORKSPACE/results/campaigns"
 log() { echo "[$(date -u +%H:%M:%S)] $*"; }
 
 # CUDA runtime libraries shipped inside the image's torch wheels.
+NVIDIA_LIBS=""
 for lib in /usr/local/lib/python3.11/site-packages/nvidia/*/lib; do
-  [ -d "$lib" ] && export LD_LIBRARY_PATH="$lib:${LD_LIBRARY_PATH:-}"
+  [ -d "$lib" ] || continue
+  export LD_LIBRARY_PATH="$lib:${LD_LIBRARY_PATH:-}"
+  NVIDIA_LIBS="${NVIDIA_LIBS:+$NVIDIA_LIBS:}$lib"
 done
+
+GLIBC="$WORKSPACE/glibc"
+BIN="$TOOLS/bin"
 
 mkdir -p "$WORKSPACE/.tmp"
 log "python $(python3 --version 2>&1)"
-nvidia-smi --query-gpu=name,memory.total,memory.free,driver_version --format=csv,noheader || true
+
+fetch_url() {
+  # The image has no curl/wget; python is the only downloader available.
+  python3 - "$1" "$2" <<'PY'
+import sys, urllib.request
+urllib.request.urlretrieve(sys.argv[1], sys.argv[2])
+PY
+}
+
+# Current llama.cpp Linux releases are built against glibc >= 2.38, the image
+# ships 2.36. The container host's newer loader/libs are mounted via /workspace
+# and drive the binaries instead (see bootstrap-glibc.sh).
+ensure_glibc() {
+  [ -x "$GLIBC/ld-linux-x86-64.so.2" ] && return 0
+  echo "missing $GLIBC: llama.cpp $LLAMA_RELEASE needs glibc >= 2.38, image has 2.36." >&2
+  echo "run tools/homelab/bootstrap-glibc.sh on the container host first" >&2
+  return 1
+}
+
+install_wrappers() {
+  local bin="$1" lp tool
+  # ggml_backend_load_all() looks for libggml-*.so next to /proc/self/exe, so the
+  # loader has to be copied into the binary dir, not merely invoked from /workspace.
+  cp -f "$GLIBC/ld-linux-x86-64.so.2" "$bin/ld-linux-x86-64.so.2"
+  lp="$GLIBC:$bin:$NVIDIA_LIBS:/usr/local/lib:/usr/lib/x86_64-linux-gnu"
+  mkdir -p "$BIN"
+  for tool in llama-server llama-bench; do
+    printf '#!/bin/sh\nexec "%s/ld-linux-x86-64.so.2" --library-path "%s" "%s/%s" "$@"\n' \
+      "$bin" "$lp" "$bin" "$tool" > "$BIN/$tool"
+    chmod +x "$BIN/$tool"
+  done
+}
 
 dir_for() { echo "$TOOLS/llama-${LLAMA_RELEASE}-$1"; }
 
@@ -39,33 +76,28 @@ fetch_llama() {
   local variant="$1" url
   case "$variant" in
     cuda) url="https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_RELEASE}/llama-${LLAMA_RELEASE}-bin-ubuntu-cuda-12.8-x64.tar.gz" ;;
-    cpu) url="https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_RELEASE}/llama-${LLAMA_RELEASE}-bin-ubuntu-x64.tar.gz" ;;
     *) echo "unknown variant $variant" >&2; return 1 ;;
   esac
   [ -n "$(llama_bin_dir "$variant")" ] && return 0
   mkdir -p "$(dir_for "$variant")"
   log "downloading llama.cpp $variant build ($LLAMA_RELEASE)"
-  curl -fsSL --retry 3 -o "$TOOLS/$variant.tar.gz" "$url"
+  fetch_url "$url" "$TOOLS/$variant.tar.gz"
   tar -xzf "$TOOLS/$variant.tar.gz" -C "$(dir_for "$variant")"
   rm -f "$TOOLS/$variant.tar.gz"
 }
 
-LLAMA_BIN=""
-if fetch_llama cuda; then
-  LLAMA_BIN="$(llama_bin_dir cuda)"
-  if [ -z "$LLAMA_BIN" ] || ! "$LLAMA_BIN/llama-server" --version >/dev/null 2>&1; then
-    log "CUDA build unusable here, falling back to the CPU build (recorded in the manifest)"
-    LLAMA_BIN=""
-  fi
-fi
-if [ -z "$LLAMA_BIN" ]; then
-  fetch_llama cpu
-  LLAMA_BIN="$(llama_bin_dir cpu)"
-fi
-[ -n "$LLAMA_BIN" ] || { echo "no llama.cpp binary available" >&2; exit 1; }
-export PATH="$LLAMA_BIN:$PATH"
-llama-server --version || true
-llama-bench --help 2>&1 | head -1 || true
+ensure_glibc
+fetch_llama cuda
+LLAMA_BIN="$(llama_bin_dir cuda)"
+[ -n "$LLAMA_BIN" ] || { echo "llama-server not found in the $LLAMA_RELEASE tarball" >&2; exit 1; }
+install_wrappers "$LLAMA_BIN"
+export PATH="$BIN:$PATH"
+llama-server --version
+DEVICES="$(llama-server --list-devices 2>&1 || true)"
+case "$DEVICES" in
+  *CUDA*) log "llama.cpp devices: $(echo "$DEVICES" | tr '\n' ' ')" ;;
+  *) echo "no CUDA device visible to llama.cpp: $DEVICES" >&2; exit 1 ;;
+esac
 
 # lm-eval sees the image's torch/transformers/datasets as satisfied because the
 # venv inherits system site-packages; only the harness and its small deps install.

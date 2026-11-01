@@ -294,11 +294,41 @@ def collect_environment() -> dict[str, Any]:
     return env
 
 
+_LLAMA_DEVICE_RE = re.compile(
+    r"^\s*(CUDA\d+):\s+(.+?)\s+\((\d+) MiB,\s*(\d+) MiB free\)$", re.MULTILINE
+)
+
+
+def _gpus_from_llama() -> list[dict[str, Any]]:
+    exe = shutil.which("llama-server")
+    if not exe:
+        return []
+    try:
+        proc = subprocess.run(
+            [exe, "--list-devices"], capture_output=True, text=True, timeout=120, check=False
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    gpus = []
+    for ident, name, total, free in _LLAMA_DEVICE_RE.findall(proc.stdout or ""):
+        gpus.append(
+            {"id": ident, "name": name, "memory_total": f"{total} MiB", "memory_free": f"{free} MiB"}
+        )
+    return gpus
+
+
 def query_gpu() -> dict[str, Any]:
-    """Best-effort GPU identity via nvidia-smi; absence is recorded, not hidden."""
+    """Best-effort GPU identity; absence is recorded, not hidden.
+
+    nvidia-smi is not present in the sandbox image, so llama.cpp's own device
+    listing is the fallback and the manifest says which source was used.
+    """
     exe = shutil.which("nvidia-smi")
     if not exe:
-        return {"available": False, "reason": "nvidia-smi not found"}
+        gpus = _gpus_from_llama()
+        if gpus:
+            return {"available": True, "source": "llama-server --list-devices", "devices": gpus}
+        return {"available": False, "reason": "no nvidia-smi and no llama.cpp device listing"}
     query = "name,memory.total,memory.used,driver_version,compute_cap"
     try:
         proc = subprocess.run(
@@ -325,7 +355,7 @@ def query_gpu() -> dict[str, Any]:
                     "compute_cap": parts[4],
                 }
             )
-    return {"available": bool(gpus), "devices": gpus}
+    return {"available": bool(gpus), "source": "nvidia-smi", "devices": gpus}
 
 
 def binary_version(executable: str, *args: str) -> str:
