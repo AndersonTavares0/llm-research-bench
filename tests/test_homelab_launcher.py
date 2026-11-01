@@ -53,3 +53,28 @@ def test_campaign_remains_the_default_full_campaign_route():
     assert 'GPU_LAB_TASK="${GPU_LAB_TASK:-campaign}"' in source
     assert '"$VENV/bin/python" -m llm_research_bench.campaign run' in source
     assert '"$VENV/bin/python" -m llm_research_bench.campaign summary' in source
+
+
+@pytest.mark.skipif(BASH is None, reason="Bash is required to exercise the paired wrapper")
+def test_fixed_paired_wrapper_overrides_task_and_execs_adjacent_entrypoint(tmp_path):
+    wrapper = ROOT / "tools/homelab/gsm8k-paired-entrypoint.sh"
+    if not wrapper.is_file():
+        pytest.fail("fixed paired-task wrapper does not exist")
+
+    wrapper_copy = tmp_path / "gsm8k-paired-entrypoint.sh"
+    wrapper_copy.write_bytes(wrapper.read_bytes())
+    (tmp_path / "campaign-entrypoint.sh").write_text(
+        'printf "%s" "$GPU_LAB_TASK" > "$TASK_CAPTURE"\n', encoding="utf-8"
+    )
+    capture = tmp_path / "task.txt"
+    result = subprocess.run(
+        [BASH, str(wrapper_copy)],
+        env={**os.environ, "GPU_LAB_TASK": "campaign", "TASK_CAPTURE": str(capture)},
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert capture.read_text(encoding="utf-8") == "gsm8k-paired"
