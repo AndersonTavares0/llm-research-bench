@@ -404,7 +404,7 @@ def build_server_cmd(
     alias: str,
     server: dict[str, Any],
 ) -> list[str]:
-    return [
+    cmd = [
         binary,
         "-m",
         str(model_path),
@@ -425,6 +425,12 @@ def build_server_cmd(
         "--jinja",
         "--no-webui",
     ]
+    if server.get("chat_template_kwargs"):
+        cmd += [
+            "--chat-template-kwargs",
+            json.dumps(server["chat_template_kwargs"], separators=(",", ":")),
+        ]
+    return cmd
 
 
 def build_bench_cmd(binary: str, model_path: Path, bench: dict[str, Any]) -> list[str]:

@@ -116,11 +116,20 @@ def test_existing_result_requires_matching_key_and_measured_status(tmp_path):
 
 def test_server_and_bench_commands_use_official_flags(tmp_path):
     server = campaign.build_server_cmd(
-        "llama-server", tmp_path / "m.gguf", "alias", {"port": 8091, "ctx_size": 8192}
+        "llama-server",
+        tmp_path / "m.gguf",
+        "alias",
+        {
+            "port": 8091,
+            "ctx_size": 8192,
+            "chat_template_kwargs": {"enable_thinking": False},
+        },
     )
     assert server[:2] == ["llama-server", "-m"]
     assert "--jinja" in server and "--alias" in server
     assert server[server.index("--ctx-size") + 1] == "8192"
+    kwargs = json.loads(server[server.index("--chat-template-kwargs") + 1])
+    assert kwargs == {"enable_thinking": False}
 
     bench = campaign.build_bench_cmd(
         "llama-bench", tmp_path / "m.gguf", {"prompt_tokens": 512, "gen_tokens": 128}
