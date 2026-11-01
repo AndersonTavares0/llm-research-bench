@@ -101,12 +101,13 @@ esac
 
 # lm-eval sees the image's torch/transformers/datasets as satisfied because the
 # venv inherits system site-packages; only the harness and its small deps install.
+LM_EVAL_VERSION="${LM_EVAL_VERSION:-0.4.13}"
 if [ ! -x "$VENV/bin/python" ]; then
   python3 -m venv --system-site-packages "$VENV"
 fi
-"$VENV/bin/python" -m pip install --quiet "lm-eval"
+"$VENV/bin/python" -m pip install --quiet "lm-eval==$LM_EVAL_VERSION"
 export PATH="$VENV/bin:$PATH"
-"$VENV/bin/python" -m lm_eval --version
+"$VENV/bin/python" -c "import importlib.metadata as m; print('lm-eval', m.version('lm-eval'))"
 
 SPEC_VALUES="$("$VENV/bin/python" - "$SPEC" <<'PY'
 import sys

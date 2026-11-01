@@ -373,9 +373,14 @@ def binary_version(executable: str, *args: str) -> str:
 
 
 def lm_eval_version() -> str:
+    """Version from package metadata: the 0.4.x CLI has no --version flag."""
     try:
         proc = subprocess.run(
-            [sys.executable, "-m", "lm_eval", "--version"],
+            [
+                sys.executable,
+                "-c",
+                "import importlib.metadata as m; print('lm-eval', m.version('lm-eval'))",
+            ],
             capture_output=True,
             text=True,
             timeout=120,
@@ -383,8 +388,9 @@ def lm_eval_version() -> str:
         )
     except (OSError, subprocess.SubprocessError):  # pragma: no cover - env specific
         return "lm_eval: not installed"
-    text = ((proc.stdout or "") + (proc.stderr or "")).strip()
-    return _first_line(text) or "lm_eval: unknown"
+    if proc.returncode != 0:
+        return "lm_eval: not installed"
+    return _first_line(proc.stdout or "") or "lm_eval: unknown"
 
 
 # --------------------------------------------------------------------------- #
@@ -601,7 +607,7 @@ def check_tasks_available(groups: list[TaskGroup]) -> None:
     wanted = sorted({task for group in groups for task in group.tasks})
     try:
         proc = subprocess.run(
-            [sys.executable, "-m", "lm_eval", "--tasks", "list"],
+            [sys.executable, "-m", "lm_eval", "ls", "tasks"],
             capture_output=True,
             text=True,
             timeout=300,
@@ -610,11 +616,12 @@ def check_tasks_available(groups: list[TaskGroup]) -> None:
     except (OSError, subprocess.SubprocessError) as exc:  # pragma: no cover - env specific
         raise SpecError(f"cannot list lm-eval tasks: {exc}") from exc
     listing = (proc.stdout or "") + (proc.stderr or "")
-    missing = [task for task in wanted if not re.search(rf"(?<![\w/]){re.escape(task)}(?![\w/])", listing)]
+    # `ls tasks` prints a padded markdown table: rows look like "|name   |path|type|".
+    missing = [task for task in wanted if not re.search(rf"(?m)^\|\s*{re.escape(task)}\s*\|", listing)]
     if missing:
         raise SpecError(
             f"tasks not found in this lm-eval version: {', '.join(missing)} "
-            "(check `lm_eval --tasks list`)"
+            "(check `lm_eval ls tasks`)"
         )
 
 
