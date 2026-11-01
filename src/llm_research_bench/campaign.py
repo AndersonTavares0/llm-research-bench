@@ -483,7 +483,10 @@ def build_lm_eval_cmd(
         model_args = (
             f"model={model_alias},base_url=http://127.0.0.1:{port}/v1/chat/completions"
         )
-    return cmd + ["--model_args", model_args]
+    cmd += ["--model_args", model_args]
+    if task_group.backend == "local-chat-completions":
+        cmd.append("--apply_chat_template")
+    return cmd
 
 
 # --------------------------------------------------------------------------- #

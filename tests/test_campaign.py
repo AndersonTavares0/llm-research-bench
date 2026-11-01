@@ -185,6 +185,8 @@ def test_lm_eval_command_matrix():
     args = chat[chat.index("--model_args") + 1]
     assert args.endswith("base_url=http://127.0.0.1:8090/v1/chat/completions")
     assert "model=alias" in args
+    assert "--apply_chat_template" in chat
+    assert "--apply_chat_template" not in mcq
     assert chat[chat.index("--limit") + 1] == "20"
 
 
