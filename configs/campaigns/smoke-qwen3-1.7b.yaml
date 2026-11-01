@@ -1,0 +1,51 @@
+# Smoke campaign: official llama.cpp + lm-evaluation-harness integration.
+# Purpose: prove the pipeline end to end and record provenance, not to rank models.
+# limit=20 per task, so the Wilson intervals are wide by construction.
+campaign: smoke-qwen3-1.7b-v1
+description: >-
+  One Apache-2.0 GGUF model through llama.cpp (inference, llama-bench) and
+  EleutherAI lm-evaluation-harness (arc_challenge, hellaswag, belebele_por_Latn,
+  gsm8k, ifeval). Small fixed sample: validates orchestration and provenance.
+status: measured
+hardware_profile: gpu-lab-ct108-gtx1050ti-4gib
+
+server:
+  port: 8090
+  ctx_size: 4096
+  gpu_layers: 99
+  threads: 2
+  parallel: 1
+  startup_timeout_s: 300
+
+bench:
+  prompt_tokens: 512
+  gen_tokens: 128
+  repetitions: 3
+  gpu_layers: 99
+
+evaluation:
+  limit: 20
+  seed: 42
+  num_fewshot: 0
+  batch_size: 1
+  max_length: 2048
+  max_gen_toks: 256
+
+models:
+  - name: qwen3-1.7b-q4km
+    alias: qwen3-1.7b
+    file: Qwen3-1.7B-Q4_K_M.gguf
+    quantization: Q4_K_M
+    hf_repo: ggml-org/Qwen3-1.7B-GGUF
+    hf_revision: daeb8e2d528a760970442092f6bf1e55c3b659eb
+    license: apache-2.0
+
+task_groups:
+  # Loglikelihood/MCQ: GGUFLM tokenises with the server and scores exact logprobs.
+  - name: knowledge-mcq
+    backend: gguf
+    tasks: [arc_challenge, hellaswag, belebele_por_Latn]
+  # Generation/chat: the server applies the model chat template (--jinja).
+  - name: generative-chat
+    backend: local-chat-completions
+    tasks: [gsm8k, ifeval]
