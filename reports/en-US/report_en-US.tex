@@ -514,6 +514,7 @@ Table~\ref{tab:model_provenance} records exact provenance, verified file sizes, 
 \end{tabularx}
 \end{table*}
 
+\clearpage
 \section{Threats to Validity and Limitations}
 
 \subsection{Internal Validity}
@@ -530,7 +531,9 @@ We utilize $B_{\text{demand}} = S_{\text{weights}} \times \text{Throughput}$ as 
 
 \subsection{GSM8K Evaluation Limitations}
 
-The GSM8K comparison covers only 20 test items for one quantized model and one decoding setup; estimates therefore have substantial sampling uncertainty and do not establish general performance across the full dataset or other models. Paired tests use the shared items, but the two filters are related and the unadjusted $p$-values are exploratory. Strict-match failures also include formatting failures (20/20 zero-shot; 6/20 five-shot), while flexible extraction is permissive; neither score alone isolates mathematical reasoning. Two outputs reached the generation-length limit (zero-shot: 2; five-shot: 1), which may truncate reasoning. The evaluation supports a within-sample comparison only; larger, preregistered evaluations and independent replications are needed.
+The GSM8K comparison covers only 20 test items for one quantized model and one decoding setup; estimates therefore have substantial sampling uncertainty and do not establish general performance across the full dataset or other models. Paired tests use the shared items, but the two filters are related and the unadjusted $p$-values are exploratory. Strict-match failures also include formatting failures (20/20 zero-shot; 6/20 five-shot), while flexible extraction is permissive; neither score alone isolates mathematical reasoning. Two outputs reached the generation-length limit (zero-shot: 2; five-shot: 1), which may truncate reasoning.
+
+The planned 100-pair extension was not completed, so no results from it are reported. This evaluation supports only a within-sample comparison; larger, preregistered evaluations and independent replications are needed.
 
 \section{Conclusions}
 
