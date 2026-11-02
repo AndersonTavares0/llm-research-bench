@@ -291,6 +291,16 @@ Em conformidade com a prática científica aberta, o projeto documenta explicita
 - **Deriva Térmica em Execuções Contínuas:** Em baterias ininterruptas, a temperatura da GPU subiu de $44^\circ\text{C}$ para $74^\circ\text{C}$, ativando o escalonamento dinâmico do NVIDIA GPU Boost 3.0 ($1695 \to 1607\text{ MHz}$, variação de $-5,2\%$). O protocolo de 3 níveis foi concebido para mitigar esse efeito em rodadas futuras.
 - **Acompanhamento de Questões Abertas:** As discussões metodológicas e o planejamento das próximas etapas estão documentados na **[Issue #2: Pesquisa em andamento: revisão metodológica e novos experimentos](https://github.com/AndersonTavares0/llm-research-bench/issues/2)**.
 
+### Campanhas oficiais de benchmark
+
+Além da série histórica descrita neste README, o repositório agora inclui uma camada de orquestração para **llama.cpp/llama-bench** e **EleutherAI lm-evaluation-harness**. Os resultados oficiais são mantidos separadamente e não substituem nem reclassificam os dados históricos.
+
+- [Metodologia, resultados smoke e reprodução (PT-BR)](docs/benchmarks/official-campaigns.pt-BR.md)
+- [Official campaign methodology and results (English)](docs/benchmarks/official-campaigns.md)
+- [Artefatos brutos e manifestos da campanha](results/campaigns/smoke-qwen3-1.7b-v1/)
+
+A campanha Qwen3-1.7B usa limite de 20 exemplos por tarefa e serve apenas como validação da integração; **não autoriza rankings**. Seus desvios e limites estão documentados na metodologia vinculada acima.
+
 ### Relatórios Técnicos Completos e Citação
 
 Para aprofundamento nas derivações teóricas (matemática da atenção de Vaswani et al., equações de escala de GQA, embeddings rotacionais RoPE e curvas de intensidade aritmética Roofline), consulte os relatórios técnicos integrais:

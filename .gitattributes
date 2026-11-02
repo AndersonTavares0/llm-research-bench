@@ -1,0 +1,2 @@
+# Shell entry points run inside Linux containers; CRLF makes them fail.
+*.sh text eol=lf

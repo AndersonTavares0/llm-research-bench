@@ -291,6 +291,16 @@ In accordance with open scientific practice, this project explicitly documents i
 - **Thermal Drift in Continuous Batches:** In uninterrupted test runs, device temperature rose from $44^\circ\text{C}$ to $74^\circ\text{C}$, triggering NVIDIA GPU Boost 3.0 clock scaling ($1695 \to 1607\text{ MHz}$, $-5.2\%$). The new 3-tier protocol incorporates cooldown periods to address this in future runs.
 - **Tracking Open Issues:** All active methodological discussions and planned experimental expansions are tracked in **[Issue #2: Ongoing Research and Methodological Review](https://github.com/AndersonTavares0/llm-research-bench/issues/2)**.
 
+### Official benchmark campaigns
+
+Alongside the historical series described in this README, the repository now includes a light orchestration layer for **llama.cpp/llama-bench** and the **EleutherAI lm-evaluation-harness**. Official-tool results are stored separately and do not replace or relabel historical data.
+
+- [Official campaign methodology, smoke results, and reproduction](docs/benchmarks/official-campaigns.md)
+- [Metodologia e resultados da campanha (PT-BR)](docs/benchmarks/official-campaigns.pt-BR.md)
+- [Raw campaign artifacts and manifests](results/campaigns/smoke-qwen3-1.7b-v1/)
+
+The Qwen3-1.7B campaign uses a 20-example-per-task limit and validates integration only; **it does not support rankings**. Protocol deviations and limitations are documented in the linked methodology.
+
 ### Full Technical Reports & Citation
 
 For deeper theoretical derivations (Transformer self-attention mathematics, GQA scaling equations, RoPE rotary embeddings, and Roofline arithmetic intensity curves), refer to the full technical monographs:

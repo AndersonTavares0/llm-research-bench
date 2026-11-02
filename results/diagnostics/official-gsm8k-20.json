@@ -1,0 +1,53 @@
+{
+  "benchmark": "GSM8K",
+  "dataset_split": "test",
+  "dataset_task_version": 3,
+  "evaluation_harness": "lm-evaluation-harness",
+  "evaluation_harness_version": "0.4.14.dev0",
+  "model": "Qwen3-1.7B",
+  "model_quantization": "Q4_K_M",
+  "model_sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+  "inference_engine": "llama.cpp",
+  "inference_engine_build": "b12024",
+  "protocol": {
+    "items_per_condition": 20,
+    "few_shot_examples": [0, 5],
+    "seed": 42,
+    "batch_size": 1,
+    "generation": "greedy",
+    "temperature": 0,
+    "max_generation_tokens": 384,
+    "few_shot_source": "train",
+    "same_test_items_across_conditions": true
+  },
+  "metrics": {
+    "definition": "exact_match; harness-reported sample standard error",
+    "zero_shot": {
+      "n": 20,
+      "strict_match": {"correct": 0, "accuracy": 0.0, "standard_error": 0.0},
+      "flexible_extract": {"correct": 3, "accuracy": 0.15, "standard_error": 0.0819178022}
+    },
+    "five_shot": {
+      "n": 20,
+      "strict_match": {"correct": 7, "accuracy": 0.35, "standard_error": 0.1094243310},
+      "flexible_extract": {"correct": 11, "accuracy": 0.55, "standard_error": 0.1141328865}
+    }
+  },
+  "paired_comparison": {
+    "test_item_sets_match": true,
+    "method": "two-sided exact McNemar test (binomial on discordant pairs)",
+    "interpretation": "exploratory; small evaluation subset and two related outcomes; not confirmatory evidence",
+    "strict_match": {"improved_zero_to_five_shot": 7, "declined": 0, "ties": 13, "discordant_pairs": 7, "p_unadjusted": 0.015625},
+    "flexible_extract": {"improved_zero_to_five_shot": 9, "declined": 1, "ties": 10, "discordant_pairs": 10, "p_unadjusted": 0.021484375}
+  },
+  "artifact_validation": {
+    "captured_responses_matching_harness_predictions": {"zero_shot": 20, "five_shot": 20},
+    "sample_records_per_condition": {"zero_shot": 40, "five_shot": 40},
+    "records_per_metric_per_condition": 20,
+    "aggregate_scores_recomputed_from_samples": true
+  },
+  "format_diagnostics": {
+    "strict_match_invalid_final_answer_format": {"zero_shot": 20, "five_shot": 6},
+    "flexible_extract_invalid_final_answer_format": {"zero_shot": 0, "five_shot": 0}
+  }
+}
