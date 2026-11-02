@@ -14,6 +14,7 @@ python3 - "$WORKSPACE" "$OUT" "$MODEL" <<'PY'
 import hashlib
 import http.server
 import json
+import os
 import pathlib
 import socket
 import subprocess
@@ -33,6 +34,9 @@ with socket.socket() as sock:
     proxy_port = sock.getsockname()[1]
 
 base = f"http://127.0.0.1:{server_port}"
+external_server_url = os.environ.get("GSM8K_SERVER_URL")
+if external_server_url:
+    base = external_server_url.rstrip("/")
 records = []
 active_condition = {"name": None}
 record_lock = threading.Lock()
@@ -76,14 +80,17 @@ def get_json(url, timeout=3):
     with urllib.request.urlopen(url, timeout=timeout) as response:
         return json.load(response)
 
-server_log = (out / "llama-server.log").open("wb")
-proc = subprocess.Popen([
-    str(workspace / "tools/bin/llama-server"), "-m", str(model),
-    "--host", "127.0.0.1", "--port", str(server_port), "--ctx-size", "4096",
-    "--n-gpu-layers", "99", "--threads", "2", "--alias", "qwen3-1.7b",
-    "--parallel", "1", "--jinja", "--chat-template-kwargs",
-    '{"enable_thinking":false}', "--no-webui",
-], stdout=server_log, stderr=subprocess.STDOUT)
+server_log = None
+proc = None
+if not external_server_url:
+    server_log = (out / "llama-server.log").open("wb")
+    proc = subprocess.Popen([
+        str(workspace / "tools/bin/llama-server"), "-m", str(model),
+        "--host", "127.0.0.1", "--port", str(server_port), "--ctx-size", "4096",
+        "--n-gpu-layers", "99", "--threads", "2", "--alias", "qwen3-1.7b",
+        "--parallel", "1", "--jinja", "--chat-template-kwargs",
+        '{"enable_thinking":false}', "--no-webui",
+    ], stdout=server_log, stderr=subprocess.STDOUT)
 proxy = http.server.ThreadingHTTPServer(("127.0.0.1", proxy_port), Proxy)
 proxy_thread = threading.Thread(target=proxy.serve_forever, daemon=True)
 proxy_thread.start()
@@ -91,7 +98,7 @@ proxy_thread.start()
 try:
     deadline = time.monotonic() + 180
     while time.monotonic() < deadline:
-        if proc.poll() is not None:
+        if proc is not None and proc.poll() is not None:
             raise RuntimeError(f"llama-server exited with {proc.returncode}")
         try:
             if get_json(base + "/health").get("status") == "ok":
@@ -151,13 +158,15 @@ try:
 finally:
     proxy.shutdown()
     proxy.server_close()
-    proc.terminate()
-    try:
-        proc.wait(timeout=20)
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        proc.wait()
-    server_log.close()
+    if proc is not None:
+        proc.terminate()
+        try:
+            proc.wait(timeout=20)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+    if server_log is not None:
+        server_log.close()
 
 (out / "api-captures.jsonl").write_text(
     "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in records),

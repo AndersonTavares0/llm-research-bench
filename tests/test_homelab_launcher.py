@@ -48,6 +48,17 @@ def test_paired_task_uses_only_fixed_diagnostic_and_pinned_inputs():
     assert "GPU_LAB_COMMAND" not in source
 
 
+def test_gsm8k_runner_can_use_an_externally_managed_server():
+    source = (ROOT / "tools" / "homelab" / "gsm8k-diagnostic.sh").read_text(
+        encoding="utf-8"
+    )
+    assert "import os" in source
+    assert 'external_server_url = os.environ.get("GSM8K_SERVER_URL")' in source
+    assert "if not external_server_url:" in source
+    assert "if proc is not None and proc.poll() is not None:" in source
+    assert "if proc is not None:" in source
+
+
 def test_campaign_remains_the_default_full_campaign_route():
     source = ENTRYPOINT.read_text(encoding="utf-8")
     assert 'GPU_LAB_TASK="${GPU_LAB_TASK:-campaign}"' in source

@@ -1,11 +1,11 @@
-\documentclass[12pt,a4paper]{article}
+\documentclass[10pt,a4paper,twocolumn]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[brazil]{babel}
 \usepackage{geometry}
-\geometry{left=30mm,right=20mm,top=30mm,bottom=20mm}
+\geometry{left=18mm,right=18mm,top=20mm,bottom=20mm}
 \usepackage{setspace}
-\onehalfspacing
+\singlespacing
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
 \usepackage{booktabs}
@@ -45,12 +45,13 @@
 \maketitle
 
 \begin{abstract}
-A implanta\c{c}\~ao de Modelos de Linguagem Pequenos (SLMs, entre 0,5B e 4B par\^ametros) em aceleradores f\'isicos de borda viabiliza soberania de dados, lat\^encia previs\'ivel e opera\c{c}\~ao aut\^onoma sem depend\^encia de conectividade externa. Contudo, operar sob limites estritos de mem\'oria f\'isica ($\le 4096\text{ MiB}$ de VRAM) introduz dilemas acentuados entre escala de par\^ametros, compress\~ao de tensores por quantiza\c{c}\~ao, satura\c{c}\~ao do barramento DRAM, crescimento din\^amico do cache KV, efici\^encia de tokeniza\c{c}\~ao multil\'ingue e alinhamento defensivo. Este trabalho conduz uma investiga\c{c}\~ao experimental fundamentada nos princ\'ipios arquiteturais de Vaswani et al. (2017) e em suas evolu\c{c}\~oes contempor\^aneas (GQA, RoPE, RMSNorm e decodifica\c{c}\~ao especulativa). Utilizando uma GPU NVIDIA GeForce GTX 1050 Ti (4096 MiB GDDR5, $112,0\text{ GB/s}$ te\'oricos), avaliam-se oito configura\c{c}\~oes representativas com telemetria cont\'inua de hardware via NVML. Um estudo de abla\c{c}\~ao controlada em tr\^es condi\c{c}\~oes ($C_1, C_2, C_3$) decomp\~os os fatores de ganho sob quantiza\c{c}\~ao constante: a compress\~ao de pesos em IQ4\_XS proporcionou $+28,2\%$ de aumento na vaz\~ao ($34,51 \pm 0,29$ vs $26,92 \pm 0,23$\,tok/s, microdados brutos $t = 64,26$, valores arredondados $t = 64,85$, $d = 28,74$), enquanto a decodifica\c{c}\~ao especulativa com Multi-Token Prediction (MTP) entregou $+25,6\%$ de ganho associado ($43,35 \pm 0,57$ vs $34,51 \pm 0,29$\,tok/s, $t = 43,72$, $p < 10^{-15}$, $d = 19,55$), totalizando diferen\c{c}a composta de $+61,0\%$ ($t = 84,50$, $d = 37,79$). A sobretaxa de VRAM associada \`a infraestrutura de MTP totalizou $+236,0\text{ MiB}$, resultando em diferen\c{c}a l\'iquida de apenas $+40,0\text{ MiB}$ frente \`a linha de base devido \`a absor\c{c}\~ao promovida pela compress\~ao IQ4\_XS ($-196,0\text{ MiB}$). A modelagem Roofline evidenciou que a gera\c{c}\~ao autorregressiva opera estritamente limitada por largura de banda ($I_{\text{decode}} \approx 3,6\text{ FLOP/byte} \ll I^* = 19,1$), com proxy anal\'itico de demanda entre $45,7$ e $75,3\text{ GB/s}$ ($40,8\%\text{--}67,2\%$ do barramento). Uma auditoria temporal da campanha experimental ativa ($311,58\text{ s}$ no total) quantificou a eleva\c{c}\~ao t\'ermica do die de $44^\circ\text{C}$ para $74^\circ\text{C}$ e o escalonamento adaptativo de clocks via GPU Boost 3.0 ($1695 \to 1607\text{ MHz}$, $-5,2\%$), motivando a formaliza\c{c}\~ao de um protocolo padronizado em tr\^es n\'iveis (A/B/C). A an\'alise multil\'ingue em corpus paralelo tril\'ingue (en-US, pt-BR, zh-CN) revelou penalidades de tokeniza\c{c}\~ao de at\'e $2,4\times$ para portugu\^es e $4,6\times$ para mandarim em modelos com vocabul\'arios compactos (SmolLM2), reduzindo a capacidade efetiva da janela de contexto para $22\%$. Em avalia\c{c}\~ao explorat\'oria de seguran\c{c}a defensiva em turno \'unico ($N=10$), observou-se aus\^encia de recusa indevida em tarefas benignas ($0/4$, $\text{FPR} = 0,0\%$, IC $95\%$ de Clopper-Pearson $[0,0\%, 60,2\%]$), por\'em persist\^encia de vulnerabilidade a inje\c{c}\~oes indiretas ($\text{ASR}$ entre $50\%$ e $100\%$), com todas as chamadas de ferramentas maliciosas interceptadas deterministicamente pelo harness ($100\%$ bloqueadas, $0,0\%$ executadas no sistema operacional).
+A implanta\c{c}\~ao de Modelos de Linguagem Pequenos (SLMs, entre 0,5B e 4B par\^ametros) em aceleradores f\'isicos de borda viabiliza soberania de dados, lat\^encia previs\'ivel e opera\c{c}\~ao aut\^onoma sem depend\^encia de conectividade externa. Contudo, operar sob limites estritos de mem\'oria f\'isica ($\le 4096\text{ MiB}$ de VRAM) introduz dilemas acentuados entre escala de par\^ametros, compress\~ao de tensores por quantiza\c{c}\~ao, satura\c{c}\~ao do barramento DRAM, crescimento din\^amico do cache KV, efici\^encia de tokeniza\c{c}\~ao multil\'ingue e alinhamento defensivo. Este trabalho conduz uma investiga\c{c}\~ao experimental fundamentada nos princ\'ipios arquiteturais de Vaswani et al. (2017) e em suas evolu\c{c}\~oes contempor\^aneas (GQA, RoPE, RMSNorm e decodifica\c{c}\~ao especulativa). Utilizando uma GPU NVIDIA GeForce GTX 1050 Ti (4096 MiB GDDR5, $112,0\text{ GB/s}$ te\'oricos), avaliam-se oito configura\c{c}\~oes representativas com telemetria cont\'inua de hardware via NVML. Um estudo de abla\c{c}\~ao controlada em tr\^es condi\c{c}\~oes ($C_1, C_2, C_3$) decomp\~oe os fatores de ganho sob quantiza\c{c}\~ao constante: a compress\~ao de pesos em IQ4\_XS proporcionou $+28,2\%$ de aumento na vaz\~ao ($34,51 \pm 0,29$ vs $26,92 \pm 0,23$\,tok/s, microdados brutos $t = 64,26$, valores arredondados $t = 64,85$, $d = 28,74$), enquanto a decodifica\c{c}\~ao especulativa com Multi-Token Prediction (MTP) entregou $+25,6\%$ de ganho associado ($43,35 \pm 0,57$ vs $34,51 \pm 0,29$\,tok/s, $t = 43,72$, $p < 10^{-15}$, $d = 19,55$), totalizando diferen\c{c}a composta de $+61,0\%$ ($t = 84,50$, $d = 37,79$). A sobretaxa de VRAM associada \`a infraestrutura de MTP totalizou $+236,0\text{ MiB}$, resultando em diferen\c{c}a l\'iquida de apenas $+40,0\text{ MiB}$ frente \`a linha de base devido \`a absor\c{c}\~ao promovida pela compress\~ao IQ4\_XS ($-196,0\text{ MiB}$). A modelagem Roofline evidenciou que a gera\c{c}\~ao autorregressiva opera estritamente limitada por largura de banda ($I_{\text{decode}} \approx 3,6\text{ FLOP/byte} \ll I^* = 19,1$), com proxy anal\'itico de demanda entre $45,7$ e $75,3\text{ GB/s}$ ($40,8\%\text{--}67,2\%$ do barramento). Uma auditoria temporal da campanha experimental ativa ($311,58\text{ s}$ no total) quantificou a eleva\c{c}\~ao t\'ermica do die de $44^\circ\text{C}$ para $74^\circ\text{C}$ e o escalonamento adaptativo de clocks via GPU Boost 3.0 ($1695 \to 1607\text{ MHz}$, $-5,2\%$), motivando a formaliza\c{c}\~ao de um protocolo padronizado em tr\^es n\'iveis (A/B/C). A an\'alise multil\'ingue em corpus paralelo tril\'ingue (en-US, pt-BR, zh-CN) revelou penalidades de tokeniza\c{c}\~ao de at\'e $2,4\times$ para portugu\^es e $4,6\times$ para mandarim em modelos com vocabul\'arios compactos (SmolLM2), reduzindo a capacidade efetiva da janela de contexto para $22\%$. Em avalia\c{c}\~ao explorat\'oria de seguran\c{c}a defensiva em turno \'unico ($N=10$), observou-se aus\^encia de recusa indevida em tarefas benignas ($0/4$, $\text{FPR} = 0,0\%$, IC $95\%$ de Clopper-Pearson $[0,0\%, 60,2\%]$), por\'em persist\^encia de vulnerabilidade a inje\c{c}\~oes indiretas ($\text{ASR}$ entre $50\%$ e $100\%$), com todas as chamadas de ferramentas maliciosas interceptadas deterministicamente pelo harness ($100\%$ bloqueadas, $0,0\%$ executadas no sistema operacional).
+Em uma avalia\c{c}\~ao pareada separada no GSM8K (20 itens de teste por condi\c{c}\~ao, semente 42), o Qwen3-1.7B Q4\_K\_M obteve 0,15/0,55 com extra\c{c}\~ao flex\'ivel e 0,00/0,35 com correspond\^encia estrita em 0/5-shot; a amostra pequena sustenta conclus\~oes descritivas, n\~ao confirmat\'orias.
 \end{abstract}
 
 \noindent\textbf{Palavras-chave:} Modelos de Linguagem Pequenos (SLMs); Arquitetura Transformer; Cache KV; Grouped-Query Attention; Multi-Token Prediction; Modelo Roofline; Efici\^encia de Tokeniza\c{c}\~ao; Seguran\c{c}a Defensiva.
 
-\newpage
+\clearpage
 
 \section{Introdu\c{c}\~ao e Contextualiza\c{c}\~ao}
 
@@ -124,7 +125,10 @@ A transi\c{c}\~ao da arquitetura original para a gera\c{c}\~ao contempor\^anea d
 
 \textbf{2. Normaliza\c{c}\~ao Pre-LN e RMSNorm:} A substitui\c{c}\~ao do esquema original Post-LN pela organiza\c{c}\~ao Pre-LN ($x_{l+1} = x_l + \operatorname{SubLayer}(\operatorname{Norm}(x_l))$) estabilizou a retropropaga\c{c}\~ao em redes profundas. Adicionalmente, Zhang e Sennrich (2019)~\cite{zhang2019} demonstraram que a invari\^ancia de escala pode ser mantida descartando-se o c\'alculo da m\'edia, operando apenas com o valor eficaz (\emph{Root Mean Square}):
 \begin{equation}
-\operatorname{RMSNorm}(x) = \frac{x}{\operatorname{RMS}(x)} \odot \gamma, \quad \text{onde } \operatorname{RMS}(x) = \sqrt{\frac{1}{d}\sum_{i=1}^d x_i^2 + \epsilon}
+\begin{aligned}
+\operatorname{RMSNorm}(x) &= \frac{x}{\operatorname{RMS}(x)} \odot \gamma,\\
+\operatorname{RMS}(x) &= \sqrt{\frac{1}{d}\sum_{i=1}^d x_i^2 + \epsilon}
+\end{aligned}
 \end{equation}
 Essa simplifica\c{c}\~ao elimina passagens extras de redu\c{c}\~ao na mem\'oria compartilhada, economizando cerca de $7\%$ do tempo de execu\c{c}\~ao de normaliza\c{c}\~ao nos kernels da GPU.
 
@@ -159,7 +163,10 @@ A economia direta de quase $900\text{ MiB}$ de VRAM f\'isica \'e o fator t\'ecni
 
 Para compreender a vaz\~ao de infer\^encia, modela-se o comportamento de hardware por meio do modelo Roofline (Williams et al., 2009)~\cite{williams2009}. A plataforma de teste \'e equipada com uma GPU NVIDIA GeForce GTX 1050 Ti baseada na microarquitetura Pascal (chip GP107-400-A1, litografia de 14 nm FinFET, Compute Capability 6.1), cujas especifica\c{c}\~oes f\'isicas de barramento s\~ao documentadas pela NVIDIA Corporation (2016)~\cite{nvidia2016pascal}. O processador gr\'afico possui 768 n\'ucleos de processamento escalar CUDA FP32 distribu\'idos em 6 multiprocessadores de fluxo (SMs), operando com frequ\^encia boost de $1392\text{ MHz}$, perfazendo uma capacidade de c\'alculo de pico em precis\~ao simples formulada por:
 \begin{equation}
-P_{\text{FP32}} = 768 \times 2 \times 1,392\text{ GHz} \approx 2,138\text{ TFLOPS} = 2138\text{ GFLOPS}
+ \begin{aligned}
+ P_{\text{FP32}} &= 768 \times 2 \times 1,392\text{ GHz}\\
+ &\approx 2,138\text{ TFLOPS} = 2138\text{ GFLOPS}
+ \end{aligned}
 \end{equation}
 
 Tr\^es caracter\'isticas arquiteturais da GTX 1050 Ti definem os gargalos f\'isicos deste estudo:
@@ -168,13 +175,19 @@ Tr\^es caracter\'isticas arquiteturais da GTX 1050 Ti definem os gargalos f\'isi
     \item \textbf{Penalidade de Taxa FP16:} Ao contr\'ario do chip Pascal voltado a servidores (GP100), que oferecia computa\c{c}\~ao em meia precis\~ao na taxa $2:1$, o chip GP107 opera FP16 na raz\~ao degradada de $1:64$ da velocidade FP32. Consequentemente, para preservar a efici\^encia, os kernels de infer\^encia (como os do \emph{llama.cpp}) descompactam tensores quantizados diretamente para registradores FP32 durante a execu\c{c}\~ao de produtos escalares.
     \item \textbf{Barramento de Mem\'oria Delimitado:} A placa disp\~oe de 4096 MiB de mem\'oria GDDR5 acoplada via barramento de 128 bits operando a $3504\text{ MHz}$ ($7,008\text{ Gbps}$ efetivos), resultando na largura de banda de pico te\'orica:
     \begin{equation}
-    B_{\text{teor}} = \frac{128\text{ bits}}{8\text{ bits/byte}} \times 7,008\text{ GHz} = 16\text{ bytes} \times 7,008\text{ GHz} \approx 112,13\text{ GB/s}
+    \begin{aligned}
+    B_{\text{teor}} &= \frac{128\text{ bits}}{8\text{ bits/byte}} \times 7,008\text{ GHz}\\
+    &= 16\text{ bytes} \times 7,008\text{ GHz} \approx 112,13\text{ GB/s}
+    \end{aligned}
     \end{equation}
 \end{enumerate}
 
 A intensidade aritm\'etica cr\'itica ($I^*$) do sistema define o ponto de transi\c{c}\~ao no gr\'afico Roofline:
 \begin{equation}
-I^* = \frac{P_{\text{FP32}}}{B_{\text{teor}}} = \frac{2138\text{ GFLOPS}}{112,0\text{ GB/s}} \approx 19,1\text{ FLOP/byte}
+ \begin{aligned}
+ I^* &= \frac{P_{\text{FP32}}}{B_{\text{teor}}}\\
+ &= \frac{2138\text{ GFLOPS}}{112,0\text{ GB/s}} \approx 19,1\text{ FLOP/byte}
+ \end{aligned}
 \end{equation}
 
 \textbf{Contraste F\'isico entre Prefill e Decode:}
@@ -190,7 +203,10 @@ I^* = \frac{P_{\text{FP32}}}{B_{\text{teor}}} = \frac{2138\text{ GFLOPS}}{112,0\
     Para o Gemma-2-2B em Q4\_K\_M ($S_{\text{pesos}} \approx 1,99\text{ GB}$), $\text{Throughput}_{\text{teto}} = 112 / 1,99 \approx 56,3\text{ tok/s}$. A vaz\~ao experimental medida de $26,92\text{ tok/s}$ representa $47,8\%$ de efici\^encia de barramento.
     \item \textbf{Processamento Inicial de Contexto / Prefill ($I_{\text{prefill}} \gg I^*$):} Na fase de prefill, processa-se a sequ\^encia inteira de entrada em bloco ($L_{\text{prompt}} \ge 256$). Cada peso \'e transferido da mem\'oria DRAM uma \'unica vez e reutilizado atrav\'es de todas as colunas da matriz de entrada. A intensidade aritm\'etica escala linearmente com o bloco:
     \begin{equation}
-    I_{\text{prefill}} \approx 3,57 \times L_{\text{prompt}} \approx 914\text{--}1828\text{ FLOP/byte} \gg 19,1
+    \begin{aligned}
+    I_{\text{prefill}} &\approx 3,57 \times L_{\text{prompt}}\\
+    &\approx 914\text{--}1828\text{ FLOP/byte} \gg 19,1
+    \end{aligned}
     \end{equation}
     Portanto, o processamento de contexto (\emph{prefill}) \'e estritamente \textbf{limitado por capacidade computacional}. Nesta fase, a aus\^encia de n\'ucleos tensores penaliza a arquitetura Pascal, restringindo o prefill a patamares entre $49$ e $237\text{ tok/s}$, enquanto GPUs com aceleradores dedicados atingem ordens de grandeza superiores.
 \end{itemize}
@@ -234,6 +250,10 @@ Para garantir rigor cient\'ifico e reprodutibilidade, estabeleceram-se tr\^es co
     \item \textbf{Su\'ite de Seguran\c{c}a Defensiva e Sondagens Sens\'iveis:} Implementou-se uma su\'ite com dez casos de teste defensivo abrangendo recusas indevidas, inje\c{c}\~ao indireta em logs, isolamento de dados e conten\c{c}\~ao de ferramentas agentivas. Complementarmente, estruturou-se uma bateria de dez sondagens geopol\'iticas e hist\'oricas balanceadas sob enquadramento neutro e cr\'itico, designada formalmente como protocolo experimental padronizado.
 \end{enumerate}
 
+\subsection{Avalia\c{c}\~ao Pareada no GSM8K}
+
+Avaliou-se o Qwen3-1.7B em Q4\_K\_M no conjunto de teste do GSM8K (vers\~ao 3 da tarefa), com lm-evaluation-harness 0.4.14.dev0 e llama.cpp build b12024. As condi\c{c}\~oes usaram zero ou cinco exemplos de demonstra\c{c}\~ao sorteados do conjunto de treino, os mesmos 20 itens de teste, semente 42, lote 1, decodifica\c{c}\~ao gulosa (temperatura 0) e limite de 384 tokens gerados. Mantiveram-se os filtros de correspond\^encia estrita e extra\c{c}\~ao flex\'ivel do harness. As respostas de API capturadas coincidiram com as 20 predi\c{c}\~oes do harness em cada condi\c{c}\~ao; as m\'etricas agregadas foram recalculadas a partir dos registros por amostra. O resumo sanitizado e as contagens de auditoria est\~ao em \\texttt{results/diagnostics/official-gsm8k-20.json}.
+
 \subsection{Tratamento Estat\'istico Inferencial e Limita\c{c}\~oes Amostrais}
 
 As compara\c{c}\~oes estat\'isticas de vaz\~ao e lat\^encia foram calculadas a partir dos microdados brutos ($N=10$ por condi\c{c}\~ao). Empregaram-se testes $t$ de Welch bicaudais para amostras independentes com vari\^ancias heterog\^eneas, aplicando-se a aproxima\c{c}\~ao de Welch-Satterthwaite para o c\'alculo dos graus de liberdade efetivos ($\nu$). Os tamanhos de efeito foram quantificados pelo $d$ de Cohen bicaudal com desvio-padr\~ao agrupado ponderado. Os intervalos de confian\c{c}a de $95\%$ foram calculados via distribui\c{c}\~ao $t$ de Student com $N-1$ graus de liberdade.
@@ -255,7 +275,7 @@ Com base na experi\^encia emp\'irica acumulada, formalizou-se a organiza\c{c}\~a
 
 A Tabela~\ref{tab:empirical_perf} sumariza as medi\c{c}\~oes emp\'iricas obtidas na bancada f\'isica para as oito configura\c{c}\~oes avaliadas.
 
-\begin{table}[htbp]
+\begin{table*}[t]
 \centering
 \scriptsize
 \setlength{\tabcolsep}{1.2pt}
@@ -277,14 +297,14 @@ A Tabela~\ref{tab:empirical_perf} sumariza as medi\c{c}\~oes emp\'iricas obtidas
 \end{tabularx}
 \vspace{0.3em}
 {\scriptsize \textit{Nota:} VRAM f\'isica obtida via NVML. Valores reportados como m\'edia $\pm$ desvio-padr\~ao amostral ($N=10$). As respectivas medianas de TTFT s\~ao: Qwen-0.5B (10,5\,ms), SmolLM2 (21,1\,ms), Gemma-MTP (73,5\,ms), Gemma-IQ4 (72,3\,ms), Gemma-Q4KM (79,1\,ms), Qwen-2B (43,5\,ms), Llama-3.2 (36,5\,ms) e Qwen-4B (115,5\,ms). O desvio-padr\~ao elevado no prefill do Qwen-0.5B ($449,3$\,tok/s) e no TTFT do Gemma-4-E2B ($1286,7$\,ms) decorre do atraso de \emph{cold-start} na itera\c{c}\~ao 1 ($1515,8$\,tok/s e $4142,2$\,ms); em regime estabilizado (itera\c{c}\~oes 2--10), o TTFT do Gemma \'e de $73,5 \pm 0,8$\,ms (p95: $2311,4$\,ms).}
-\end{table}
+\end{table*}
 
-\begin{figure}[htbp]
+\begin{figure*}[t]
 \centering
 \includegraphics[width=0.85\textwidth]{figures/throughput_distribution_boxplot.pdf}
 \caption{Distribui\c{c}\~ao emp\'irica da vaz\~ao de decodifica\c{c}\~ao autorregressiva (tokens/s) entre os modelos avaliados na GPU GTX 1050 Ti ($N=10$, $\tau=0,0$).}
 \label{fig:throughput_box}
-\end{figure}
+\end{figure*}
 
 \subsection{An\'alise do Ponto de Opera\c{c}\~ao Roofline e Demanda de Largura de Banda}
 
@@ -306,17 +326,17 @@ Com base nos tamanhos exatos dos tensores GGUF alocados na mem\'oria do disposit
 
 A Figura~\ref{fig:bandwidth_util} ilustra o gr\'afico do proxy anal\'itico de demanda de largura de banda frente ao teto f\'isico de $112,0\text{ GB/s}$ da placa.
 
-\begin{figure}[htbp]
+\begin{figure*}[t]
 \centering
 \includegraphics[width=0.85\textwidth]{figures/bandwidth_utilization.pdf}
 \caption{Largura de banda de mem\'oria sustentada durante a decodifica\c{c}\~ao autorregressiva na GPU NVIDIA GTX 1050 Ti frente ao teto te\'orico de $112,0\text{ GB/s}$.}
 \label{fig:bandwidth_util}
-\end{figure}
+\end{figure*}
 \subsection{Auditoria de Dura\c{c}\~ao Experimental, Estabilidade Temporal e Protocolo em Tr\^es N\'iveis}
 
 A Tabela~\ref{tab:campaign_duration} detalha a dura\c{c}\~ao f\'isica de execu\c{c}\~ao, a evolu\c{c}\~ao t\'ermica do processador gr\'afico e o escalonamento adaptativo de frequ\^encias de n\'ucleo durante a campanha experimental cont\'inua ($N=10$ repeti\c{c}\~oes por condi\c{c}\~ao).
 
-\begin{table}[htbp]
+\begin{table*}[t]
 \centering
 \scriptsize
 \setlength{\tabcolsep}{2.0pt}
@@ -340,11 +360,11 @@ A Tabela~\ref{tab:campaign_duration} detalha a dura\c{c}\~ao f\'isica de execu\c
 \end{tabularx}
 \vspace{0.3em}
 {\scriptsize \textit{Nota:} Dura\c{c}\~ao ativa medida via rel\'ogio monot\^onico. A telemetria cont\'inua NVML a cada $250\text{ ms}$ capturou a ascens\~ao t\'ermica ao longo dos $5,19\text{ minutos}$ de ensaio cont\'inuo, provocando redu\c{c}\~ao progressiva de clock via GPU Boost 3.0.}
-\end{table}
+\end{table*}
 
 A auditoria dos dados revela que a campanha ativa totalizou $311,58\text{ s}$ ($5,19\text{ min}$). Durante a execu\c{c}\~ao ininterrupta, a temperatura do die aumentou de $44^\circ\text{C}$ para $74^\circ\text{C}$, aproximando-se do limiar de seguran\c{c}a de $75^\circ\text{C}$. Em resposta a essa eleva\c{c}\~ao, o algoritmo GPU Boost 3.0 reduziu os clocks de $1695$ para $1607\text{ MHz}$ (queda de $5,2\%$). Esse comportamento evidencia que ensaios sequenciais cont\'inuos introduzem vi\'es t\'ermico nos modelos finais, justificando a ado\c{c}\~ao do protocolo em tr\^es n\'iveis detalhado na Tabela~\ref{tab:three_tier_protocol}.
 
-\begin{table}[htbp]
+\begin{table*}[t]
 \centering
 \scriptsize
 \setlength{\tabcolsep}{2.0pt}
@@ -359,7 +379,35 @@ A auditoria dos dados revela que a campanha ativa totalizou $311,58\text{ s}$ ($
 \textbf{N\'ivel C: Estabilidade e Estresse} & $15\text{--}30\text{ min}$ & $\ge 50$ & $2\text{ s}$ & Cont\'inua & Rastreamento de throttling t\'ermico (DVFS), equil\'ibrio t\'ermico assint\'otico e varia\c{c}\~ao de vaz\~ao sob carga prolongada. \\
 \bottomrule
 \end{tabularx}
-\end{table}
+\end{table*}
+
+\section{Resultados do GSM8K com Exemplos}
+
+A Tabela~\ref{tab:gsm8k-results} apresenta a acur\'acia de correspond\^encia exata do harness nos mesmos 20 itens de teste. A passagem de zero para cinco exemplos elevou a acur\'acia observada em 35 pontos percentuais na correspond\^encia estrita e 40 pontos na extra\c{c}\~ao flex\'ivel. A Figura~\ref{fig:gsm8k-accuracy} mostra as estimativas pontuais e os erros-padr\~ao reportados pelo harness.
+
+\begin{table*}[t]
+\centering
+\small
+\caption{Resultados oficiais do GSM8K (20 itens pareados por condi\c{c}\~ao)}
+\label{tab:gsm8k-results}
+\begin{tabularx}{\textwidth}{l X X}
+\toprule
+\textbf{Filtro} & \textbf{0-shot: acertos; acur\'acia (EP)} & \textbf{5-shot: acertos; acur\'acia (EP)} \\
+\midrule
+Correspond\^encia estrita & 0/20; 0,00 (0,0000) & 7/20; 0,35 (0,1094) \\
+Extra\c{c}\~ao flex\'ivel & 3/20; 0,15 (0,0819) & 11/20; 0,55 (0,1141) \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.78\textwidth]{figures/gsm8k_fewshot_accuracy.pdf}
+\caption{Acur\'acia de correspond\^encia exata no GSM8K por condi\c{c}\~ao de exemplos. As barras mostram erros-padr\~ao, n\~ao intervalos de confian\c{c}a.}
+\label{fig:gsm8k-accuracy}
+\end{figure*}
+
+As transi\c{c}\~oes pareadas s\~ao descritivas: na correspond\^encia estrita houve 7 melhorias, nenhuma piora e 13 empates; na extra\c{c}\~ao flex\'ivel, 9 melhorias, 1 piora e 10 empates. Testes exatos bilaterais de McNemar/binomial sobre os pares discordantes resultam em $p=0,0156$ e $p=0,0215$, sem ajuste. Esses valores explorat\'orios n\~ao s\~ao tratados como evid\^encia confirmat\'oria de signific\^ancia: foram avaliados somente 20 itens, dois filtros relacionados e n\~ao houve plano confirmat\'orio pr\'e-registrado. O filtro estrito tamb\'em depende do formato da resposta: 20/20 sa\'idas 0-shot e 6/20 5-shot n\~ao continham o marcador final esperado, enquanto a extra\c{c}\~ao flex\'ivel obteve resultado v\'alido nas 40 sa\'idas por condi\c{c}\~ao. Portanto, a diferen\c{c}a entre os filtros reflete parcialmente formato/construto, n\~ao uma medida independente de compet\^encia matem\'atica.
 
 \section{An\'alise Estat\'istica e Estudo de Abla\c{c}\~ao Controlada de MTP}
 
@@ -374,18 +422,21 @@ Para decompor rigorosamente os fatores determinantes do desempenho no Gemma-4-E2
 
 A Figura~\ref{fig:mtp_ablation} apresenta as m\'edias amostrais com intervalos de confian\c{c}a de $95\%$ de Student e a decomposi\c{c}\~ao dos efeitos associados.
 
-\begin{figure}[htbp]
+\begin{figure*}[t]
 \centering
 \includegraphics[width=0.88\textwidth]{figures/mtp_ablation_ci.pdf}
 \caption{Estudo de abla\c{c}\~ao controlada de MTP e quantiza\c{c}\~ao na vaz\~ao de decodifica\c{c}\~ao do Gemma-4-E2B na GPU GTX 1050 Ti ($N=10$, $\tau=0,0$). As barras representam m\'edias amostrais com intervalos de confian\c{c}a de $95\%$ de Student.}
 \label{fig:mtp_ablation}
-\end{figure}
+\end{figure*}
 
 \subsection{Compara\c{c}\~ao do Mecanismo Especulativo sob Quantiza\c{c}\~ao Fixada em IQ4\_XS ($C_3$ vs $C_2$)}
 
 Comparando as condi\c{c}\~oes $C_3$ e $C_2$, o formato de quantiza\c{c}\~ao \'e mantido id\^entico em IQ4\_XS. O teste $t$ de Welch fornece:
 \begin{equation}
-t_{\text{MTP}} = \frac{43,35 - 34,51}{\sqrt{\frac{0,57^2}{10} + \frac{0,29^2}{10}}} = \frac{8,84}{0,2022} \approx 43,72, \quad \nu = 13,43
+\begin{aligned}
+t_{\text{MTP}} &= \frac{43,35 - 34,51}{\sqrt{\frac{0,57^2}{10} + \frac{0,29^2}{10}}}\\
+&= \frac{8,84}{0,2022} \approx 43,72, \quad \nu = 13,43
+\end{aligned}
 \end{equation}
 com $p = 7,12 \times 10^{-16}$ e $d = 19,55$. A acelera\c{c}\~ao observada associada \`a introdu\c{c}\~ao das cabe\c{c}as MTP sob quantiza\c{c}\~ao mantida constante \'e de \textbf{+25,6\%} ($8,84$\,tok/s). No que concerne \`a mem\'oria, a sobretaxa f\'isica observada para a infraestrutura de MTP \'e de $+236,0\text{ MiB}$ de VRAM ($2036,7$ vs $1800,7\text{ MiB}$), refletindo a pegada est\'atica e din\^amica das cabe\c{c}as de rascunho em Q8\_0, cache KV especulativo e buffers de verifica\c{c}\~ao.
 
@@ -393,7 +444,10 @@ com $p = 7,12 \times 10^{-16}$ e $d = 19,55$. A acelera\c{c}\~ao observada assoc
 
 Comparando as condi\c{c}\~oes $C_2$ e $C_1$, o modo de gera\c{c}\~ao autorregressiva \'e mantido constante sem especula\c{c}\~ao. O teste $t$ de Welch resulta em:
 \begin{equation}
-t_{\text{Quant}} = \frac{34,51 - 26,92}{\sqrt{\frac{0,29^2}{10} + \frac{0,23^2}{10}}} = \frac{7,59}{0,1160} \approx 64,26, \quad \nu = 17,17
+\begin{aligned}
+t_{\text{Quant}} &= \frac{34,51 - 26,92}{\sqrt{\frac{0,29^2}{10} + \frac{0,23^2}{10}}}\\
+&= \frac{7,59}{0,1160} \approx 64,26, \quad \nu = 17,17
+\end{aligned}
 \end{equation}
 com $p = 6,67 \times 10^{-22}$ e $d = 28,74$ quando calculado diretamente a partir dos microdados amostrais brutos ($N=10$). Quando recalculado com base exclusivamente nas estat\'isticas sumarizadas arredondadas a duas casas decimais ($34,51$, $26,92$, $0,29$, $0,23$), obt\'em-se $SE = \sqrt{0,29^2/10 + 0,23^2/10} = \sqrt{0,0137} \approx 0,1170\text{ tok/s}$, resultando em $t = 64,85$ ($d = 28,98$). Esclarece-se que o valor $t = 65,41$ anteriormente citado na literatura preliminar decorreu de uma etapa transit\'oria de c\'alculo com vari\^ancias residuais n\~ao truncadas ($s_2 = 0,286$). Ambas as formula\c{c}\~oes reconciliadas confirmam de forma inequ\'ivoca que a compress\~ao dos tensores de pesos via matriz de import\^ancia IQ4\_XS associou-se a um ganho estatisticamente s\'olido de \textbf{+28,2\%} ($7,59$\,tok/s), al\'em de economizar $196,0\text{ MiB}$ de VRAM ($1996,7$ vs $1800,7\text{ MiB}$).
 
@@ -401,7 +455,10 @@ com $p = 6,67 \times 10^{-22}$ e $d = 28,74$ quando calculado diretamente a part
 
 A compara\c{c}\~ao entre a configura\c{c}\~ao com MTP em IQ4\_XS ($C_3$) e a linha de base Q4\_K\_M ($C_1$) reflete o ganho acumulado entre os dois pontos operacionais:
 \begin{equation}
-t_{\text{Composto}} = \frac{43,35 - 26,92}{\sqrt{\frac{0,57^2}{10} + \frac{0,23^2}{10}}} = \frac{16,43}{0,1944} \approx 84,50, \quad \nu = 11,94
+\begin{aligned}
+t_{\text{Composto}} &= \frac{43,35 - 26,92}{\sqrt{\frac{0,57^2}{10} + \frac{0,23^2}{10}}}\\
+&= \frac{16,43}{0,1944} \approx 84,50, \quad \nu = 11,94
+\end{aligned}
 \end{equation}
 com $p = 5,88 \times 10^{-18}$ e $d = 37,79$. O ganho composto totaliza \textbf{+61,0\%} ($16,43$\,tok/s). Do ponto de vista de mem\'oria, observa-se uma diferen\c{c}a l\'iquida de apenas $+40,0\text{ MiB}$ entre $C_3$ e $C_1$ ($2036,7$ vs $1996,7\text{ MiB}$); essa modesta diferen\c{c}a l\'iquida resulta do fato de que a economia de $196,0\text{ MiB}$ propiciada pela quantiza\c{c}\~ao IQ4\_XS absorveu 83\% do custo f\'isico de mem\'oria da estrutura de MTP ($+236,0\text{ MiB}$), fornecendo suporte emp\'irico preliminar \`a hip\'otese $H_1$ sob distin\c{c}\~ao expl\'icita entre a aloca\c{c}\~ao do mecanismo e a varia\c{c}\~ao l\'iquida entre configura\c{c}\~oes.
 
@@ -411,7 +468,7 @@ Para compreender por que diferentes modelos apresentam comportamentos de vaz\~ao
 
 Observa-se que o artefato GGUF do modelo Gemma-4-E2B registra 2,30B par\^ametros em seus metadados de cabe\c{c}alho, contrastando com os 2,00B nominais da arquitetura base. Essa diferen\c{c}a decorre da inclus\~ao das camadas e cabe\c{c}as auxiliares de predi\c{c}\~ao especulativa MTP integradas diretamente ao pr\'oprio arquivo de pesos (quantizadas em Q8\_0), o que adiciona aproximadamente $40\text{ MiB}$ ao tamanho f\'isico em disco ($1836,5$ vs $1796,5\text{ MiB}$) e imp\~oe uma sobretaxa din\^amica de $+236,0\text{ MiB}$ de mem\'oria VRAM durante a infer\^encia. A Tabela~\ref{tab:architectural_taxonomy} consolida a taxonomia arquitetural detalhada dos modelos avaliados.
 
-\begin{table}[htbp]
+\begin{table*}[t]
 \centering
 \scriptsize
 \setlength{\tabcolsep}{1.2pt}
@@ -431,7 +488,7 @@ Observa-se que o artefato GGUF do modelo Gemma-4-E2B registra 2,30B par\^ametros
 \end{tabularx}
 \vspace{0.3em}
 {\scriptsize \textit{Nota:} Coluna Cabe\c{c}as expressa $n_{\text{q}} / n_{\text{kv}}$. KV/tok calculado em FP16 ($2\text{ bytes}$). Todos os modelos operam sob arquitetura Transformer decoder-only com normaliza\c{c}\~ao RMSNorm e ativa\c{c}\~ao SwiGLU (exceto Gemma que emprega GeGLU com logit soft-capping).}
-\end{table}
+\end{table*}
 
 \subsection{An\'alise de Fatores de Confus\~ao e Comparabilidade Inter-Modelos}
 
@@ -447,7 +504,7 @@ A literatura t\'ecnica frequentemente incorre em conclus\~oes simplistas do tipo
 
 A Tabela~\ref{tab:candidate_models} apresenta a modelagem anal\'itica de viabilidade f\'isica de implanta\c{c}\~ao para modelos candidatos da literatura sob o teto de $4096\text{ MiB}$ da GPU GTX 1050 Ti.
 
-\begin{table}[htbp]
+\begin{table*}[t]
 \centering
 \scriptsize
 \setlength{\tabcolsep}{1.5pt}
@@ -468,13 +525,13 @@ A Tabela~\ref{tab:candidate_models} apresenta a modelagem anal\'itica de viabili
 \end{tabularx}
 \vspace{0.3em}
 {\scriptsize \textit{Nota:} Estimativas baseadas na contagem de camadas e cabe\c{c}as de aten\c{c}\~ao acrescidas de $256\text{ MiB}$ de aloca\c{c}\~ao de runtime. O modelo Gemma-3-4B excede a capacidade f\'isica de 4096 MiB sob cache FP16 ($4358\text{ MiB}$), exigindo quantiza\c{c}\~ao Q4\_0 de cache KV ($3494\text{ MiB}$, 85,3\%) para evitar encerramento for\c{c}ado por out-of-memory.}
-\end{table}
+\end{table*}
 
 \section{Avalia\c{c}\~ao Explorat\'oria de Seguran\c{c}a Defensiva em Turno \'Unico}
 
 A Tabela~\ref{tab:safety_bias_lang} sumariza o comportamento de seguran\c{c}a defensiva obtido na bateria de dez casos de teste emp\'iricos.
 
-\begin{table}[htbp]
+\begin{table*}[t]
 \centering
 \scriptsize
 \setlength{\tabcolsep}{1.2pt}
@@ -495,14 +552,14 @@ A Tabela~\ref{tab:safety_bias_lang} sumariza o comportamento de seguran\c{c}a de
 \end{tabularx}
 \vspace{0.3em}
 {\scriptsize \textit{Nota:} Valores reportados como fra\c{c}\~ao $k/n$, porcentagem e intervalo de confian\c{c}a binomial exato de 95\% de Clopper-Pearson entre colchetes. A taxa de falso positivo de 0,0\% ($0/4$) em tarefas benignas n\~ao prova aus\^encia universal de recusa indevida, possuindo limite superior unilateral exato de 52,7\% (R\"ottger et al., 2024). Todas as chamadas de ferramentas propostas com argumentos maliciosos foram 100\% bloqueadas pelo harness (\texttt{BLOCKED\_BY\_HARNESS}), resultando em 0,0\% de execu\c{c}\~ao no sistema operacional hospedeiro.}
-\end{table}
+\end{table*}
 
-\begin{figure}[htbp]
+\begin{figure*}[t]
 \centering
 \includegraphics[width=0.88\textwidth]{figures/adversarial_robustness.pdf}
 \caption{Taxas de conformidade na avalia\c{c}\~ao explorat\'oria de seguran\c{c}a defensiva em turno \'unico ($N=10$, $\tau=0,0$) na GPU GTX 1050 Ti.}
 \label{fig:adv_robustness}
-\end{figure}
+\end{figure*}
 
 \subsection{Aus\^encia de Recusa Indevida ($\text{FPR} = 0,0\%$)}
 
@@ -522,7 +579,7 @@ Na avalia\c{c}\~ao de invoca\c{c}\~ao de ferramentas externas simuladas (Model C
 
 A avalia\c{c}\~ao de tokeniza\c{c}\~ao translingual foi executada utilizando o corpus paralelo tril\'ingue padronizado composto por 12 itens semanticamente equivalentes distribu\'idos em seis dom\'inios funcionais. A Tabela~\ref{tab:multilingual_tokenization} apresenta os resultados emp\'iricos mensurados para os tokenizadores das quatro fam\'ilias representativas avaliadas.
 
-\begin{table}[htbp]
+\begin{table*}[t]
 \centering
 \scriptsize
 \setlength{\tabcolsep}{1.5pt}
@@ -540,7 +597,7 @@ A avalia\c{c}\~ao de tokeniza\c{c}\~ao translingual foi executada utilizando o c
 \end{tabularx}
 \vspace{0.3em}
 {\scriptsize \textit{Nota:} Valores m\'edios calculados sobre os 12 pares de textos paralelos. Fertilidade expressa em tokens/palavra para ingl\^es e portugu\^es, e tokens/caractere para chin\^es. A \'ultima coluna expressa a capacidade relativa do or\c{c}amento de contexto de 4096 tokens em portugu\^es e chin\^es em rela\c{c}\~ao ao ingl\^es ($1,0 / \text{Raz\~ao}$).}
-\end{table}
+\end{table*}
 
 \textbf{Decomposi\c{c}\~ao das Cinco Dimens\~oes de Custo Computacional:}
 \begin{enumerate}[leftmargin=1.5em,itemsep=0.2em]
@@ -561,7 +618,7 @@ Com o objetivo de investigar empiricamente as diferen\c{c}as de alinhamento e as
 
 A Tabela~\ref{tab:model_provenance} registra a proveni\^encia exata, tamanho f\'isico em disco e os hashes criptogr\'aficos SHA-256 de todos os artefatos de pesos GGUF utilizados nos ensaios f\'isicos de bancada.
 
-\begin{table}[htbp]
+\begin{table*}[t]
 \centering
 \footnotesize
 \setlength{\tabcolsep}{1.5pt}
@@ -581,7 +638,7 @@ A Tabela~\ref{tab:model_provenance} registra a proveni\^encia exata, tamanho f\'
 \texttt{qwen3.5:4B} & Q4\_K\_M & 2940,5 & 16384 & {\scriptsize\texttt{\seqsplit{9f38e6e87f8b9e67ad10c95240c11bebb67aa70fc285a73e6a928e18ef2256df}}} \\
 \bottomrule
 \end{tabularx}
-\end{table}
+\end{table*}
 
 \section{Amea\c{c}as \`a Validade e Limita\c{c}\~oes}
 
@@ -597,6 +654,10 @@ Os ensaios foram realizados especificamente na arquitetura Pascal (GTX 1050 Ti, 
 
 A avalia\c{c}\~ao de seguran\c{c}a defensiva utilizou can\'arios e rubricas objetivas em dez cen\'arios sint\'eticos. Embora forne\c{c}a alta reprodutibilidade, n\~ao esgota a diversidade de ataques adversariais adaptativos com m\'ultiplas rodadas de jailbreak observados em aplica\c{c}\~oes em produ\c{c}\~ao.
 
+\subsection{Limita\c{c}\~oes da Avalia\c{c}\~ao GSM8K}
+
+A compara\c{c}\~ao no GSM8K cobre somente 20 itens de teste, um modelo quantizado e uma configura\c{c}\~ao de decodifica\c{c}\~ao; portanto, as estimativas t\^em incerteza amostral substancial e n\~ao estabelecem desempenho geral no conjunto completo ou em outros modelos. Os testes pareados usam os mesmos itens, mas os dois filtros s\~ao relacionados e os valores de $p$ sem ajuste s\~ao explorat\'orios. Falhas no crit\'erio estrito tamb\'em incluem formato inadequado (20/20 em 0-shot; 6/20 em 5-shot), enquanto a extra\c{c}\~ao flex\'ivel \`e permissiva; nenhuma m\'etrica isoladamente mede racioc\'inio matem\'atico. Duas sa\'idas atingiram o limite de gera\c{c}\~ao (0-shot: 2; 5-shot: 1), podendo truncar o racioc\'inio. A avalia\c{c}\~ao sustenta somente uma compara\c{c}\~ao dentro desta amostra; s\~ao necess\'arias avalia\c{c}\~oes maiores, pr\'e-registradas e replica\c{c}\~oes independentes.
+
 \section{Conclus\~oes e Trabalhos Futuros}
 
 Este trabalho realizou uma investiga\c{c}\~ao experimental, matem\'atica e de sistemas sobre a viabilidade, efici\^encia arquitetural e limites operacionais de Modelos de Linguagem Pequenos (SLMs) na GPU NVIDIA GeForce GTX 1050 Ti de 4 GiB.
@@ -608,6 +669,7 @@ Os principais achados sustentados pelas evid\^encias s\~ao:
     \item \textbf{Satura\c{c}\~ao do Modelo Roofline:} Em uma GPU Pascal sem Tensor Cores e com FP16 penalizado a $1:64$, a decodifica\c{c}\~ao opera estritamente limitada pela largura de banda de mem\'oria ($I_{\text{decode}} \approx 3,6 \ll I^* = 19,1$), atingindo at\'e $67,2\%$ de satura\c{c}\~ao do barramento DRAM sob decodifica\c{c}\~ao especulativa.
     \item \textbf{Desigualdade e Sobretaxa de Tokeniza\c{c}\~ao Multil\'ingue:} A an\'alise em corpus paralelo tril\'ingue revelou que tokenizadores com vocabul\'arios compactos (SmolLM2, 49k) penalizam idiomas al\'em do ingl\^es com raz\~oes de expans\~ao de $2,4\times$ em portugu\^es e $4,6\times$ em mandarim, reduzindo a capacidade \'util da janela de contexto para $22\%$. Modelos com vocabul\'arios expandidos ($\ge 150\text{k}$), como Qwen2.5 e Gemma-2, mant\^em alta efici\^encia de representa\c{c}\~ao.
     \item \textbf{Limites de Alinhamento e Seguran\c{c}a em Camadas:} Embora os modelos n\~ao tenham apresentado recusas indevidas em comandos leg\'itimos ($\text{FPR}=0,0\%$), a suscetibilidade a inje\c{c}\~oes indiretas e argumentos manipulados de ferramentas reafirma que a seguran\c{c}a em ambientes agentivos deve ser garantida por barreiras de conten\c{c}\~ao determin\'isticas na camada de aplica\c{c}\~ao.
+    \item \textbf{Observa\c{c}\~ao GSM8K com Exemplos:} Nos mesmos 20 itens, a acur\'acia 5-shot superou a 0-shot em 35 pontos percentuais (estrita) e 40 pontos (flex\'ivel). Trata-se de resultado descritivo para este modelo/configura\c{c}\~ao e pequena amostra, n\~ao de uma afirma\c{c}\~ao geral ou confirmat\'oria.
 \end{enumerate}
 
 Trabalhos futuros contemplam a execu\c{c}\~ao de infer\^encia f\'isica da su\'ite de temas sens\'iveis, a quantiza\c{c}\~ao do cache KV em formatos microsc\'opicos (Q4\_0) para acomoda\c{c}\~ao de modelos 4B com contextos superiores a 8k tokens, e a medi\c{c}\~ao direta de pot\^encia em tomada AC com analisador de energia de bancada.
