@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import threading
 import time
 import urllib.request
 from pathlib import Path
@@ -124,6 +125,39 @@ def validate(instance: Any, schema: dict[str, Any], path: str = "$") -> list[str
     return errors
 
 
+def _vram_used_mib() -> float | None:
+    try:
+        import torch
+        free, total = torch.cuda.mem_get_info()
+        return round((total - free) / 1024**2, 1)
+    except Exception:
+        return None
+
+
+class _VramSampler(threading.Thread):
+    """1 Hz GPU-memory sampler; no-op when no accelerator is visible."""
+
+    def __init__(self, path: Path):
+        super().__init__(daemon=True)
+        self.path = Path(path)
+        self.stop_event = threading.Event()
+
+    def run(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self.path.open("w", encoding="utf-8") as handle:
+            handle.write("utc,vram_used_mib\n")
+            while not self.stop_event.is_set():
+                value = _vram_used_mib()
+                if value is not None:
+                    handle.write(f"{time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())},{value}\n")
+                    handle.flush()
+                self.stop_event.wait(1.0)
+
+    def stop(self) -> None:
+        self.stop_event.set()
+        self.join(timeout=5)
+
+
 def _post(base_url: str, model: str, payload: dict[str, Any], timeout: int) -> dict[str, Any]:
     req = urllib.request.Request(
         f"{base_url.rstrip('/')}/v1/chat/completions",
@@ -147,6 +181,7 @@ def run_suite(
     seed: int = 42,
     timeout: int = 600,
     clients: int = 2,
+    vram_csv: str | None = None,
 ) -> dict[str, Any]:
     if suite == "concurrency":
         cases = [{"round": i} for i in range(max(1, limit))]
@@ -154,6 +189,9 @@ def run_suite(
     else:
         cases = CASES[suite][:limit]
     random.Random(seed).shuffle(cases)
+    sampler = _VramSampler(Path(vram_csv)) if vram_csv else None
+    if sampler:
+        sampler.start()
     details: list[dict[str, Any]] = []
     latencies_ms: list[float] = []
     round_ms: list[float] = []
@@ -239,6 +277,8 @@ def run_suite(
                 if calls[0].get("function", {}).get("name") != case["tool"]:
                     errors.append("wrong tool name")
             details.append({"prompt": case["prompt"], "valid": not errors, "errors": errors})
+    if sampler:
+        sampler.stop()
     valid = sum(1 for d in details if d["valid"])
     rate = valid / len(details) if details else 0.0
     latency = summarize_ms(latencies_ms)
@@ -279,10 +319,11 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--limit", type=int, default=10)
     run.add_argument("--seed", type=int, default=42)
     run.add_argument("--clients", type=int, default=2)
+    run.add_argument("--vram-csv", default=None)
     run.add_argument("--output", required=True)
     args = parser.parse_args(argv)
     payload = run_suite(args.base_url, args.model, args.suite, limit=args.limit,
-                        seed=args.seed, clients=args.clients)
+                        seed=args.seed, clients=args.clients, vram_csv=args.vram_csv)
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=2), encoding="utf-8")

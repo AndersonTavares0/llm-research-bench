@@ -67,3 +67,26 @@ run.
   is retained for the choice list and a test pins it.
 - One repeat lease was refused during the drain window (expected) and is recorded
   as a missing cell rather than retried indefinitely.
+
+## Repeats and VRAM (follow-up run)
+
+Three key cells were repeated with 1 Hz GPU-memory sampling inside the lease
+(`capability --vram-csv`), staying under the 2-minute interruption cap.
+
+| Config | Runs (req/s) | Mean ± SD | p50 runs | Peak VRAM |
+|---|---|---:|---|---:|
+| 1 slot, 2 clients | 0.611, 0.610 | 0.6105 ± 0.0007 | 2,486 / 2,515 ms | 1,340.1 MiB |
+| 2 slots, 2 clients | 0.736, 0.737 | 0.7365 ± 0.0007 | 2,703 / 2,701 ms | 1,458.1 MiB |
+| 4 slots, 2 clients | 0.737, 0.732, 0.733 | 0.7340 ± 0.0027 | 2,703 / 2,740 / 2,741 ms | 1,696.1 MiB |
+
+- Between-run spread is **0.1–0.4%** on aggregate throughput, so the 2-slot
+  saturation (+20.6% over 1 slot) is far outside the observed noise.
+- Peak VRAM rises with total context exactly as the q8_0 KV slope predicts:
+  1,340 → 1,458 MiB for +2048 tokens (≈59 KiB/token) and 1,458 → 1,696 MiB for
+  another +4096 tokens (≈59.5 KiB/token), matching H1's 60.3 KiB/token.
+- Three further repeat leases were refused during the drain window
+  (`reservation refused`) and are recorded as missing cells rather than retried
+  beyond the interruption budget.
+
+New artifacts: `results/campaigns/gpu-lab-conc-equiv-{p1c2-r2,p2c2-r2,p4c2-r2}/`
+including each cell's `vram.csv`.

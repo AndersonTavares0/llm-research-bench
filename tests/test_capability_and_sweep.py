@@ -327,3 +327,11 @@ def test_concurrency_is_an_offered_suite():
     assert "concurrency" in capability.CASES
     out = capability.main.__doc__  # noqa: F841 - keeps the module import warm
     assert set(capability.CASES) >= {"structured_output", "tool_call", "concurrency"}
+
+
+def test_capability_cmd_passes_vram_csv(tmp_path):
+    cmd = campaign.build_capability_cmd(
+        campaign.TaskGroup("c", "capability", ["structured_output"]), "m", 8090,
+        {"limit": 3, "vram_csv": "/tmp/v.csv"}, tmp_path / "r.json",
+    )
+    assert cmd[cmd.index("--vram-csv") + 1] == "/tmp/v.csv"

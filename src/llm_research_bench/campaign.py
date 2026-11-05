@@ -557,6 +557,7 @@ def build_capability_cmd(
         str(evaluation.get("seed", 42)),
         "--clients",
         str(evaluation.get("clients", 2)),
+        *(["--vram-csv", str(evaluation["vram_csv"])] if evaluation.get("vram_csv") else []),
         "--output",
         str(output_path),
     ]
