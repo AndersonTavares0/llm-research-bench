@@ -1,0 +1,529 @@
+{
+  "generated_at_utc": "2026-11-05T13:22:01Z",
+  "campaigns": [
+    "gpu-lab-qwen3-1.7b-v2",
+    "local-rtx3060ti-qwen3-1.7b-v1",
+    "smoke-qwen3-1.7b-v1"
+  ],
+  "note": "Zeros-CI colunas usam Wilson 95%. O --limit do lm-eval seleciona as primeiras N amostras (n\u00e3o uma amostra aleat\u00f3ria); portanto estes n\u00fameros descrevem esta campanha e n\u00e3o autorizam ranking entre modelos.",
+  "quality": [
+    {
+      "campaign": "gpu-lab-qwen3-1.7b-v2",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "gsm8k",
+      "metric": "exact_match,strict-match",
+      "value": 0.0,
+      "n": 100,
+      "ci95": [
+        0.0,
+        0.037
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "gpu-lab-qwen3-1.7b-v2",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "gsm8k",
+      "metric": "exact_match,flexible-extract",
+      "value": 0.46,
+      "n": 100,
+      "ci95": [
+        0.3656,
+        0.5574
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "gpu-lab-qwen3-1.7b-v2",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "ifeval",
+      "metric": "inst_level_strict_acc,none",
+      "value": 0.7546,
+      "n": 100,
+      "ci95": [
+        0.6619,
+        0.8285
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "gpu-lab-qwen3-1.7b-v2",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "ifeval",
+      "metric": "prompt_level_strict_acc,none",
+      "value": 0.68,
+      "n": 100,
+      "ci95": [
+        0.5834,
+        0.7633
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "gpu-lab-qwen3-1.7b-v2",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "arc_challenge",
+      "metric": "acc,none",
+      "value": 0.47,
+      "n": 100,
+      "ci95": [
+        0.3751,
+        0.5671
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "gpu-lab-qwen3-1.7b-v2",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "arc_challenge",
+      "metric": "acc_norm,none",
+      "value": 0.47,
+      "n": 100,
+      "ci95": [
+        0.3751,
+        0.5671
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "gpu-lab-qwen3-1.7b-v2",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "hellaswag",
+      "metric": "acc,none",
+      "value": 0.44,
+      "n": 100,
+      "ci95": [
+        0.3467,
+        0.5377
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "gpu-lab-qwen3-1.7b-v2",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "hellaswag",
+      "metric": "acc_norm,none",
+      "value": 0.47,
+      "n": 100,
+      "ci95": [
+        0.3751,
+        0.5671
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "gsm8k",
+      "metric": "exact_match,strict-match",
+      "value": 0.0,
+      "n": 100,
+      "ci95": [
+        0.0,
+        0.037
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "gsm8k",
+      "metric": "exact_match,flexible-extract",
+      "value": 0.41,
+      "n": 100,
+      "ci95": [
+        0.3187,
+        0.508
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "ifeval",
+      "metric": "inst_level_strict_acc,none",
+      "value": 0.7546,
+      "n": 100,
+      "ci95": [
+        0.6619,
+        0.8285
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "ifeval",
+      "metric": "prompt_level_strict_acc,none",
+      "value": 0.66,
+      "n": 100,
+      "ci95": [
+        0.5628,
+        0.7454
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "arc_challenge",
+      "metric": "acc,none",
+      "value": 0.46,
+      "n": 100,
+      "ci95": [
+        0.3656,
+        0.5574
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "arc_challenge",
+      "metric": "acc_norm,none",
+      "value": 0.48,
+      "n": 100,
+      "ci95": [
+        0.3846,
+        0.5768
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "hellaswag",
+      "metric": "acc,none",
+      "value": 0.44,
+      "n": 100,
+      "ci95": [
+        0.3467,
+        0.5377
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "hellaswag",
+      "metric": "acc_norm,none",
+      "value": 0.48,
+      "n": 100,
+      "ci95": [
+        0.3846,
+        0.5768
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q8",
+      "task": "arc_challenge",
+      "metric": "acc,none",
+      "value": 0.5,
+      "n": 100,
+      "ci95": [
+        0.4038,
+        0.5962
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q8",
+      "task": "arc_challenge",
+      "metric": "acc_norm,none",
+      "value": 0.44,
+      "n": 100,
+      "ci95": [
+        0.3467,
+        0.5377
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q8",
+      "task": "hellaswag",
+      "metric": "acc,none",
+      "value": 0.43,
+      "n": 100,
+      "ci95": [
+        0.3373,
+        0.5278
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q8",
+      "task": "hellaswag",
+      "metric": "acc_norm,none",
+      "value": 0.47,
+      "n": 100,
+      "ci95": [
+        0.3751,
+        0.5671
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "smoke-qwen3-1.7b-v1",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "gsm8k",
+      "metric": "exact_match,strict-match",
+      "value": 0.0,
+      "n": 20,
+      "ci95": [
+        0.0,
+        0.1611
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "smoke-qwen3-1.7b-v1",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "gsm8k",
+      "metric": "exact_match,flexible-extract",
+      "value": 0.0,
+      "n": 20,
+      "ci95": [
+        0.0,
+        0.1611
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "smoke-qwen3-1.7b-v1",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "ifeval",
+      "metric": "inst_level_strict_acc,none",
+      "value": 0.6667,
+      "n": 20,
+      "ci95": [
+        0.4487,
+        0.8309
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "smoke-qwen3-1.7b-v1",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "ifeval",
+      "metric": "prompt_level_strict_acc,none",
+      "value": 0.6,
+      "n": 20,
+      "ci95": [
+        0.3866,
+        0.7812
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "smoke-qwen3-1.7b-v1",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "arc_challenge",
+      "metric": "acc,none",
+      "value": 0.35,
+      "n": 20,
+      "ci95": [
+        0.1812,
+        0.5671
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "smoke-qwen3-1.7b-v1",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "arc_challenge",
+      "metric": "acc_norm,none",
+      "value": 0.4,
+      "n": 20,
+      "ci95": [
+        0.2188,
+        0.6134
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "smoke-qwen3-1.7b-v1",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "hellaswag",
+      "metric": "acc,none",
+      "value": 0.4,
+      "n": 20,
+      "ci95": [
+        0.2188,
+        0.6134
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "smoke-qwen3-1.7b-v1",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "hellaswag",
+      "metric": "acc_norm,none",
+      "value": 0.4,
+      "n": 20,
+      "ci95": [
+        0.2188,
+        0.6134
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "smoke-qwen3-1.7b-v1",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "belebele_por_Latn",
+      "metric": "acc,none",
+      "value": 0.75,
+      "n": 20,
+      "ci95": [
+        0.5313,
+        0.8881
+      ],
+      "status": "measured"
+    },
+    {
+      "campaign": "smoke-qwen3-1.7b-v1",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "task": "belebele_por_Latn",
+      "metric": "acc_norm,none",
+      "value": 0.75,
+      "n": 20,
+      "ci95": [
+        0.5313,
+        0.8881
+      ],
+      "status": "measured"
+    }
+  ],
+  "performance": [
+    {
+      "campaign": "gpu-lab-qwen3-1.7b-v2",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "n_prompt": 512,
+      "n_gen": 0,
+      "avg_ts": 848.835302,
+      "stddev_ts": 1.892035,
+      "build": "ddf48f85c",
+      "gpu": "NVIDIA GeForce GTX 1050 Ti",
+      "backends": "CUDA"
+    },
+    {
+      "campaign": "gpu-lab-qwen3-1.7b-v2",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "n_prompt": 0,
+      "n_gen": 128,
+      "avg_ts": 48.030267,
+      "stddev_ts": 0.014739,
+      "build": "ddf48f85c",
+      "gpu": "NVIDIA GeForce GTX 1050 Ti",
+      "backends": "CUDA"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q4km",
+      "n_prompt": 512,
+      "n_gen": 0,
+      "avg_ts": 10135.441622,
+      "stddev_ts": 164.637283,
+      "build": "ddf48f85c",
+      "gpu": "NVIDIA GeForce RTX 3060 Ti",
+      "backends": "CUDA"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q4km",
+      "n_prompt": 0,
+      "n_gen": 128,
+      "avg_ts": 255.798184,
+      "stddev_ts": 0.523133,
+      "build": "ddf48f85c",
+      "gpu": "NVIDIA GeForce RTX 3060 Ti",
+      "backends": "CUDA"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q8",
+      "n_prompt": 512,
+      "n_gen": 0,
+      "avg_ts": 10925.781711,
+      "stddev_ts": 155.77397,
+      "build": "ddf48f85c",
+      "gpu": "NVIDIA GeForce RTX 3060 Ti",
+      "backends": "CUDA"
+    },
+    {
+      "campaign": "local-rtx3060ti-qwen3-1.7b-v1",
+      "hardware_profile": "local-rtx3060ti-8gib",
+      "model": "qwen3-1.7b-q8",
+      "n_prompt": 0,
+      "n_gen": 128,
+      "avg_ts": 179.98985,
+      "stddev_ts": 0.162386,
+      "build": "ddf48f85c",
+      "gpu": "NVIDIA GeForce RTX 3060 Ti",
+      "backends": "CUDA"
+    },
+    {
+      "campaign": "smoke-qwen3-1.7b-v1",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "n_prompt": 512,
+      "n_gen": 0,
+      "avg_ts": 850.304976,
+      "stddev_ts": 1.123446,
+      "build": "ddf48f85c",
+      "gpu": "NVIDIA GeForce GTX 1050 Ti",
+      "backends": "CUDA"
+    },
+    {
+      "campaign": "smoke-qwen3-1.7b-v1",
+      "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+      "model": "qwen3-1.7b-q4km",
+      "n_prompt": 0,
+      "n_gen": 128,
+      "avg_ts": 48.154656,
+      "stddev_ts": 0.022726,
+      "build": "ddf48f85c",
+      "gpu": "NVIDIA GeForce GTX 1050 Ti",
+      "backends": "CUDA"
+    }
+  ]
+}
