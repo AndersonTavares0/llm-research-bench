@@ -297,3 +297,33 @@ def test_dashed_suffix_without_equals_is_rejected_by_argparse(tmp_path):
             "--grid", "ctx=8192", "--campaign-suffix", "-r2", "--out", str(tmp_path),
         ])
     assert exc.value.code == 2
+
+
+def test_concurrency_clients_parameter_scales_round_work(monkeypatch):
+    import time as _time
+    seen = []
+
+    def slow_post(*a, **k):
+        _time.sleep(0.01)
+        return {"choices": [{"message": {"content": "ok"}}]}
+
+    monkeypatch.setattr(capability, "_post", slow_post)
+    out = capability.run_suite("http://x", "m", "concurrency", limit=2, clients=3)
+    m = out["results"]["concurrency"]
+    assert m["sample_len"] == 2
+    assert len(out["cases"][0]["wall_ms"]) == 3
+    assert m["aggregate_rps"] > 0
+
+
+def test_capability_cmd_passes_clients(tmp_path):
+    cmd = campaign.build_capability_cmd(
+        campaign.TaskGroup("c", "capability", ["concurrency"]), "m", 8090,
+        {"limit": 6, "seed": 42, "clients": 4}, tmp_path / "r.json",
+    )
+    assert cmd[cmd.index("--clients") + 1] == "4"
+
+
+def test_concurrency_is_an_offered_suite():
+    assert "concurrency" in capability.CASES
+    out = capability.main.__doc__  # noqa: F841 - keeps the module import warm
+    assert set(capability.CASES) >= {"structured_output", "tool_call", "concurrency"}

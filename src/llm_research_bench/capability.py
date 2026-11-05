@@ -59,6 +59,9 @@ TOOLS = [
 ]
 
 CASES: dict[str, list[dict[str, Any]]] = {
+    # Rounds are generated from --limit/--clients; the key only has to exist so
+    # argparse can offer the suite name.
+    "concurrency": [],
     "structured_output": [
         {"prompt": "Extract: Ada Lovelace, 36, London.", "schema": "person"},
         {"prompt": "Extract: Grace Hopper, 85, New York.", "schema": "person"},
@@ -71,7 +74,6 @@ CASES: dict[str, list[dict[str, Any]]] = {
         {"prompt": "Weather in Tokyo, use celsius.", "schema": "weather"},
         {"prompt": "Weather in Lima, use celsius.", "schema": "weather"},
     ],
-    "concurrency": [{"round": i} for i in range(4)],
     "tool_call": [
         {"prompt": "What is the weather in Lisbon in celsius?", "tool": "get_weather"},
         {"prompt": "What is the weather in Oslo in celsius?", "tool": "get_weather"},
@@ -144,8 +146,13 @@ def run_suite(
     limit: int,
     seed: int = 42,
     timeout: int = 600,
+    clients: int = 2,
 ) -> dict[str, Any]:
-    cases = CASES[suite][:limit]
+    if suite == "concurrency":
+        cases = [{"round": i} for i in range(max(1, limit))]
+        clients = max(1, int(clients))
+    else:
+        cases = CASES[suite][:limit]
     random.Random(seed).shuffle(cases)
     details: list[dict[str, Any]] = []
     latencies_ms: list[float] = []
@@ -170,8 +177,8 @@ def run_suite(
                 return (time.perf_counter() - started) * 1000, None
 
             started = time.perf_counter()
-            with ThreadPoolExecutor(max_workers=2) as pool:
-                results = list(pool.map(hit, (0, 1)))
+            with ThreadPoolExecutor(max_workers=clients) as pool:
+                results = list(pool.map(hit, range(clients)))
             elapsed = (time.perf_counter() - started) * 1000
             walls = [w for w, _ in results if w is not None]
             errors = [e for _, e in results if e]
@@ -253,7 +260,7 @@ def run_suite(
                 **({
                     "round_p50_ms": percentile(round_ms, 50),
                     "slowest_ms": round(max(latencies_ms), 1) if latencies_ms else None,
-                    "aggregate_rps": round(2 * len(round_ms) / (sum(round_ms) / 1000), 3)
+                    "aggregate_rps": round(clients * len(round_ms) / (sum(round_ms) / 1000), 3)
                     if round_ms else None,
                 } if suite == "concurrency" else {}),
             }
@@ -271,9 +278,11 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--suite", choices=sorted(CASES), required=True)
     run.add_argument("--limit", type=int, default=10)
     run.add_argument("--seed", type=int, default=42)
+    run.add_argument("--clients", type=int, default=2)
     run.add_argument("--output", required=True)
     args = parser.parse_args(argv)
-    payload = run_suite(args.base_url, args.model, args.suite, limit=args.limit, seed=args.seed)
+    payload = run_suite(args.base_url, args.model, args.suite, limit=args.limit,
+                        seed=args.seed, clients=args.clients)
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=2), encoding="utf-8")

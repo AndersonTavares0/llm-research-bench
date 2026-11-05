@@ -555,6 +555,8 @@ def build_capability_cmd(
         str(evaluation.get("limit", 10)),
         "--seed",
         str(evaluation.get("seed", 42)),
+        "--clients",
+        str(evaluation.get("clients", 2)),
         "--output",
         str(output_path),
     ]

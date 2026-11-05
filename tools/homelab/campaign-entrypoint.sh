@@ -191,7 +191,7 @@ set +e
 PYTHONPATH="$REPO/src" "$VENV/bin/python" -m llm_research_bench.campaign run \
   --spec "$SPEC" \
   --out "$RESULTS" \
-  --models-dir "$MODELS_DIR"
+  --models-dir "$MODELS_DIR" ${CAMPAIGN_NO_BENCH:+--no-bench}
 RUN_CODE=$?
 set -e
 
