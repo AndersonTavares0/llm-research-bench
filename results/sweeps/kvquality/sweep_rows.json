@@ -1,0 +1,22 @@
+[
+  {
+    "campaign": "gpu-lab-kv-quality-ctx4096-kvf16",
+    "ctx": 4096,
+    "kv": "f16",
+    "status": "measured",
+    "error": null,
+    "duration_s": 233.8,
+    "peak_vram_mib": 1658.1,
+    "telemetry_csv": "/workspace/results/sweeps/kvquality/gpu-lab-kv-quality-ctx4096-kvf16-vram.csv"
+  },
+  {
+    "campaign": "gpu-lab-kv-quality-ctx4096-kvq8_0",
+    "ctx": 4096,
+    "kv": "q8_0",
+    "status": "measured",
+    "error": null,
+    "duration_s": 233.6,
+    "peak_vram_mib": 1530.1,
+    "telemetry_csv": "/workspace/results/sweeps/kvquality/gpu-lab-kv-quality-ctx4096-kvq8_0-vram.csv"
+  }
+]

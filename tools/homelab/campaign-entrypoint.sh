@@ -134,6 +134,11 @@ export PATH="$VENV/bin:$PATH"
 "$VENV/bin/python" -m pip install --quiet "tenacity==9.1.2" "langdetect==1.0.9" "immutabledict==4.2.1"
 "$VENV/bin/python" -c "import importlib.metadata as m; print('lm-eval', m.version('lm-eval'))"
 
+# A sweep's model and settings come from its base spec, not the default spec.
+if [ "$GPU_LAB_TASK" = "sweep" ] && [ -n "${SWEEP_BASE:-}" ]; then
+  SPEC="$SWEEP_BASE"
+fi
+
 SPEC_VALUES="$("$VENV/bin/python" - "$SPEC" <<'PY'
 import sys
 import yaml
@@ -149,7 +154,19 @@ HF_REV="${_rest#*|}"
 if [ ! -f "$MODELS_DIR/$HF_FILE" ]; then
   log "downloading $HF_REPO/$HF_FILE @ $HF_REV"
   mkdir -p "$MODELS_DIR"
-  hf download "$HF_REPO" "$HF_FILE" --revision "$HF_REV" --local-dir "$MODELS_DIR"
+  if command -v hf >/dev/null 2>&1; then
+    hf download "$HF_REPO" "$HF_FILE" --revision "$HF_REV" --local-dir "$MODELS_DIR"
+  else
+    "$VENV/bin/python" - "$HF_REPO" "$HF_FILE" "$HF_REV" "$MODELS_DIR" <<'PYDL'
+import os, shutil, sys
+from huggingface_hub import hf_hub_download
+repo, file, rev, dest = sys.argv[1:5]
+path = hf_hub_download(repo_id=repo, filename=file, revision=rev)
+target = os.path.join(dest, file)
+if os.path.abspath(path) != os.path.abspath(target):
+    shutil.copy2(path, target)
+PYDL
+  fi
 fi
 
 if [ "$GPU_LAB_TASK" = "gsm8k-paired" ]; then
@@ -164,7 +181,7 @@ if [ "$GPU_LAB_TASK" = "sweep" ]; then
     --grid "${SWEEP_GRID:-ctx=2048,4096,8192}" \
     --kv "${SWEEP_KV:-f16,q8_0}" \
     --out "${SWEEP_OUT:-$WORKSPACE/results/sweeps/kv-ctx}" \
-    --models-dir "$MODELS_DIR" \
+    --models-dir "$MODELS_DIR" ${SWEEP_PARALLEL:+--parallel "$SWEEP_PARALLEL"} ${SWEEP_LAYERS:+--layers "$SWEEP_LAYERS"} \
     ${SWEEP_BENCH_ONLY:+--bench-only} ${SWEEP_NO_BENCH:+--no-bench}
   exit $?
 fi

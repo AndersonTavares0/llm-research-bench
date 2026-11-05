@@ -1,0 +1,42 @@
+[
+  {
+    "campaign": "gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers99",
+    "ctx": 2048,
+    "kv": "q8_0",
+    "status": "measured",
+    "error": null,
+    "duration_s": 30.4,
+    "peak_vram_mib": 2364.1,
+    "telemetry_csv": "/workspace/results/sweeps/offload2/gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers99-vram.csv"
+  },
+  {
+    "campaign": "gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers32",
+    "ctx": 2048,
+    "kv": "q8_0",
+    "status": "measured",
+    "error": null,
+    "duration_s": 30.9,
+    "peak_vram_mib": 2364.1,
+    "telemetry_csv": "/workspace/results/sweeps/offload2/gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers32-vram.csv"
+  },
+  {
+    "campaign": "gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers24",
+    "ctx": 2048,
+    "kv": "q8_0",
+    "status": "measured",
+    "error": null,
+    "duration_s": 38.6,
+    "peak_vram_mib": 2074.1,
+    "telemetry_csv": "/workspace/results/sweeps/offload2/gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers24-vram.csv"
+  },
+  {
+    "campaign": "gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers16",
+    "ctx": 2048,
+    "kv": "q8_0",
+    "status": "measured",
+    "error": null,
+    "duration_s": 51.5,
+    "peak_vram_mib": 1612.1,
+    "telemetry_csv": "/workspace/results/sweeps/offload2/gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers16-vram.csv"
+  }
+]

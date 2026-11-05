@@ -47,9 +47,6 @@ models:
     sha256: d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5
 
 task_groups:
-  - name: structured
+  - name: concurrency
     backend: capability
-    tasks: [structured_output]
-  - name: tools
-    backend: capability
-    tasks: [tool_call]
+    tasks: [concurrency]

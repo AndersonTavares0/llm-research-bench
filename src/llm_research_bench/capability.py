@@ -16,7 +16,10 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from llm_research_bench.latency import summarize_ms
+from llm_research_bench.latency import percentile, summarize_ms
+
+FILLER = ("The quick brown fox jumps over the lazy dog while the engineer "
+          "records the measurement carefully and repeats the run. ")
 
 SCHEMAS: dict[str, dict[str, Any]] = {
     "person": {
@@ -68,6 +71,7 @@ CASES: dict[str, list[dict[str, Any]]] = {
         {"prompt": "Weather in Tokyo, use celsius.", "schema": "weather"},
         {"prompt": "Weather in Lima, use celsius.", "schema": "weather"},
     ],
+    "concurrency": [{"round": i} for i in range(4)],
     "tool_call": [
         {"prompt": "What is the weather in Lisbon in celsius?", "tool": "get_weather"},
         {"prompt": "What is the weather in Oslo in celsius?", "tool": "get_weather"},
@@ -145,7 +149,32 @@ def run_suite(
     random.Random(seed).shuffle(cases)
     details: list[dict[str, Any]] = []
     latencies_ms: list[float] = []
+    round_ms: list[float] = []
     for case in cases:
+        if suite == "concurrency":
+            from concurrent.futures import ThreadPoolExecutor
+
+            def hit(client: int) -> float:
+                prompt = (f"Round {case['round']} client {client}. " + FILLER * 40
+                          + "\nReply with one short sentence.")
+                started = time.perf_counter()
+                _post(base_url, model, {
+                    "model": model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "max_tokens": 32,
+                    "temperature": 0,
+                }, timeout)
+                return (time.perf_counter() - started) * 1000
+
+            started = time.perf_counter()
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                walls = list(pool.map(hit, (0, 1)))
+            elapsed = (time.perf_counter() - started) * 1000
+            latencies_ms.extend(walls)
+            round_ms.append(elapsed)
+            details.append({"round": case["round"], "wall_ms": [round(w, 1) for w in walls],
+                            "round_ms": round(elapsed, 1), "valid": True})
+            continue
         if suite == "structured_output":
             schema = SCHEMAS[case["schema"]]
             payload = {
@@ -213,6 +242,12 @@ def run_suite(
                 "latency_p50_ms": latency["p50_ms"],
                 "latency_p95_ms": latency["p95_ms"],
                 "latency_n": latency["n"],
+                **({
+                    "round_p50_ms": percentile(round_ms, 50),
+                    "slowest_ms": round(max(latencies_ms), 1) if latencies_ms else None,
+                    "aggregate_rps": round(2 * len(round_ms) / (sum(round_ms) / 1000), 3)
+                    if round_ms else None,
+                } if suite == "concurrency" else {}),
             }
         },
         "cases": details,

@@ -58,6 +58,9 @@ def expand_grid(
             spec["server"]["cache_ram"] = spec["server"].get("cache_ram", 0)
             if n_layers is not None:
                 spec["server"]["gpu_layers"] = n_layers
+                # llama-bench takes its own -ngl; without this the sweep would
+                # measure full offload in every cell.
+                spec.setdefault("bench", {})["gpu_layers"] = n_layers
             if n_parallel is not None:
                 spec["server"]["parallel"] = n_parallel
             spec["description"] = (

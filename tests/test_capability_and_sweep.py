@@ -223,3 +223,26 @@ def test_run_cells_forwards_evaluate_flag(tmp_path):
     finally:
         sweep.sample_memory = original
     assert seen == {"evaluate": False}
+
+
+def test_concurrency_suite_reports_rounds_and_aggregate(monkeypatch):
+    import time as _time
+
+    def slow_post(*a, **k):
+        _time.sleep(0.02)
+        return {"choices": [{"message": {"content": "ok"}}]}
+
+    monkeypatch.setattr(capability, "_post", slow_post)
+    out = capability.run_suite("http://x", "m", "concurrency", limit=2)
+    m = out["results"]["concurrency"]
+    assert m["sample_len"] == 2
+    assert m["valid_rate,none"] == 1.0
+    assert m["aggregate_rps"] is not None and m["aggregate_rps"] > 0
+    assert m["slowest_ms"] >= m["latency_p50_ms"]
+    assert len(out["cases"][0]["wall_ms"]) == 2
+
+
+def test_grid_sets_bench_layers_for_offload():
+    base = {"campaign": "o", "server": {"ctx_size": 2048}, "bench": {"repetitions": 2}, "description": "d"}
+    specs = sweep.expand_grid(base, [2048], ["q8_0"], layers=[99, 24])
+    assert [s["bench"]["gpu_layers"] for s in specs] == [99, 24]
