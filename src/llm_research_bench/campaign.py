@@ -477,6 +477,8 @@ def build_bench_cmd(binary: str, model_path: Path, bench: dict[str, Any]) -> lis
         str(bench.get("gen_tokens", 128)),
         "-r",
         str(bench.get("repetitions", 3)),
+        *(["-b", str(bench["batch_size"])] if bench.get("batch_size") else []),
+        *(["-ub", str(bench["ubatch_size"])] if bench.get("ubatch_size") else []),
         "-ngl",
         str(bench.get("gpu_layers", 99)),
         "-o",

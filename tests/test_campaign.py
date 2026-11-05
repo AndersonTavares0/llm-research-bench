@@ -370,3 +370,13 @@ def test_capability_groups_skip_lm_eval_task_check(monkeypatch, tmp_path):
                               force=False, no_bench=False, no_eval=False)
     assert campaign._cmd_run(args) == 0
     assert seen["n"] == 1  # only the lm-eval group is checked
+
+
+def test_bench_cmd_passes_batch_flags(tmp_path):
+    bench = campaign.build_bench_cmd(
+        "llama-bench", tmp_path / "m.gguf",
+        {"prompt_tokens": 512, "gen_tokens": 128, "repetitions": 3,
+         "batch_size": 2048, "ubatch_size": 512},
+    )
+    assert bench[bench.index("-b") + 1] == "2048"
+    assert bench[bench.index("-ub") + 1] == "512"
