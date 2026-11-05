@@ -10,6 +10,7 @@ GPU_LAB_TASK="${GPU_LAB_TASK:-campaign}"
 case "$GPU_LAB_TASK" in
   campaign) ;;
   gsm8k-paired) ;;
+  sweep) ;;
   *) echo "unsupported GPU_LAB_TASK: $GPU_LAB_TASK" >&2; exit 2 ;;
 esac
 
@@ -154,6 +155,17 @@ fi
 if [ "$GPU_LAB_TASK" = "gsm8k-paired" ]; then
   log "running fixed GSM8K zero-shot/five-shot diagnostic"
   exec bash "$REPO/tools/homelab/gsm8k-diagnostic.sh"
+fi
+
+if [ "$GPU_LAB_TASK" = "sweep" ]; then
+  log "running context/KV sweep into ${SWEEP_OUT:-$WORKSPACE/results/sweeps/kv-ctx}"
+  PYTHONPATH="$REPO/src" "$VENV/bin/python" -m llm_research_bench.sweep run \
+    --base "${SWEEP_BASE:-$REPO/configs/campaigns/gpu-lab-qwen3-1.7b-v2.yaml}" \
+    --grid "${SWEEP_GRID:-ctx=2048,4096,8192}" \
+    --kv "${SWEEP_KV:-f16,q8_0}" \
+    --out "${SWEEP_OUT:-$WORKSPACE/results/sweeps/kv-ctx}" \
+    --models-dir "$MODELS_DIR"
+  exit $?
 fi
 
 cd "$REPO"

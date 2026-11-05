@@ -38,7 +38,7 @@ from typing import Any
 import yaml
 
 SCHEMA_VERSION = "campaign/v1"
-BACKENDS = {"gguf", "local-chat-completions"}
+BACKENDS = {"gguf", "local-chat-completions", "capability"}
 
 # Fields a campaign manifest must carry for a result to be re-analysable later.
 MANIFEST_FIELDS = (
@@ -532,6 +532,34 @@ def build_lm_eval_cmd(
     return cmd
 
 
+def build_capability_cmd(
+    task_group: TaskGroup,
+    model_alias: str,
+    port: int,
+    evaluation: dict[str, Any],
+    output_path: Path,
+) -> list[str]:
+    """In-tree probes (JSON-schema adherence, tool-call validity) on the same server."""
+    return [
+        sys.executable,
+        "-m",
+        "llm_research_bench.capability",
+        "run",
+        "--base-url",
+        f"http://127.0.0.1:{port}",
+        "--model",
+        model_alias,
+        "--suite",
+        task_group.tasks[0],
+        "--limit",
+        str(evaluation.get("limit", 10)),
+        "--seed",
+        str(evaluation.get("seed", 42)),
+        "--output",
+        str(output_path),
+    ]
+
+
 # --------------------------------------------------------------------------- #
 # llama.cpp server lifecycle
 # --------------------------------------------------------------------------- #
@@ -859,9 +887,18 @@ def run_campaign(
                 group_dir.mkdir(parents=True, exist_ok=True)
                 raw_dir = group_dir / "raw"
                 raw_dir.mkdir(parents=True, exist_ok=True)
-                eval_cmd = build_lm_eval_cmd(
-                    group, model.alias or model.name, port, spec.evaluation, raw_dir
-                )
+                if group.backend == "capability":
+                    eval_cmd = build_capability_cmd(
+                        group,
+                        model.alias or model.name,
+                        port,
+                        spec.evaluation,
+                        raw_dir / "capability" / "results.json",
+                    )
+                else:
+                    eval_cmd = build_lm_eval_cmd(
+                        group, model.alias or model.name, port, spec.evaluation, raw_dir
+                    )
                 started = utc_now()
                 try:
                     code = run_command(
