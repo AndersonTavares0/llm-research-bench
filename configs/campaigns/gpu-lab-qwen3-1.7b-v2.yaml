@@ -1,0 +1,64 @@
+# GPU Lab campaign v2: controlled measurement on the lab's GTX 1050 Ti.
+# Runs through the documented `gpu-lab job` handoff, which leases the GPU from
+# the production inference service and restores it when the job exits.
+# limit=100 is a fixed first-N subsample, not a random sample: the scores are
+# descriptive and do not authorize model rankings.
+campaign: gpu-lab-qwen3-1.7b-v2
+description: >-
+  Qwen3-1.7B Q4_K_M on the GPU Lab GTX 1050 Ti through llama.cpp b12024 and
+  lm-evaluation-harness d6de816, with pinned model SHA-256, ten llama-bench
+  repetitions, and EOS-aware generative decoding.
+status: measured
+hardware_profile: gpu-lab-ct108-gtx1050ti-4gib
+
+server:
+  port: 8090
+  ctx_size: 4096
+  gpu_layers: 99
+  threads: 2
+  parallel: 1
+  startup_timeout_s: 300
+  # Host prompt cache defaults to several GiB in current llama.cpp builds; the
+  # job sandbox has 3 GiB total, so keep it off.
+  cache_ram: 0
+  # Qwen3 defaults to thinking mode; disable it so the token budget is spent on
+  # the answer rather than on an unparsed reasoning block.
+  chat_template_kwargs:
+    enable_thinking: false
+
+bench:
+  prompt_tokens: 512
+  gen_tokens: 128
+  repetitions: 10
+  gpu_layers: 99
+
+evaluation:
+  limit: 100
+  seed: 42
+  num_fewshot: 0
+  batch_size: 1
+  max_length: 2048
+  max_gen_toks: 256
+  timeout_s: 5400
+  # The harness cannot infer the chat EOS for an API backend; without this the
+  # model runs into the token cap instead of stopping at the turn boundary.
+  eos_string: "<|im_end|>"
+
+models:
+  - name: qwen3-1.7b-q4km
+    alias: qwen3-1.7b
+    file: Qwen3-1.7B-Q4_K_M.gguf
+    quantization: Q4_K_M
+    hf_repo: ggml-org/Qwen3-1.7B-GGUF
+    hf_revision: daeb8e2d528a760970442092f6bf1e55c3b659eb
+    license: apache-2.0
+    # Verified on the lab copy at /srv/gpu-lab-data/users/ander/models.
+    sha256: d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5
+
+task_groups:
+  - name: knowledge-mcq
+    backend: gguf
+    tasks: [arc_challenge, hellaswag]
+  - name: generative-chat
+    backend: local-chat-completions
+    tasks: [gsm8k, ifeval]
