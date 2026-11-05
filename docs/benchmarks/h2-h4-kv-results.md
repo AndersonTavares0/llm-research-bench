@@ -44,7 +44,13 @@ now shares the GPU instead of queueing behind an idle one — the classic
 throughput/latency knee.
 
 The 4-slot cell produced no results artifact and is excluded rather than
-reported from the sweep row alone.
+reported from the sweep row alone. Root cause (found in the cell's run log): with
+`--parallel 4` llama-server splits `--ctx-size` across slots (2048/4 = 512
+tokens), and the 600-token probe prompt returns HTTP 400. The probe now records
+that as an invalid round instead of aborting the cell, and the repeat wrapper
+(`run-h4-repeat.sh`) uses ctx 8192 so each of the four slots gets 2048 tokens.
+The 4-slot measurement and three repeat leases of the 1-slot configuration are
+pending operator approval.
 
 ## KV quality at n=100 — q8_0 vs f16
 

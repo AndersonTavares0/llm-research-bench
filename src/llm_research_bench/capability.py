@@ -154,23 +154,31 @@ def run_suite(
         if suite == "concurrency":
             from concurrent.futures import ThreadPoolExecutor
 
-            def hit(client: int) -> float:
+            def hit(client: int) -> tuple[float | None, str | None]:
                 prompt = (f"Round {case['round']} client {client}. " + FILLER * 40
                           + "\nReply with one short sentence.")
                 started = time.perf_counter()
-                _post(base_url, model, {
-                    "model": model,
-                    "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": 32,
-                    "temperature": 0,
-                }, timeout)
-                return (time.perf_counter() - started) * 1000
+                try:
+                    _post(base_url, model, {
+                        "model": model,
+                        "messages": [{"role": "user", "content": prompt}],
+                        "max_tokens": 32,
+                        "temperature": 0,
+                    }, timeout)
+                except Exception as exc:  # a 400 (e.g. ctx/parallel split) must not kill the cell
+                    return None, str(exc)
+                return (time.perf_counter() - started) * 1000, None
 
             started = time.perf_counter()
             with ThreadPoolExecutor(max_workers=2) as pool:
-                walls = list(pool.map(hit, (0, 1)))
+                results = list(pool.map(hit, (0, 1)))
             elapsed = (time.perf_counter() - started) * 1000
+            walls = [w for w, _ in results if w is not None]
+            errors = [e for _, e in results if e]
             latencies_ms.extend(walls)
+            if errors:
+                details.append({"round": case["round"], "valid": False, "errors": errors})
+                continue
             round_ms.append(elapsed)
             details.append({"round": case["round"], "wall_ms": [round(w, 1) for w in walls],
                             "round_ms": round(elapsed, 1), "valid": True})

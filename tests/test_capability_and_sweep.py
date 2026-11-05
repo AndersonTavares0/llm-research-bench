@@ -246,3 +246,21 @@ def test_grid_sets_bench_layers_for_offload():
     base = {"campaign": "o", "server": {"ctx_size": 2048}, "bench": {"repetitions": 2}, "description": "d"}
     specs = sweep.expand_grid(base, [2048], ["q8_0"], layers=[99, 24])
     assert [s["bench"]["gpu_layers"] for s in specs] == [99, 24]
+
+
+def test_concurrency_failure_is_recorded_not_raised(monkeypatch):
+    def bad_post(*a, **k):
+        raise RuntimeError("HTTP Error 400: Bad Request")
+
+    monkeypatch.setattr(capability, "_post", bad_post)
+    out = capability.run_suite("http://x", "m", "concurrency", limit=2)
+    m = out["results"]["concurrency"]
+    assert m["valid_rate,none"] == 0.0
+    assert m["latency_n"] == 0
+    assert "400" in out["cases"][0]["errors"][0]
+
+
+def test_expand_grid_campaign_suffix_for_repeats():
+    base = {"campaign": "h4", "server": {"ctx_size": 8192}, "description": "d"}
+    specs = sweep.expand_grid(base, [8192], ["q8_0"], parallels=[1], suffix="-r2")
+    assert specs[0]["campaign"] == "h4-r2-ctx8192-kvq8_0-par1"

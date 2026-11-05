@@ -35,6 +35,7 @@ def expand_grid(
     kv_types: list[str],
     layers: list[int] | None = None,
     parallels: list[int] | None = None,
+    suffix: str = "",
 ) -> list[dict[str, Any]]:
     """One spec per cell; the campaign name carries every swept setting."""
     specs: list[dict[str, Any]] = []
@@ -45,12 +46,12 @@ def expand_grid(
             if kv not in KV_CACHE_TYPES:
                 raise ValueError(f"unsupported KV type {kv!r}")
             spec = json.loads(json.dumps(base))  # deep copy
-            suffix = f"-ctx{ctx}-kv{kv}"
+            cell = f"-ctx{ctx}-kv{kv}"
             if n_layers is not None:
-                suffix += f"-layers{n_layers}"
+                cell += f"-layers{n_layers}"
             if n_parallel is not None:
-                suffix += f"-par{n_parallel}"
-            spec["campaign"] = f"{base['campaign']}{suffix}"
+                cell += f"-par{n_parallel}"
+            spec["campaign"] = f"{base['campaign']}{suffix}{cell}"
             spec.setdefault("server", {})
             spec["server"]["ctx_size"] = ctx
             spec["server"]["cache_type_k"] = KV_CACHE_TYPES[kv]
@@ -207,6 +208,8 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--kv", default="f16,q8_0")
     run.add_argument("--layers")
     run.add_argument("--parallel")
+    run.add_argument("--campaign-suffix", default="",
+                     help="appended before the cell suffix (one per lease repeat)")
     run.add_argument("--out", required=True)
     run.add_argument("--models-dir", default="/models")
     run.add_argument("--llama-server", default="llama-server")
@@ -226,7 +229,8 @@ def main(argv: list[str] | None = None) -> int:
     ctxs = [int(x) for x in args.grid.split("=", 1)[1].split(",")]
     layers = [int(x) for x in args.layers.split(",")] if args.layers else None
     parallels = [int(x) for x in args.parallel.split(",")] if args.parallel else None
-    specs = expand_grid(base, ctxs, args.kv.split(","), layers=layers, parallels=parallels)
+    specs = expand_grid(base, ctxs, args.kv.split(","), layers=layers,
+                        parallels=parallels, suffix=args.campaign_suffix)
     out = Path(args.out)
     (out / "specs").mkdir(parents=True, exist_ok=True)
     for spec in specs:
