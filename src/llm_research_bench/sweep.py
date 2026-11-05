@@ -38,6 +38,7 @@ def expand_grid(
     suffix: str = "",
 ) -> list[dict[str, Any]]:
     """One spec per cell; the campaign name carries every swept setting."""
+    suffix = str(suffix or "").lstrip("-")
     specs: list[dict[str, Any]] = []
     for ctx in contexts:
       for kv in kv_types:
@@ -51,7 +52,9 @@ def expand_grid(
                 cell += f"-layers{n_layers}"
             if n_parallel is not None:
                 cell += f"-par{n_parallel}"
-            spec["campaign"] = f"{base['campaign']}{suffix}{cell}"
+            spec["campaign"] = (
+                f"{base['campaign']}-{suffix}{cell}" if suffix else f"{base['campaign']}{cell}"
+            )
             spec.setdefault("server", {})
             spec["server"]["ctx_size"] = ctx
             spec["server"]["cache_type_k"] = KV_CACHE_TYPES[kv]

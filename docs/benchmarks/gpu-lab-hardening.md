@@ -198,12 +198,25 @@ normal context exit still leaves zero owners. After one controlled restart:
 sequential and two concurrent completions each leave `active_requests=0`, and
 `/health` is 200.
 
-### Open issue: H4 repeat leases produced no artifacts
+### H4 repeat leases: root cause and fix (2026-11-05)
 
-The six approved leases (generations 181–186) each acquired and released
-correctly, and production answered a real completion after every one. However
-the job payload exited with `status=2/INVALIDARGUMENT` in ~2.8 s and wrote no
-sweep rows; `bash -n` on both scripts passes. The repeats are therefore **not
-measured** and must not be reported. Next action: run the wrapper by hand inside
-CT108 (as the lab user, without a lease) to capture the failing line, then re-run
-the same six leases.
+The six approved leases (generations 181–186) acquired and released correctly and
+production answered a real completion after each, but every payload exited with
+`status=2/INVALIDARGUMENT` in ~2.8 s and wrote no rows.
+
+Root cause: the wrapper passed `--campaign-suffix -r1`. argparse treats a
+token starting with `-` as an option, so it stopped with exit code 2 before any
+work — reproduced locally with the identical arguments:
+
+```
+sweep.py run: error: argument --campaign-suffix: expected one argument
+```
+
+Fix: suffixes lose their leading dash and the entrypoint always uses the
+`--campaign-suffix=<value>` form; `expand_grid` strips a leading dash defensively
+and prefixes the repeat with `-`. Two regression tests now cover the CLI parse
+(cell named `…-r2-ctx8192-kvq8_0-par4`) and document that the dashed spaced form
+is rejected by argparse.
+
+This class of failure is invisible to `bash -n`; only executing the CLI with the
+real argument vector catches it.

@@ -262,5 +262,38 @@ def test_concurrency_failure_is_recorded_not_raised(monkeypatch):
 
 def test_expand_grid_campaign_suffix_for_repeats():
     base = {"campaign": "h4", "server": {"ctx_size": 8192}, "description": "d"}
-    specs = sweep.expand_grid(base, [8192], ["q8_0"], parallels=[1], suffix="-r2")
+    specs = sweep.expand_grid(base, [8192], ["q8_0"], parallels=[1], suffix="r2")
     assert specs[0]["campaign"] == "h4-r2-ctx8192-kvq8_0-par1"
+    # A leading dash used to be consumed by argparse as another option.
+    assert sweep.expand_grid(base, [8192], ["q8_0"], parallels=[1], suffix="-r2")[0]["campaign"] == "h4-r2-ctx8192-kvq8_0-par1"
+
+
+def test_cli_parses_campaign_suffix_and_names_cell(tmp_path, monkeypatch):
+    seen = {}
+
+    def fake_run(specs, out_dir, **kwargs):
+        seen["names"] = [s.campaign for s in specs]
+        return []
+
+    monkeypatch.setattr(sweep, "run_cells", fake_run)
+    rc = sweep.main([
+        "run",
+        "--base", "configs/campaigns/gpu-lab-concurrency-qwen3.yaml",
+        "--grid", "ctx=8192",
+        "--kv", "q8_0",
+        "--parallel", "4",
+        "--campaign-suffix", "r2",
+        "--out", str(tmp_path),
+        "--models-dir", str(tmp_path),
+    ])
+    assert rc == 0
+    assert seen["names"] == ["gpu-lab-concurrency-qwen3-r2-ctx8192-kvq8_0-par4"]
+
+
+def test_dashed_suffix_without_equals_is_rejected_by_argparse(tmp_path):
+    with pytest.raises(SystemExit) as exc:
+        sweep.main([
+            "run", "--base", "configs/campaigns/gpu-lab-concurrency-qwen3.yaml",
+            "--grid", "ctx=8192", "--campaign-suffix", "-r2", "--out", str(tmp_path),
+        ])
+    assert exc.value.code == 2
