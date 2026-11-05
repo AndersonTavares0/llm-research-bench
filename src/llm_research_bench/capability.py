@@ -11,9 +11,12 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import time
 import urllib.request
 from pathlib import Path
 from typing import Any
+
+from llm_research_bench.latency import summarize_ms
 
 SCHEMAS: dict[str, dict[str, Any]] = {
     "person": {
@@ -141,6 +144,7 @@ def run_suite(
     cases = CASES[suite][:limit]
     random.Random(seed).shuffle(cases)
     details: list[dict[str, Any]] = []
+    latencies_ms: list[float] = []
     for case in cases:
         if suite == "structured_output":
             schema = SCHEMAS[case["schema"]]
@@ -156,7 +160,9 @@ def run_suite(
                 "max_tokens": 256,
                 "temperature": 0,
             }
+            started = time.perf_counter()
             content = _extract_content(_post(base_url, model, payload, timeout))
+            latencies_ms.append((time.perf_counter() - started) * 1000)
             try:
                 parsed = json.loads(content)
                 errors = validate(parsed, schema)
@@ -171,7 +177,9 @@ def run_suite(
                 "max_tokens": 256,
                 "temperature": 0,
             }
+            started = time.perf_counter()
             message = _post(base_url, model, payload, timeout)["choices"][0]["message"]
+            latencies_ms.append((time.perf_counter() - started) * 1000)
             calls = message.get("tool_calls") or []
             errors = []
             if not calls:
@@ -189,6 +197,7 @@ def run_suite(
             details.append({"prompt": case["prompt"], "valid": not errors, "errors": errors})
     valid = sum(1 for d in details if d["valid"])
     rate = valid / len(details) if details else 0.0
+    latency = summarize_ms(latencies_ms)
     return {
         "results": {
             suite: {
@@ -199,6 +208,11 @@ def run_suite(
                 "valid_rate_stderr,none": round((rate * (1 - rate) / len(details)) ** 0.5, 6)
                 if details
                 else 0.0,
+                # End-to-end client latency; deliberately not a ",none" metric so
+                # the campaign summary does not treat it as a quality score.
+                "latency_p50_ms": latency["p50_ms"],
+                "latency_p95_ms": latency["p95_ms"],
+                "latency_n": latency["n"],
             }
         },
         "cases": details,

@@ -116,3 +116,52 @@ def test_analyze_joins_bench_throughput(tmp_path):
     assert rows[0]["prefill_tok_s"] == 800.5
     assert rows[0]["decode_tok_s"] == 40.25
     assert _json.loads((tmp_path / "sweep_analysis.json").read_text())[0]["ctx"] == 2048
+
+
+def test_latency_percentiles_and_empty():
+    from llm_research_bench.latency import summarize_ms
+
+    assert summarize_ms([]) == {"n": 0, "p50_ms": None, "p95_ms": None, "mean_ms": None}
+    stats = summarize_ms([100.0, 200.0, 300.0, 400.0])
+    assert stats["p50_ms"] == 250.0
+    assert stats["p95_ms"] == 385.0
+    assert stats["mean_ms"] == 250.0
+
+
+def test_capability_reports_latency_outside_quality_metrics(monkeypatch):
+    monkeypatch.setattr(
+        capability, "_post",
+        lambda *a, **k: {"choices": [{"message": {"content": '{"name":"Ada","age":36,"city":"London"}'}}]},
+    )
+    metrics = capability.run_suite("http://x", "m", "structured_output", limit=2)["results"]["structured_output"]
+    assert metrics["latency_p50_ms"] is not None
+    assert metrics["latency_n"] == 2
+    # Only valid-rate metrics look like quality scores to `summarize`; latency
+    # keys must stay out of that set.
+    quality = {k for k in metrics if k.endswith(",none")}
+    assert quality == {"valid_rate,none", "valid_rate_stderr,none"}
+
+
+def test_capability_campaign_spec_is_valid():
+    spec = campaign.load_spec("configs/campaigns/gpu-lab-capability-probe.yaml")
+    assert campaign.validate_spec(spec) == []
+    assert {g.backend for g in spec.task_groups} == {"capability"}
+    assert [g.tasks[0] for g in spec.task_groups] == ["structured_output", "tool_call"]
+
+
+def test_analyze_keeps_failed_cells_and_missing_bench_null(tmp_path):
+    import json as _json
+
+    (tmp_path / "sweep_rows.json").write_text(
+        _json.dumps([
+            {"campaign": "c-ctx8192-kvf16", "ctx": 8192, "kv": "f16",
+             "status": "failed", "error": "oom", "peak_vram_mib": 3000.0},
+            {"campaign": "c-ctx2048-kvf16", "ctx": 2048, "kv": "f16",
+             "status": "measured", "peak_vram_mib": 1500.0},
+        ]),
+        encoding="utf-8",
+    )
+    rows = sweep.analyze(tmp_path)
+    assert rows[0]["status"] == "failed" and rows[0]["error"] == "oom"
+    assert rows[0]["prefill_tok_s"] is None
+    assert rows[1]["prefill_tok_s"] is None  # no bench artifact: report null, not a guess
