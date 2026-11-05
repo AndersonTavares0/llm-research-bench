@@ -1,0 +1,116 @@
+[
+  {
+    "campaign": "gpu-lab-ctxkv-probe-ctx2048-kvf16",
+    "ctx": 2048,
+    "kv": "f16",
+    "status": "measured",
+    "error": null,
+    "duration_s": 6.1,
+    "peak_vram_mib": 1432.1,
+    "telemetry_csv": "/workspace/results/sweeps/ctxkv2/gpu-lab-ctxkv-probe-ctx2048-kvf16-vram.csv",
+    "prefill_tok_s": null,
+    "decode_tok_s": null,
+    "latencies": {
+      "structured_output": {
+        "p50_ms": 589.133,
+        "p95_ms": 612.009,
+        "n": 3
+      }
+    }
+  },
+  {
+    "campaign": "gpu-lab-ctxkv-probe-ctx2048-kvq8_0",
+    "ctx": 2048,
+    "kv": "q8_0",
+    "status": "measured",
+    "error": null,
+    "duration_s": 5.3,
+    "peak_vram_mib": 1332.1,
+    "telemetry_csv": "/workspace/results/sweeps/ctxkv2/gpu-lab-ctxkv-probe-ctx2048-kvq8_0-vram.csv",
+    "prefill_tok_s": null,
+    "decode_tok_s": null,
+    "latencies": {
+      "structured_output": {
+        "p50_ms": 600.117,
+        "p95_ms": 621.608,
+        "n": 3
+      }
+    }
+  },
+  {
+    "campaign": "gpu-lab-ctxkv-probe-ctx4096-kvf16",
+    "ctx": 4096,
+    "kv": "f16",
+    "status": "measured",
+    "error": null,
+    "duration_s": 5.2,
+    "peak_vram_mib": 1658.1,
+    "telemetry_csv": "/workspace/results/sweeps/ctxkv2/gpu-lab-ctxkv-probe-ctx4096-kvf16-vram.csv",
+    "prefill_tok_s": null,
+    "decode_tok_s": null,
+    "latencies": {
+      "structured_output": {
+        "p50_ms": 592.785,
+        "p95_ms": 608.088,
+        "n": 3
+      }
+    }
+  },
+  {
+    "campaign": "gpu-lab-ctxkv-probe-ctx4096-kvq8_0",
+    "ctx": 4096,
+    "kv": "q8_0",
+    "status": "measured",
+    "error": null,
+    "duration_s": 5.3,
+    "peak_vram_mib": 1452.1,
+    "telemetry_csv": "/workspace/results/sweeps/ctxkv2/gpu-lab-ctxkv-probe-ctx4096-kvq8_0-vram.csv",
+    "prefill_tok_s": null,
+    "decode_tok_s": null,
+    "latencies": {
+      "structured_output": {
+        "p50_ms": 602.941,
+        "p95_ms": 620.613,
+        "n": 3
+      }
+    }
+  },
+  {
+    "campaign": "gpu-lab-ctxkv-probe-ctx8192-kvf16",
+    "ctx": 8192,
+    "kv": "f16",
+    "status": "measured",
+    "error": null,
+    "duration_s": 5.2,
+    "peak_vram_mib": 2110.1,
+    "telemetry_csv": "/workspace/results/sweeps/ctxkv2/gpu-lab-ctxkv-probe-ctx8192-kvf16-vram.csv",
+    "prefill_tok_s": null,
+    "decode_tok_s": null,
+    "latencies": {
+      "structured_output": {
+        "p50_ms": 589.04,
+        "p95_ms": 606.24,
+        "n": 3
+      }
+    }
+  },
+  {
+    "campaign": "gpu-lab-ctxkv-probe-ctx8192-kvq8_0",
+    "ctx": 8192,
+    "kv": "q8_0",
+    "status": "measured",
+    "error": null,
+    "duration_s": 5.3,
+    "peak_vram_mib": 1694.1,
+    "telemetry_csv": "/workspace/results/sweeps/ctxkv2/gpu-lab-ctxkv-probe-ctx8192-kvq8_0-vram.csv",
+    "prefill_tok_s": null,
+    "decode_tok_s": null,
+    "latencies": {
+      "structured_output": {
+        "p50_ms": 603.239,
+        "p95_ms": 626.615,
+        "n": 3
+      }
+    }
+  }
+]

@@ -1207,7 +1207,8 @@ def _cmd_plan(args: argparse.Namespace) -> int:
 def _cmd_run(args: argparse.Namespace) -> int:
     spec = load_spec(args.spec)
     if not args.skip_task_check:
-        check_tasks_available(spec.task_groups)
+        # Capability suites are in-tree, not lm-eval task ids.
+        check_tasks_available([g for g in spec.task_groups if g.backend != "capability"])
     summary = run_campaign(
         spec=spec,
         out_dir=Path(args.out),

@@ -1,0 +1,41 @@
+{
+  "results": {
+    "tool_call": {
+      "name": "tool_call",
+      "alias": "tool_call",
+      "sample_len": 5,
+      "valid_rate,none": 1.0,
+      "valid_rate_stderr,none": 0.0,
+      "latency_p50_ms": 611.334,
+      "latency_p95_ms": 772.293,
+      "latency_n": 5
+    }
+  },
+  "cases": [
+    {
+      "prompt": "What is the weather in Tokyo in celsius?",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "prompt": "What is the weather in Oslo in celsius?",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "prompt": "What is the weather in Miami in fahrenheit?",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "prompt": "What is the weather in Lima in celsius?",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "prompt": "What is the weather in Lisbon in celsius?",
+      "valid": true,
+      "errors": []
+    }
+  ]
+}

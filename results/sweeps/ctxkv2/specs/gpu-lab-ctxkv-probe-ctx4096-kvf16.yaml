@@ -1,0 +1,43 @@
+campaign: gpu-lab-ctxkv-probe-ctx4096-kvf16
+description: 'Measures GPU memory and latency while the server is configured with
+  each context/KV cell. Bench-only sweeps cannot do this: llama-bench uses its own
+  context and never starts the campaign server. [ctx=4096, kv=f16]'
+status: measured
+hardware_profile: gpu-lab-ct108-gtx1050ti-4gib
+server:
+  port: 8090
+  ctx_size: 4096
+  gpu_layers: 99
+  threads: 2
+  parallel: 1
+  startup_timeout_s: 300
+  cache_ram: 0
+  chat_template_kwargs:
+    enable_thinking: false
+  cache_type_k: f16
+  cache_type_v: f16
+bench:
+  prompt_tokens: 512
+  gen_tokens: 128
+  repetitions: 2
+evaluation:
+  limit: 3
+  seed: 42
+  batch_size: 1
+  max_length: 2048
+  max_gen_toks: 64
+  timeout_s: 600
+models:
+- name: qwen3-1.7b-q4km
+  alias: qwen3-1.7b
+  file: Qwen3-1.7B-Q4_K_M.gguf
+  quantization: Q4_K_M
+  hf_repo: ggml-org/Qwen3-1.7B-GGUF
+  hf_revision: daeb8e2d528a760970442092f6bf1e55c3b659eb
+  license: apache-2.0
+  sha256: d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5
+task_groups:
+- name: probe
+  backend: capability
+  tasks:
+  - structured_output

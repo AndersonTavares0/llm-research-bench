@@ -353,3 +353,20 @@ def test_llama_device_listing_is_parsed_when_nvidia_smi_is_absent(monkeypatch):
             "memory_free": "3975 MiB",
         }
     ]
+
+
+def test_capability_groups_skip_lm_eval_task_check(monkeypatch, tmp_path):
+    seen = {}
+    monkeypatch.setattr(campaign, "check_tasks_available", lambda groups: seen.update(n=len(groups)))
+    monkeypatch.setattr(campaign, "load_spec", lambda _: campaign.CampaignSpec(
+        campaign="c", hardware_profile="h",
+        models=[campaign.ModelSpec("m", "m.gguf", "Q4_K_M")],
+        task_groups=[campaign.TaskGroup("probe", "capability", ["structured_output"]),
+                     campaign.TaskGroup("mcq", "gguf", ["arc_challenge"])],
+    ))
+    monkeypatch.setattr(campaign, "run_campaign", lambda **k: {"groups": [], "bench": []})
+    args = argparse.Namespace(spec="x", skip_task_check=False, out=str(tmp_path),
+                              models_dir=str(tmp_path), llama_server="s", llama_bench="b",
+                              force=False, no_bench=False, no_eval=False)
+    assert campaign._cmd_run(args) == 0
+    assert seen["n"] == 1  # only the lm-eval group is checked

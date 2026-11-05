@@ -204,3 +204,22 @@ def test_offload_and_concurrency_specs_validate():
     for name in ("gpu-lab-offload-llama32-3b", "gpu-lab-concurrency-qwen3"):
         spec = campaign.load_spec(f"configs/campaigns/{name}.yaml")
         assert campaign.validate_spec(spec) == [], name
+
+
+def test_run_cells_forwards_evaluate_flag(tmp_path):
+    seen = {}
+
+    def runner(spec, out_dir, **kwargs):
+        seen.update(kwargs)
+
+    spec = campaign.CampaignSpec(
+        campaign="c", hardware_profile="h", models=[], task_groups=[],
+        server={"ctx_size": 2048, "cache_type_k": "f16"},
+    )
+    original = sweep.sample_memory
+    sweep.sample_memory = lambda path, stop, interval=1.0: None
+    try:
+        sweep.run_cells([spec], out_dir=tmp_path, runner=runner, evaluate=False)
+    finally:
+        sweep.sample_memory = original
+    assert seen == {"evaluate": False}

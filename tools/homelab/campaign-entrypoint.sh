@@ -164,7 +164,8 @@ if [ "$GPU_LAB_TASK" = "sweep" ]; then
     --grid "${SWEEP_GRID:-ctx=2048,4096,8192}" \
     --kv "${SWEEP_KV:-f16,q8_0}" \
     --out "${SWEEP_OUT:-$WORKSPACE/results/sweeps/kv-ctx}" \
-    --models-dir "$MODELS_DIR"
+    --models-dir "$MODELS_DIR" \
+    ${SWEEP_BENCH_ONLY:+--bench-only} ${SWEEP_NO_BENCH:+--no-bench}
   exit $?
 fi
 

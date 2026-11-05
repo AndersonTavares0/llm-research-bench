@@ -208,6 +208,10 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--models-dir", default="/models")
     run.add_argument("--llama-server", default="llama-server")
     run.add_argument("--llama-bench", default="llama-bench")
+    run.add_argument("--no-bench", action="store_true",
+                     help="skip llama-bench per cell (server-only memory sampling)")
+    run.add_argument("--bench-only", action="store_true",
+                     help="skip evaluation per cell (memory/throughput sweeps)")
     sub.add_parser("analyze").add_argument("--root", required=True)
     args = parser.parse_args(argv)
 
@@ -240,6 +244,8 @@ def main(argv: list[str] | None = None) -> int:
         models_dir=Path(args.models_dir),
         llama_server=args.llama_server,
         llama_bench=args.llama_bench,
+        **({"evaluate": False} if args.bench_only else {}),
+        **({"bench": False} if args.no_bench else {}),
     )
     print(json.dumps(rows, indent=2))
     return 0 if all(r["status"] == "measured" for r in rows) else 1

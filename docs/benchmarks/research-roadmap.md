@@ -51,6 +51,9 @@ because they preempt production inference.
   report the largest ctx that fits 4096 MiB with ≥256 MiB headroom.
 - Decision rule: q8_0 KV is adopted for long-context work only if memory drops
   ≥35% and the MCQ score change is inside the paired-bootstrap interval.
+- Status: **executed** (lease generation 172) — memory slope 113.0 KiB/token f16,
+  60.3 KiB/token q8_0, fixed cost ~1,206 MiB. See
+  [`h1-context-kv-results.md`](h1-context-kv-results.md).
 - Runner: `tools/homelab/run-sweep.sh` expands the grid with
   `llm_research_bench.sweep`, runs each cell through `run_campaign` inside one
   lease, samples GPU memory at 1 Hz, and `sweep analyze` joins the throughput
@@ -86,6 +89,8 @@ because they preempt production inference.
   groundedness on a small fixed corpus.
 - Decision rule: report per-task pass rates with Wilson intervals; no composite
   score.
+- Status: **executed on Qwen3-1.7B** — structured 10/10 (95% CI 0.722–1.0),
+  tool calls 5/5 (95% CI 0.566–1.0). RAG groundedness is not implemented yet.
 - Campaign spec: `configs/campaigns/gpu-lab-capability-probe.yaml` runs both
   probes as `backend: capability` groups under one lease; each response is timed
   client-side and reported as p50/p95 end-to-end latency.
