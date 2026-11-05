@@ -1,0 +1,12 @@
+[
+  {
+    "campaign": "gpu-lab-concurrency-qwen3-r1-ctx8192-kvq8_0-par1",
+    "ctx": 8192,
+    "kv": "q8_0",
+    "status": "measured",
+    "error": null,
+    "duration_s": 40.1,
+    "peak_vram_mib": 1702.1,
+    "telemetry_csv": "/workspace/results/sweeps/h4-par1-r1/gpu-lab-concurrency-qwen3-r1-ctx8192-kvq8_0-par1-vram.csv"
+  }
+]
