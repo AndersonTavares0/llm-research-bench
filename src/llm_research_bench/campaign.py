@@ -16,6 +16,7 @@ Usage (inside the lab container, with lm-eval and llama.cpp on PATH)::
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import json
 import math
@@ -85,6 +86,7 @@ class ModelSpec:
     hf_revision: str = ""
     license: str = ""
     alias: str = ""
+    sha256: str = ""
 
     def as_dict(self) -> dict[str, Any]:
         return dict(self.__dict__)
@@ -141,6 +143,7 @@ def load_spec(path: str | Path) -> CampaignSpec:
                 hf_revision=str(m.get("hf_revision", "")),
                 license=str(m.get("license", "")),
                 alias=str(m.get("alias", m["name"])),
+                sha256=str(m.get("sha256", "")),
             )
             for m in raw.get("models") or []
         ]
@@ -193,6 +196,8 @@ def validate_spec(spec: CampaignSpec) -> list[str]:
             errors.append(f"model {model.name!r} needs a file")
         if not model.quantization or model.quantization == "unknown":
             errors.append(f"model {model.name!r} needs an explicit quantization")
+        if model.sha256 and not re.fullmatch(r"[0-9a-f]{64}", model.sha256):
+            errors.append(f"model {model.name!r}: sha256 must be 64 lowercase hex characters")
 
     group_names = [g.name for g in spec.task_groups]
     for dup in {n for n in group_names if group_names.count(n) > 1}:
@@ -208,6 +213,9 @@ def validate_spec(spec: CampaignSpec) -> list[str]:
         errors.append(f"evaluation.limit must be a positive integer, got {limit!r}")
     if not isinstance(spec.evaluation.get("seed", 0), int):
         errors.append("evaluation.seed must be an integer")
+    timeout_s = spec.evaluation.get("timeout_s")
+    if timeout_s is not None and (not isinstance(timeout_s, int) or timeout_s <= 0):
+        errors.append(f"evaluation.timeout_s must be a positive integer, got {timeout_s!r}")
     port = spec.server.get("port", 8090)
     if not isinstance(port, int) or not 0 < port < 65536:
         errors.append(f"server.port must be a TCP port, got {port!r}")
@@ -272,6 +280,7 @@ def collect_environment() -> dict[str, Any]:
     env: dict[str, Any] = {
         "hostname": socket.gethostname(),
         "platform": platform.platform(),
+        "kernel": platform.release(),
         "machine": platform.machine(),
         "python": platform.python_version(),
         "cpu_count": os.cpu_count(),
@@ -369,17 +378,29 @@ def binary_version(executable: str, *args: str) -> str:
     except (OSError, subprocess.SubprocessError) as exc:  # pragma: no cover - env specific
         return f"{executable}: {exc}"
     text = (proc.stdout or "") + (proc.stderr or "")
+    for line in text.splitlines():
+        if line.strip().startswith("version:"):
+            return line.strip()
     return _first_line(text) or f"{executable}: no version output"
 
 
 def lm_eval_version() -> str:
-    """Version from package metadata: the 0.4.x CLI has no --version flag."""
+    """Version plus VCS commit when installed from git, since the CLI has no --version."""
     try:
         proc = subprocess.run(
             [
                 sys.executable,
                 "-c",
-                "import importlib.metadata as m; print('lm-eval', m.version('lm-eval'))",
+                (
+                    "import importlib.metadata as m, json\n"
+                    "v = m.version('lm-eval')\n"
+                    "try:\n"
+                    "    d = json.loads(m.distribution('lm-eval').read_text('direct_url.json'))\n"
+                    "    c = d.get('vcs_info', {}).get('commit_id', '')\n"
+                    "except Exception:\n"
+                    "    c = ''\n"
+                    "print(f'lm-eval {v}' + (f' (commit {c[:12]})' if c else ''))\n"
+                ),
             ],
             capture_output=True,
             text=True,
@@ -430,6 +451,18 @@ def build_server_cmd(
             "--chat-template-kwargs",
             json.dumps(server["chat_template_kwargs"], separators=(",", ":")),
         ]
+    for key, flag in (
+        ("cache_type_k", "--cache-type-k"),
+        ("cache_type_v", "--cache-type-v"),
+        ("batch_size", "--batch-size"),
+        ("ubatch_size", "--ubatch-size"),
+    ):
+        if server.get(key) is not None:
+            cmd += [flag, str(server[key])]
+    if server.get("cache_ram") is not None:
+        # Host prompt cache is unbounded by default in current llama.cpp builds;
+        # inside a 3 GiB sandbox it OOM-kills the server mid-run.
+        cmd += ["--cache-ram", str(server["cache_ram"])]
     return cmd
 
 
@@ -489,6 +522,7 @@ def build_lm_eval_cmd(
         model_args = (
             f"model={model_alias},base_url=http://127.0.0.1:{port}/v1/chat/completions"
             f",max_gen_toks={evaluation.get('max_gen_toks', 256)}"
+            f",temperature=0.0,seed={evaluation.get('seed', 42)}"
         )
         if evaluation.get("eos_string"):
             model_args += f",eos_string={evaluation['eos_string']}"
@@ -559,12 +593,23 @@ class LlamaServer:
 # --------------------------------------------------------------------------- #
 
 
-def run_key(model: ModelSpec, group: TaskGroup, spec: CampaignSpec, runtime: dict[str, Any]) -> str:
+def run_key(
+    model: ModelSpec,
+    group: TaskGroup,
+    spec: CampaignSpec,
+    runtime: dict[str, Any],
+    model_sha256: str = "",
+) -> str:
     """Identity of a (model, task group) measurement; a changed key must re-run."""
     return config_hash(
         {
             "schema": SCHEMA_VERSION,
-            "model": {"file": model.file, "quantization": model.quantization, "alias": model.alias},
+            "model": {
+                "file": model.file,
+                "quantization": model.quantization,
+                "alias": model.alias,
+                "sha256": model_sha256,
+            },
             "group": group.as_dict(),
             "evaluation": spec.evaluation,
             "server": spec.server,
@@ -656,7 +701,7 @@ def check_tasks_available(groups: list[TaskGroup]) -> None:
     wanted = sorted({task for group in groups for task in group.tasks})
     try:
         proc = subprocess.run(
-            [sys.executable, "-m", "lm_eval", "ls", "tasks"],
+            [sys.executable, "-m", "lm_eval", "ls", "subtasks"],
             capture_output=True,
             text=True,
             timeout=300,
@@ -665,7 +710,8 @@ def check_tasks_available(groups: list[TaskGroup]) -> None:
     except (OSError, subprocess.SubprocessError) as exc:  # pragma: no cover - env specific
         raise SpecError(f"cannot list lm-eval tasks: {exc}") from exc
     listing = (proc.stdout or "") + (proc.stderr or "")
-    # `ls tasks` prints a padded markdown table: rows look like "|name   |path|type|".
+    # `ls subtasks` prints a padded markdown table: rows look like "|name   |path|type|".
+    # `ls tasks` lists groups only in lm-eval 0.4.14.dev0, so it would miss every task.
     missing = [task for task in wanted if not re.search(rf"(?m)^\|\s*{re.escape(task)}\s*\|", listing)]
     if missing:
         raise SpecError(
@@ -685,13 +731,14 @@ def run_campaign(
     bench: bool = True,
     evaluate: bool = True,
 ) -> dict[str, Any]:
+    started_at_utc = datetime.now(timezone.utc).isoformat(timespec="seconds")
     campaign_dir = out_dir / spec.campaign / spec.hardware_profile
     campaign_dir.mkdir(parents=True, exist_ok=True)
     lock_file = campaign_dir / ".models.lock.json"
 
     runtime = {
         "llama_cpp": binary_version(llama_server, "--version"),
-        "llama_bench": binary_version(llama_bench, "--help"),
+        "llama_bench": binary_version(llama_bench, "--version"),
         "lm_eval": lm_eval_version(),
         "schema": SCHEMA_VERSION,
     }
@@ -710,6 +757,9 @@ def run_campaign(
         "campaign": spec.campaign,
         "hardware_profile": spec.hardware_profile,
         "status": spec.status,
+        "model": spec.models[0].name if len(spec.models) == 1 else None,
+        "models": [m.name for m in spec.models],
+        "started_at_utc": started_at_utc,
         "manifest": manifest_base,
         "model_files": {},
         "bench": [],
@@ -721,11 +771,15 @@ def run_campaign(
         if not model_path.exists():
             raise SpecError(f"model file not found: {model_path}")
         sha = sha256_file(model_path, cache_file=lock_file)
+        if model.sha256 and sha != model.sha256:
+            raise SpecError(
+                f"model file {model_path} has sha256 {sha}, expected {model.sha256}"
+            )
         summary["model_files"][model.name] = {
+            **model.as_dict(),
             "path": str(model_path),
             "size_bytes": model_path.stat().st_size,
             "sha256": sha,
-            **model.as_dict(),
         }
 
         model_dir = campaign_dir / model.name
@@ -783,7 +837,7 @@ def run_campaign(
 
         pending = []
         for group in spec.task_groups:
-            key = run_key(model, group, spec, runtime)
+            key = run_key(model, group, spec, runtime, sha)
             group_dir = model_dir / group.name
             if not force and existing_result(group_dir, key):
                 summary["groups"].append(
@@ -810,7 +864,11 @@ def run_campaign(
                 )
                 started = utc_now()
                 try:
-                    code = run_command(eval_cmd, group_dir / "run.log")
+                    code = run_command(
+                        eval_cmd,
+                        group_dir / "run.log",
+                        timeout=spec.evaluation.get("timeout_s"),
+                    )
                 except subprocess.TimeoutExpired:
                     code = -1
                 finished = utc_now()
@@ -849,6 +907,7 @@ def run_campaign(
                 )
         summary["groups"].append({"model": model.name, "group": "_server", "port": port})
 
+    summary["finished_at_utc"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     (campaign_dir / "run_summary.json").write_text(
         json.dumps(summary, indent=2), encoding="utf-8"
     )
@@ -883,6 +942,8 @@ def _sample_count(task_result: dict[str, Any], fallback: int | None) -> int:
     counts = task_result.get("n-samples") or {}
     if isinstance(counts, dict) and isinstance(counts.get("effective"), int):
         return counts["effective"]
+    if isinstance(task_result.get("sample_len"), int):
+        return task_result["sample_len"]
     alias = task_result.get("alias")
     if isinstance(alias, str) and alias.isdigit():
         return int(alias)
@@ -980,7 +1041,8 @@ def summarize(out_dir: Path) -> dict[str, Any]:
         "generated_at_utc": utc_now(),
         "campaigns": sorted(c for c in campaigns if c),
         "note": (
-            "Zeros-CI colunas usam Wilson 95%. Amostras pequenas (limit por tarefa) "
+            "Zeros-CI colunas usam Wilson 95%. O --limit do lm-eval seleciona as "
+            "primeiras N amostras (não uma amostra aleatória); portanto estes números "
             "descrevem esta campanha e não autorizam ranking entre modelos."
         ),
         "quality": rows,

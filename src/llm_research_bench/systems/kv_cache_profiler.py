@@ -16,6 +16,7 @@ class KVCacheProfiler:
         "llama-3.2-3b": {"n_layers": 28, "n_kv_heads": 8, "d_head": 128, "description": "Llama-3.2-3B (GQA: 24 query / 8 KV heads)"},
         "qwen-2.5-3b": {"n_layers": 36, "n_kv_heads": 2, "d_head": 128, "description": "Qwen-2.5-3B (GQA: 16 query / 2 KV heads)"},
         "qwen-2.5-1.5b": {"n_layers": 28, "n_kv_heads": 2, "d_head": 128, "description": "Qwen-2.5-1.5B (GQA: 12 query / 2 KV heads)"},
+        "qwen3-1.7b": {"n_layers": 28, "n_kv_heads": 8, "d_head": 128, "description": "Qwen3-1.7B (GQA: 16 query / 8 KV heads)"},
         "qwen-2.5-7b": {"n_layers": 28, "n_kv_heads": 4, "d_head": 128, "description": "Qwen-2.5-7B (GQA: 28 query / 4 KV heads)"},
     }
 

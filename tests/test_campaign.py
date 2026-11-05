@@ -68,6 +68,7 @@ def test_load_spec_parses_models_and_groups(tmp_path):
         (lambda p: p["task_groups"][0].update(backend="vllm"), "backend must be"),
         (lambda p: p["evaluation"].update(limit=0), "evaluation.limit"),
         (lambda p: p["models"][0].pop("quantization"), "quantization"),
+        (lambda p: p["models"][0].update(sha256="not-a-hash"), "sha256"),
         (lambda p: p["task_groups"][0].update(tasks=[]), "no tasks"),
     ],
 )
@@ -96,6 +97,15 @@ def test_config_hash_is_stable_and_sensitive():
 
     spec.evaluation["limit"] = 40
     assert first != campaign.run_key(spec.models[0], spec.task_groups[0], spec, runtime)
+
+    # A changed model file must invalidate the resume key even with identical config.
+    sha_a = "a" * 64
+    sha_b = "b" * 64
+    assert campaign.run_key(
+        spec.models[0], spec.task_groups[0], spec, runtime, model_sha256=sha_a
+    ) != campaign.run_key(
+        spec.models[0], spec.task_groups[0], spec, runtime, model_sha256=sha_b
+    )
 
 
 def test_existing_result_requires_matching_key_and_measured_status(tmp_path):
@@ -130,6 +140,18 @@ def test_server_and_bench_commands_use_official_flags(tmp_path):
     assert server[server.index("--ctx-size") + 1] == "8192"
     kwargs = json.loads(server[server.index("--chat-template-kwargs") + 1])
     assert kwargs == {"enable_thinking": False}
+    assert "--cache-ram" not in server
+
+    capped = campaign.build_server_cmd(
+        "llama-server", tmp_path / "m.gguf", "alias",
+        {"cache_ram": 0, "cache_type_k": "q8_0", "cache_type_v": "q8_0",
+         "batch_size": 512, "ubatch_size": 128},
+    )
+    assert capped[capped.index("--cache-ram") + 1] == "0"
+    assert capped[capped.index("--cache-type-k") + 1] == "q8_0"
+    assert capped[capped.index("--cache-type-v") + 1] == "q8_0"
+    assert capped[capped.index("--batch-size") + 1] == "512"
+    assert capped[capped.index("--ubatch-size") + 1] == "128"
 
     bench = campaign.build_bench_cmd(
         "llama-bench", tmp_path / "m.gguf", {"prompt_tokens": 512, "gen_tokens": 128}
@@ -259,6 +281,17 @@ def test_summarize_uses_harness_metrics_and_skips_failures(tmp_path):
     markdown = campaign.render_markdown(summary)
     assert "| campanha | hardware | modelo" in markdown
     assert "não autorizam ranking" in markdown
+
+
+def test_summarize_uses_sample_len_when_n_samples_missing(tmp_path):
+    _write_group(tmp_path, "model-a", "knowledge-mcq", "arc_challenge", 0.5)
+    path = tmp_path / "campaign-a" / "hw-a" / "model-a" / "knowledge-mcq" / "results.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["results"]["arc_challenge"].pop("n-samples")
+    payload["results"]["arc_challenge"]["sample_len"] = 100
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert campaign.summarize(tmp_path)["quality"][0]["n"] == 100
 
 
 def test_summarize_includes_only_measured_llama_bench_json(tmp_path):

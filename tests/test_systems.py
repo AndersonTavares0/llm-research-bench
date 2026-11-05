@@ -27,6 +27,19 @@ class TestSystemsProfilers(unittest.TestCase):
         )
         self.assertEqual(size_mib, 112.0)
 
+    def test_qwen3_1_7b_kv_budget(self):
+        # 28 layers x 8 KV heads x 128 head_dim x 2 (K,V) x 2 bytes = 114,688 B/token.
+        self.assertEqual(
+            self.kv_profiler.calculate_bytes_per_token(28, 8, 128, "fp16"), 114688.0
+        )
+        # 4096 tokens of f16 KV = 448 MiB; q8_0 halves it.
+        self.assertAlmostEqual(
+            self.kv_profiler.calculate_kv_cache_mib(28, 8, 128, 4096, "fp16"), 448.0, places=1
+        )
+        self.assertAlmostEqual(
+            self.kv_profiler.calculate_kv_cache_mib(28, 8, 128, 4096, "q8_0"), 224.0, places=1
+        )
+
     def test_calculate_kv_cache_q4_0(self):
         # With q4_0 (0.5 bytes), size should be 1/4 of fp16 (28.0 MiB)
         size_mib = self.kv_profiler.calculate_kv_cache_mib(
