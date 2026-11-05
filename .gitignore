@@ -52,3 +52,7 @@ coverage.xml
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Local RTX 3060 Ti artifacts are not part of the homelab research record.
+configs/campaigns/local-rtx3060ti-qwen3-1.7b.yaml
+results/campaigns/local-rtx3060ti-qwen3-1.7b-v1/
