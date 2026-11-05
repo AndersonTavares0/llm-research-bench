@@ -113,3 +113,34 @@ because they preempt production inference.
 
 Do not add models until H1/H2 show where the memory boundary is; adding models
 before that multiplies cost without answering the constraint question.
+
+## Verified model sources (Hugging Face API, 2026-11-05)
+
+| Repo | Revision | Q4_K_M file | Bytes | License |
+|---|---|---|---|---|
+| `unsloth/Qwen3-1.7B-GGUF` | `d7f544eead698dbd1f15126ef60b45a1e1933222` | `Qwen3-1.7B-Q4_K_M.gguf` | 1,107,409,472 | apache-2.0 |
+| `bartowski/Llama-3.2-3B-Instruct-GGUF` | `5ab33fa94d1d04e903623ae72c95d1696f09f9e8` | `Llama-3.2-3B-Instruct-Q4_K_M.gguf` | 2,019,377,696 | llama3.2 |
+| `Qwen/Qwen3-1.7B-GGUF` | `90862c4b9d2787eaed51d12237eafdfe7c5f6077` | none (Q8_0 only in this repo) | — | apache-2.0 |
+
+The official SmolLM2-1.7B-Instruct and Qwen2.5-0.5B-Instruct GGUF repos did
+**not** list a `Q4_K_M` file under the usual name in the same query, so they are
+not planned until their quant naming is checked. Do not add a model whose file
+name, revision and hash have not been verified.
+
+## Running H2 and H4
+
+```bash
+# CPU/GPU boundary (downloads Llama-3.2-3B on first use, ~2.0 GB)
+python -m llm_research_bench.sweep generate \
+  --base configs/campaigns/gpu-lab-offload-llama32-3b.yaml \
+  --grid ctx=2048 --kv q8_0 --layers 99,32,24,16 --out /workspace/results/sweeps/offload
+
+# Concurrency: latency p50/p95 from the capability probes
+python -m llm_research_bench.sweep generate \
+  --base configs/campaigns/gpu-lab-concurrency-qwen3.yaml \
+  --grid ctx=2048 --kv q8_0 --parallel 1,2,4 --out /workspace/results/sweeps/concurrency
+```
+
+`sweep analyze` attaches `peak_vram_mib`, `prefill_tok_s`, `decode_tok_s` and a
+`latencies` block per capability suite, so one table covers memory, throughput
+and end-to-end latency for every cell.

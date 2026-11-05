@@ -165,3 +165,42 @@ def test_analyze_keeps_failed_cells_and_missing_bench_null(tmp_path):
     assert rows[0]["status"] == "failed" and rows[0]["error"] == "oom"
     assert rows[0]["prefill_tok_s"] is None
     assert rows[1]["prefill_tok_s"] is None  # no bench artifact: report null, not a guess
+
+
+def test_expand_grid_supports_offload_and_parallel_axes():
+    base = {"campaign": "o", "server": {"ctx_size": 2048}, "description": "d"}
+    specs = sweep.expand_grid(base, [2048], ["q8_0"], layers=[99, 16], parallels=[1, 4])
+    assert [s["campaign"] for s in specs] == [
+        "o-ctx2048-kvq8_0-layers99-par1",
+        "o-ctx2048-kvq8_0-layers99-par4",
+        "o-ctx2048-kvq8_0-layers16-par1",
+        "o-ctx2048-kvq8_0-layers16-par4",
+    ]
+    assert specs[3]["server"]["gpu_layers"] == 16
+    assert specs[3]["server"]["parallel"] == 4
+
+
+def test_analyze_attaches_capability_latency(tmp_path):
+    import json as _json
+
+    (tmp_path / "sweep_rows.json").write_text(
+        _json.dumps([{"campaign": "c-ctx2048-kvq8_0-par4", "ctx": 2048, "kv": "q8_0",
+                      "status": "measured", "peak_vram_mib": 1600.0}]),
+        encoding="utf-8",
+    )
+    res = tmp_path / "campaigns" / "c-ctx2048-kvq8_0-par4" / "hw" / "m" / "structured"
+    res.mkdir(parents=True)
+    (res / "results.json").write_text(
+        _json.dumps({"results": {"structured_output": {
+            "valid_rate,none": 1.0, "latency_p50_ms": 900.0,
+            "latency_p95_ms": 1100.0, "latency_n": 10}}}),
+        encoding="utf-8",
+    )
+    rows = sweep.analyze(tmp_path)
+    assert rows[0]["latencies"]["structured_output"] == {"p50_ms": 900.0, "p95_ms": 1100.0, "n": 10}
+
+
+def test_offload_and_concurrency_specs_validate():
+    for name in ("gpu-lab-offload-llama32-3b", "gpu-lab-concurrency-qwen3"):
+        spec = campaign.load_spec(f"configs/campaigns/{name}.yaml")
+        assert campaign.validate_spec(spec) == [], name
