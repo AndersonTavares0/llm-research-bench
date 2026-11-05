@@ -173,3 +173,37 @@ Remediation options (need operator approval):
 
 Do not edit `state.json` by hand: the controller treats it as authoritative and
 a wrong edit can mask real activity.
+
+### Fix (2026-11-05, applied to CT108)
+
+Root cause of the stuck owner: `LeaseStore.production_request()` keyed owners by
+the **gateway's own PID**, so a persisted owner whose request had ended could
+never be distinguished from a live one — `recover_orphaned_requests()` sees a
+live process and keeps it, and drain waits forever. The launcher compounded it by
+waiting only 20 s for `.ready` while `wait_for_drain` allows 30 s.
+
+Changes (backups `*.bak-20261105T164717Z` on CT108):
+
+- `gpu_lease.py`: `production_request(token=None)`; new `prune_requests(live)`
+  that drops owners absent from the gateway's in-memory live set, and **only in
+  `production` state** (a lab lease is never touched).
+- `gpu_coordinator.py`: `lease(priority, token=None)`; `prune_requests()`.
+- `ollama_priority_gateway.py`: one token per request, held in
+  `server.active_tokens`; pruned at admission; discarded in `finally`.
+- `gpu-lab-job`: ready wait 20 s → 90 s.
+
+Validation before the restart (isolated, temp state): a live token and a stale
+token coexist, `prune_requests({"live-token"})` removes exactly the stale one,
+normal context exit still leaves zero owners. After one controlled restart:
+sequential and two concurrent completions each leave `active_requests=0`, and
+`/health` is 200.
+
+### Open issue: H4 repeat leases produced no artifacts
+
+The six approved leases (generations 181–186) each acquired and released
+correctly, and production answered a real completion after every one. However
+the job payload exited with `status=2/INVALIDARGUMENT` in ~2.8 s and wrote no
+sweep rows; `bash -n` on both scripts passes. The repeats are therefore **not
+measured** and must not be reported. Next action: run the wrapper by hand inside
+CT108 (as the lab user, without a lease) to capture the failing line, then re-run
+the same six leases.
