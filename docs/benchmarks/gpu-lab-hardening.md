@@ -137,3 +137,39 @@ uncertainty budget.
   environment; results are not directly comparable to bare-metal runs.
 - `limit`-based evaluation remains a fixed first-N sample and cannot support
   benchmark-leaderboard comparisons.
+
+## 2026-11-05: gateway accounting leak blocks lease drain
+
+After the in-service probe and several completion checks, every subsequent
+`gpu-lab job` aborted during acquisition with `production requests did not
+drain` (`wait_for_drain(timeout=30)`), even though the service was idle
+(0% GPU utilization, `/health` 200).
+
+Evidence from `/var/lib/gpu-lab-controller/state.json` while idle:
+
+```
+state=production generation=180
+active_requests=1
+active_request_owners={'09adfb31…': {'pid': 344, 'starttime': '15532'}}
+```
+
+PID 344 inside CT108 is `ollama_priority_gateway.py`. The owner key changes with
+each new completion, so the gateway appears to retain one stale request-owner
+entry after local requests, and the lab drain check treats the service as busy
+forever. Two consecutive lease attempts (generations 179, 180) were refused with
+`acquire_abort_before_stop reason=drain_failed`, and the launcher reported the
+misleading `job startup timed out` because it waits only 20 s for `.ready`
+while the drain timeout is 30 s.
+
+Impact: GPU campaigns cannot start until the stale owner is cleared. Production
+itself is healthy; no lease is held and no data was lost.
+
+Remediation options (need operator approval):
+1. restart `ollama-priority-gateway.service` between campaigns, or
+2. clear the stale `active_request_owners` entry through a supported gateway
+   endpoint if one exists, or
+3. fix the gateway to release the owner in a `finally` block on client
+   disconnect/timeout.
+
+Do not edit `state.json` by hand: the controller treats it as authoritative and
+a wrong edit can mask real activity.
