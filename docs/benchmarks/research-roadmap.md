@@ -51,6 +51,10 @@ because they preempt production inference.
   report the largest ctx that fits 4096 MiB with ≥256 MiB headroom.
 - Decision rule: q8_0 KV is adopted for long-context work only if memory drops
   ≥35% and the MCQ score change is inside the paired-bootstrap interval.
+- Runner: `tools/homelab/run-sweep.sh` expands the grid with
+  `llm_research_bench.sweep`, runs each cell through `run_campaign` inside one
+  lease, samples GPU memory at 1 Hz, and `sweep analyze` joins the throughput
+  from each cell's `llama-bench/results.json`.
 
 ### H2 — Offload boundary
 
@@ -76,6 +80,8 @@ because they preempt production inference.
 ### H5 — Capability probes (structured output, tool calling, RAG)
 
 - Wire the existing evaluators into the campaign output schema (no new engine).
+  `llm_research_bench.capability` now ships deterministic `structured_output`
+  and `tool_call` probes and is reachable as a `backend: capability` task group.
 - Tasks: JSON-schema adherence rate, tool-call argument validity, RAG answer
   groundedness on a small fixed corpus.
 - Decision rule: report per-task pass rates with Wilson intervals; no composite
