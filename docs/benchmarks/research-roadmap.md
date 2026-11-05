@@ -86,6 +86,9 @@ because they preempt production inference.
   groundedness on a small fixed corpus.
 - Decision rule: report per-task pass rates with Wilson intervals; no composite
   score.
+- Status: probes smoke-tested against the production Qwen3.5-4B endpoint
+  (5/5 structured outputs, 3/3 tool calls valid). That is an evaluator check on a
+  different model, not a campaign result for Qwen3-1.7B.
 
 ## Protocol constraints
 
