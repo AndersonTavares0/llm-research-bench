@@ -1,0 +1,103 @@
+# Research roadmap: small LLMs on a 4 GiB GTX 1050 Ti
+
+This page turns the measured evidence into a prioritized experiment plan. It does
+not replace the campaign records; every claim below points at an artifact.
+
+## What is already established (measured)
+
+- **Throughput ceiling.** Qwen3-1.7B Q4_K_M, llama.cpp b12024, 6 threads:
+  848.835 tok/s prefill (512) and 48.030 tok/s decode (128), SD 1.892 / 0.015,
+  n=10. Artifact: `results/campaigns/gpu-lab-qwen3-1.7b-v2/.../llama-bench/`.
+- **Quality at n=100, zero-shot.** ARC 0.470, HellaSwag 0.470 (acc_norm),
+  GSM8K 0.460 flexible-extract, IFEval 0.680 prompt-strict. Not a ranking.
+- **Memory envelope.** The Q4_K_M server held 1.21–1.61 GiB of the 4096 MiB card
+  during evaluation (spot checks). The lab sandbox caps host RAM at 3 GiB and
+  killed the server when llama.cpp's host prompt cache grew (generation 167).
+- **Operational ceiling.** The lease controller preempts production, restores it,
+  and survives supervisor death during acquisition (7/7 self-tests).
+
+## Gaps worth research effort
+
+1. **Context scaling is unmeasured.** The card has ~2.4 GiB free at run time, so
+   long context is KV-cache limited, not capability limited. The analytical
+   profiler predicts 448 MiB of f16 KV at 4096 tokens for Qwen3-1.7B
+   (28 layers × 8 KV heads × 128 × 2 × 2 B) and 224 MiB with q8_0 KV.
+2. **KV quantization is unmeasured.** `--cache-type-k/v q8_0` is the obvious lever
+   on a 4 GiB card, but quality impact at long context is unknown here.
+3. **Offloading is unmeasured.** With the model already ~1.2 GiB, a partial-offload
+   sweep (`--n-gpu-layers`) would quantify the CPU/GPU boundary, which matters for
+   larger small models (Llama-3.2-3B, SmolLM2-1.7B are present on the lab).
+4. **Prompt caching trade-off is unknown.** Host prompt cache improves repeated
+   prompts but caused the only OOM incident. A controlled measurement of
+   `--cache-ram 0 / 256 / 1024 MiB` would settle the policy.
+5. **Concurrency is unmeasured on this card.** The framework has a
+   `ConcurrencyProfiler`, but no lease-measured artifact backs it.
+6. **Capability probes are not wired into the campaign pipeline.** The repo has
+   agent/code/long-context/safety evaluators; only lm-eval tasks are campaignized.
+
+## Hypotheses and designs
+
+Each row is one campaign spec per configuration; every design is repeated-measures
+across leases (random order, fixed cool-down) so day-to-day drift is a random
+effect rather than a confounder. All of them require an operator-authorized lease
+because they preempt production inference.
+
+### H1 — KV cache dominates the usable context window (highest value)
+
+- Configs: ctx {2048, 4096, 8192}; KV {f16, q8_0} → 6 cells, one lease each.
+- Measure: `nvidia-smi` 1 Hz memory used, prefill/decode tok/s at 512/128 and at
+  a long prompt (ctx-64), and a fixed 100-item MCQ slice for quality drift.
+- Analysis: memory vs ctx linear fit; compare with the analytical 112 KiB/token;
+  report the largest ctx that fits 4096 MiB with ≥256 MiB headroom.
+- Decision rule: q8_0 KV is adopted for long-context work only if memory drops
+  ≥35% and the MCQ score change is inside the paired-bootstrap interval.
+
+### H2 — Offload boundary
+
+- Configs: `n_gpu_layers` {99, 32, 24, 16} on Qwen3-1.7B and Llama-3.2-3B.
+- Measure: prefill/decode throughput and peak memory; report the layer count where
+  decode throughput collapses.
+- Decision rule: publish the throughput/VRAM frontier; no model ranking.
+
+### H3 — Host prompt cache policy
+
+- Configs: `cache_ram` {0, 256, 1024} MiB, repeated identical prompts vs distinct.
+- Measure: time-to-first-token for cache hits, peak host RSS, OOM events.
+- Decision rule: recommend the largest cache that never exceeds 80% of the 3 GiB
+  sandbox budget.
+
+### H4 — Concurrency
+
+- Configs: `--parallel` {1, 2, 4} at ctx 2048 with q8_0 KV.
+- Measure: aggregate decode throughput and p50/p95 latency; report the
+  throughput/latency knee.
+- Analysis: paired within-lease ordering, because concurrency changes queueing.
+
+### H5 — Capability probes (structured output, tool calling, RAG)
+
+- Wire the existing evaluators into the campaign output schema (no new engine).
+- Tasks: JSON-schema adherence rate, tool-call argument validity, RAG answer
+  groundedness on a small fixed corpus.
+- Decision rule: report per-task pass rates with Wilson intervals; no composite
+  score.
+
+## Protocol constraints
+
+- Preregister the hypothesis, primary metric and comparison family before each
+  campaign; state the MDE (~20 pp at n=100 for proportions near 0.5).
+- Publish raw JSON, the spec, hashes, runtime versions and the analysis script.
+- Never merge hardware profiles; the local RTX 3060 Ti artifacts remain separate.
+- Any GPU work needs explicit approval in advance, including the number and
+  duration of leases.
+
+## Candidate models (already present in the lab model store)
+
+| Model | Quantization | Why it is interesting |
+|---|---|---|
+| Qwen3-1.7B | Q4_K_M | baseline; full Q4/Q8 comparison already measured |
+| Llama-3.2-3B-Instruct | Q4_K_M | larger footprint, tests the 4 GiB boundary |
+| SmolLM2-1.7B-Instruct | Q4_K_M | same size class, different architecture |
+| Qwen2.5-0.5B | Q4_K_M | lower bound for throughput and quality |
+
+Do not add models until H1/H2 show where the memory boundary is; adding models
+before that multiplies cost without answering the constraint question.
