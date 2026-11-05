@@ -114,6 +114,9 @@ because they preempt production inference.
 Do not add models until H1/H2 show where the memory boundary is; adding models
 before that multiplies cost without answering the constraint question.
 
+In-service measurements (no lease) are recorded in
+[`in-service-probe.md`](in-service-probe.md).
+
 ## Verified model sources (Hugging Face API, 2026-11-05)
 
 | Repo | Revision | Q4_K_M file | Bytes | License |
