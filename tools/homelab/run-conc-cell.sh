@@ -17,6 +17,7 @@ sed -e "s|^campaign: .*|campaign: gpu-lab-conc-equiv-$TAG|" \
     -e "s|^  limit: .*|  limit: ${ROUNDS:-6}|" \
     -e "s|^  max_gen_toks: .*|  max_gen_toks: 32|" \
     -e "/^bench:/,/^evaluation:/ s|^  repetitions: .*|  repetitions: 3\n  batch_size: $BATCH\n  ubatch_size: $UBATCH|" \
+    -e "/^bench:/,/^evaluation:/ s|^  prompt_tokens: .*|  prompt_tokens: ${PROMPT:-512}|" \
     "$BASE" > "$SPEC"
 export SPEC
 export GPU_LAB_TASK=campaign
