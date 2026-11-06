@@ -227,6 +227,7 @@ def run_suite(
     vram_csv: str | None = None,
     context_fill: int = 0,
     instruction: str = "schema",
+    constrain: bool = False,
 ) -> dict[str, Any]:
     if suite == "concurrency":
         cases = [{"round": i} for i in range(max(1, limit))]
@@ -298,6 +299,11 @@ def run_suite(
                 "temperature": 0,
             }
             started = time.perf_counter()
+            if constrain:
+                payload["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": {"name": case["schema"], "schema": schema, "strict": True},
+                }
             content = _extract_content(_post(base_url, model, payload, timeout))
             latencies_ms.append((time.perf_counter() - started) * 1000)
             try:
@@ -379,11 +385,14 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--vram-csv", default=None)
     run.add_argument("--context-fill", type=int, default=0)
     run.add_argument("--instruction", choices=("schema", "strict", "example"), default="schema")
+    run.add_argument("--constrain", action="store_true",
+                     help="send response_format json_schema (constrained decoding)")
     run.add_argument("--output", required=True)
     args = parser.parse_args(argv)
     payload = run_suite(args.base_url, args.model, args.suite, limit=args.limit,
                         seed=args.seed, clients=args.clients, vram_csv=args.vram_csv,
-                        context_fill=args.context_fill, instruction=args.instruction)
+                        context_fill=args.context_fill, instruction=args.instruction,
+                        constrain=args.constrain)
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=2), encoding="utf-8")

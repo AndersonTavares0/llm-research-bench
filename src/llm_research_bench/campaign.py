@@ -562,6 +562,7 @@ def build_capability_cmd(
         *(["--vram-csv", str(evaluation["vram_csv"])] if evaluation.get("vram_csv") else []),
         *(["--context-fill", str(evaluation["context_fill"])] if evaluation.get("context_fill") else []),
         *(["--instruction", str(evaluation["instruction"])] if evaluation.get("instruction") else []),
+        *(["--constrain"] if evaluation.get("constrain") else []),
         "--output",
         str(output_path),
     ]

@@ -416,3 +416,17 @@ def test_example_instruction_avoids_schema_json(monkeypatch):
     capability.run_suite("http://x", "m", "structured_output", limit=1, instruction="example")
     assert "like this example" in seen[0]
     assert '"properties"' not in seen[0]
+
+
+def test_constrained_decoding_sends_json_schema(monkeypatch):
+    seen = []
+
+    def fake_post(base_url, model, payload, timeout):
+        seen.append(payload)
+        return {"choices": [{"message": {"content": '{"name":"A","age":1,"city":"B"}'}}]}
+
+    monkeypatch.setattr(capability, "_post", fake_post)
+    capability.run_suite("http://x", "m", "structured_output", limit=1, constrain=True)
+    fmt = seen[0]["response_format"]
+    assert fmt["type"] == "json_schema"
+    assert fmt["json_schema"]["schema"] == capability.SCHEMAS["person"]

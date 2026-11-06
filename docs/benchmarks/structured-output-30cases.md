@@ -77,3 +77,29 @@ constrained decoding (`response_format` JSON schema), which should make malforme
 output impossible rather than relying on instruction following.
 
 Artifacts: `results/campaigns/gpu-lab-longctx-exam30-{1900,3800}/`.
+
+## Constrained decoding (response_format json_schema)
+
+Same 30 cases, same strict prompt, plus
+`response_format = {"type":"json_schema","json_schema":{...,"strict":true}}`.
+
+| Condition | Strict prompt | + constrained decoding | Paired change | McNemar |
+|---|---:|---:|---|---:|
+| 1.9k | 18/30 (0.600) | **23/30 (0.767)** | 5 improved, 0 worsened | p = 0.062 |
+| 3.8k | 16/30 (0.533) | **27/30 (0.900)** | 11 improved, 0 worsened | **p = 0.001** |
+
+Remaining constrained failures: 1.9k → 5 empty, 2 truncated JSON; 3.8k → 2 empty,
+1 truncated JSON. **The schema-echo class disappears entirely**, which is what a
+grammar/JSON-schema constraint predicts: malformed instances become impossible,
+while an immediate EOS can still yield empty content.
+
+Constrained 1.9k vs 3.8k: 23 vs 27, McNemar p = 0.289 — with constraints there is
+no evidence that long context hurts compliance.
+
+**Caveat:** the llama-server log does not mention grammar compilation, so we have
+not yet proven the server enforces the schema rather than the model merely
+behaving better under the request shape. The next check is a mechanism probe with
+a schema that requires a nonsense field (`zzz_marker`): if constrained decoding is
+active, the field must appear in every response.
+
+Artifacts: `results/campaigns/gpu-lab-longctx-con30-{1900,3800}/`.
