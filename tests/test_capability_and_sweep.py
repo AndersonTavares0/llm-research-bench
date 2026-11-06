@@ -360,3 +360,41 @@ def test_strict_instruction_adds_constraint(monkeypatch):
     monkeypatch.setattr(capability, "_post", fake_post)
     capability.run_suite("http://x", "m", "structured_output", limit=1, instruction="strict")
     assert "do not repeat the schema" in seen[0]
+
+
+LEGACY_STRUCTURED = [
+    "Extract: Ada Lovelace, 36, London.",
+    "Extract: Grace Hopper, 85, New York.",
+    "Extract: Alan Turing, 41, Manchester.",
+    "Extract: Katherine Johnson, 101, Hampton.",
+    "Extract: Linus Torvalds, 54, Portland.",
+    "Weather in Lisbon, use celsius.",
+    "Weather in Oslo, use celsius.",
+    "Weather in Miami, use fahrenheit.",
+    "Weather in Tokyo, use celsius.",
+    "Weather in Lima, use celsius.",
+]
+
+
+def test_structured_suite_has_30_cases_with_legacy_prefix():
+    cases = capability.CASES["structured_output"]
+    assert len(cases) == 30
+    assert [c["prompt"] for c in cases[:10]] == LEGACY_STRUCTURED
+    assert {c["schema"] for c in cases} <= set(capability.SCHEMAS)
+    assert all(isinstance(c["prompt"], str) and c["prompt"] for c in cases)
+    # Deterministic and unique: the suite must not depend on runtime state.
+    assert len({c["prompt"] for c in cases}) == 30
+
+
+def test_schemas_accept_a_reference_instance():
+    assert capability.validate({"name": "X", "age": 1, "city": "Y"}, capability.SCHEMAS["person"]) == []
+    assert capability.validate({"city": "Y", "unit": "celsius"}, capability.SCHEMAS["weather"]) == []
+
+
+def test_classify_failure_buckets():
+    echo = ["$: unexpected property 'type'", "$: missing required property 'city'"]
+    assert capability.classify_failure(["invalid JSON: x"], "") == "empty"
+    assert capability.classify_failure(["invalid JSON: x"], "not json") == "invalid-json"
+    assert capability.classify_failure(echo, '{"type":"object"}') == "schema-echo"
+    assert capability.classify_failure(["$: expected integer"], "{}") == "schema"
+    assert capability.classify_failure([], "{}") == "none"

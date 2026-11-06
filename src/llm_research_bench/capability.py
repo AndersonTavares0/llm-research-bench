@@ -74,7 +74,30 @@ CASES: dict[str, list[dict[str, Any]]] = {
         {"prompt": "Weather in Miami, use fahrenheit.", "schema": "weather"},
         {"prompt": "Weather in Tokyo, use celsius.", "schema": "weather"},
         {"prompt": "Weather in Lima, use celsius.", "schema": "weather"},
+        # Cases 11-30 extend the suite; the first ten above stay byte-identical
+        # so earlier runs remain comparable on the same prompts.
+        {"prompt": "Extract: Marie Curie, 66, Paris.", "schema": "person"},
+        {"prompt": "Extract: Nikola Tesla, 86, Belgrade.", "schema": "person"},
+        {"prompt": "Extract: Emmy Noether, 53, Erlangen.", "schema": "person"},
+        {"prompt": "Extract: Claude Shannon, 84, Petoskey.", "schema": "person"},
+        {"prompt": "Extract: Barbara Liskov, 86, Los Angeles.", "schema": "person"},
+        {"prompt": "Extract: Tim Berners-Lee, 69, Geneva.", "schema": "person"},
+        {"prompt": "Extract: Radia Perlman, 74, Portsmouth.", "schema": "person"},
+        {"prompt": "Extract: Donald Knuth, 87, Milwaukee.", "schema": "person"},
+        {"prompt": "Weather in Reykjavik, use celsius.", "schema": "weather"},
+        {"prompt": "Weather in Singapore, use celsius.", "schema": "weather"},
+        {"prompt": "Weather in Chicago, use fahrenheit.", "schema": "weather"},
+        {"prompt": "Weather in Sydney, use celsius.", "schema": "weather"},
+        {"prompt": "Weather in Cairo, use celsius.", "schema": "weather"},
+        {"prompt": "Weather in Toronto, use celsius.", "schema": "weather"},
+        {"prompt": "Weather in Phoenix, use fahrenheit.", "schema": "weather"},
+        {"prompt": "Weather in Buenos Aires, use celsius.", "schema": "weather"},
+        {"prompt": "Extract: Hedy Lamarr, 85, Vienna.", "schema": "person"},
+        {"prompt": "Extract: John von Neumann, 53, Budapest.", "schema": "person"},
+        {"prompt": "Weather in Nairobi, use celsius.", "schema": "weather"},
+        {"prompt": "Weather in Seattle, use fahrenheit.", "schema": "weather"},
     ],
+
     "tool_call": [
         {"prompt": "What is the weather in Lisbon in celsius?", "tool": "get_weather"},
         {"prompt": "What is the weather in Oslo in celsius?", "tool": "get_weather"},
@@ -156,6 +179,21 @@ class _VramSampler(threading.Thread):
     def stop(self) -> None:
         self.stop_event.set()
         self.join(timeout=5)
+
+
+def classify_failure(errors: list[str], content: str | None) -> str:
+    """Bucket a failed structured-output case; keeps empty distinct from echo."""
+    if not (content or "").strip():
+        return "empty"
+    if any("invalid JSON" in e for e in errors):
+        return "invalid-json"
+    if any("unexpected property 'type'" in e for e in errors) and any(
+        "missing required property" in e for e in errors
+    ):
+        return "schema-echo"
+    if errors:
+        return "schema"
+    return "none"
 
 
 def _post(base_url: str, model: str, payload: dict[str, Any], timeout: int) -> dict[str, Any]:
@@ -257,7 +295,9 @@ def run_suite(
                 errors = validate(parsed, schema)
             except json.JSONDecodeError as exc:
                 parsed, errors = None, [f"invalid JSON: {exc}"]
-            details.append({"prompt": case["prompt"], "valid": not errors, "errors": errors})
+            details.append({"prompt": case["prompt"], "valid": not errors, "errors": errors,
+                            "content": content[:300],
+                            "failure": None if not errors else classify_failure(errors, content)})
         else:
             payload = {
                 "model": model,
