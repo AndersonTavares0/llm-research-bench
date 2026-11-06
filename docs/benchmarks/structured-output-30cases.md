@@ -96,10 +96,18 @@ while an immediate EOS can still yield empty content.
 Constrained 1.9k vs 3.8k: 23 vs 27, McNemar p = 0.289 — with constraints there is
 no evidence that long context hurts compliance.
 
-**Caveat:** the llama-server log does not mention grammar compilation, so we have
-not yet proven the server enforces the schema rather than the model merely
-behaving better under the request shape. The next check is a mechanism probe with
-a schema that requires a nonsense field (`zzz_marker`): if constrained decoding is
-active, the field must appear in every response.
+### Mechanism check
+
+Prompt: *"Repeat exactly the word HELLO. Do not output JSON."* with
+`response_format` requiring `{"answer": string}` and no schema text in the prompt.
+
+Result: **0/3 valid, all three responses empty** (`sample_len 3`, latency 2.98 s
+p50). An unconstrained model would answer `HELLO`; instead the requested token is
+suppressed and the model stops immediately. This is consistent with the grammar
+being active and EOS remaining permissible — i.e. constrained decoding prevents
+malformed JSON but cannot force a non-empty object.
+
+So the 27/30 result is best read as: the grammar removes schema-echo and other
+malformed outputs, while immediate-EOS still produces empty content (2–3 cases).
 
 Artifacts: `results/campaigns/gpu-lab-longctx-con30-{1900,3800}/`.

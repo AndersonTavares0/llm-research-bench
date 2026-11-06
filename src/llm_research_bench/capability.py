@@ -28,6 +28,12 @@ EXAMPLES: dict[str, dict[str, Any]] = {
 }
 
 SCHEMAS: dict[str, dict[str, Any]] = {
+    "sentinel": {
+        "type": "object",
+        "required": ["answer"],
+        "properties": {"answer": {"type": "string"}},
+        "additionalProperties": False,
+    },
     "person": {
         "type": "object",
         "required": ["name", "age", "city"],
@@ -103,6 +109,13 @@ CASES: dict[str, list[dict[str, Any]]] = {
         {"prompt": "Weather in Seattle, use fahrenheit.", "schema": "weather"},
     ],
 
+    # Mechanism check: a field the model would never invent on its own. If
+    # constrained decoding is active, every response must contain it.
+    "mechanism": [
+        {"prompt": "Repeat exactly the word HELLO. Do not output JSON.", "schema": "sentinel"},
+        {"prompt": "Repeat exactly the word WORLD. Do not output JSON.", "schema": "sentinel"},
+        {"prompt": "Reply with the number 7 only.", "schema": "sentinel"},
+    ],
     "tool_call": [
         {"prompt": "What is the weather in Lisbon in celsius?", "tool": "get_weather"},
         {"prompt": "What is the weather in Oslo in celsius?", "tool": "get_weather"},
@@ -285,7 +298,9 @@ def run_suite(
                     {
                         "role": "user",
                         "content": (
-                    f"{case['prompt']} Reply with one JSON object like this example: "
+                    case["prompt"]  # mechanism: schema is sent only via response_format
+                    if suite == "mechanism"
+                    else f"{case['prompt']} Reply with one JSON object like this example: "
                     f"{json.dumps(EXAMPLES[case['schema']])} Return it and nothing else."
                     if instruction == "example"
                     else f"{case['prompt']} Reply with JSON only, matching this schema: "
