@@ -67,7 +67,38 @@ TOOLS = [
                 },
             },
         },
-    }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "convert_currency",
+            "description": "Convert an amount between currencies",
+            "parameters": {
+                "type": "object",
+                "required": ["amount", "from", "to"],
+                "properties": {
+                    "amount": {"type": "number"},
+                    "from": {"type": "string"},
+                    "to": {"type": "string"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "search_notes",
+            "description": "Search personal notes",
+            "parameters": {
+                "type": "object",
+                "required": ["query", "limit"],
+                "properties": {
+                    "query": {"type": "string"},
+                    "limit": {"type": "integer"},
+                },
+            },
+        },
+    },
 ]
 
 CASES: dict[str, list[dict[str, Any]]] = {
@@ -117,11 +148,42 @@ CASES: dict[str, list[dict[str, Any]]] = {
         {"prompt": "Reply with the number 7 only.", "schema": "sentinel"},
     ],
     "tool_call": [
-        {"prompt": "What is the weather in Lisbon in celsius?", "tool": "get_weather"},
-        {"prompt": "What is the weather in Oslo in celsius?", "tool": "get_weather"},
-        {"prompt": "What is the weather in Miami in fahrenheit?", "tool": "get_weather"},
-        {"prompt": "What is the weather in Tokyo in celsius?", "tool": "get_weather"},
-        {"prompt": "What is the weather in Lima in celsius?", "tool": "get_weather"},
+        {"prompt": "What is the weather in Lisbon in celsius?", "tool": "get_weather",
+         "expect": {"city": "Lisbon", "unit": "celsius"}},
+        {"prompt": "What is the weather in Oslo in celsius?", "tool": "get_weather",
+         "expect": {"city": "Oslo", "unit": "celsius"}},
+        {"prompt": "What is the weather in Miami in fahrenheit?", "tool": "get_weather",
+         "expect": {"city": "Miami", "unit": "fahrenheit"}},
+        {"prompt": "What is the weather in Tokyo in celsius?", "tool": "get_weather",
+         "expect": {"city": "Tokyo", "unit": "celsius"}},
+        {"prompt": "What is the weather in Lima in celsius?", "tool": "get_weather",
+         "expect": {"city": "Lima", "unit": "celsius"}},
+        {"prompt": "What is the weather in Reykjavik in celsius?", "tool": "get_weather",
+         "expect": {"city": "Reykjavik", "unit": "celsius"}},
+        {"prompt": "Convert 25 USD to EUR.", "tool": "convert_currency",
+         "expect": {"amount": 25, "from": "USD", "to": "EUR"}},
+        {"prompt": "Convert 100 USD to BRL.", "tool": "convert_currency",
+         "expect": {"amount": 100, "from": "USD", "to": "BRL"}},
+        {"prompt": "Convert 7.5 GBP to USD.", "tool": "convert_currency",
+         "expect": {"amount": 7.5, "from": "GBP", "to": "USD"}},
+        {"prompt": "Convert 250 JPY to EUR.", "tool": "convert_currency",
+         "expect": {"amount": 250, "from": "JPY", "to": "EUR"}},
+        {"prompt": "Convert 1000 CAD to USD.", "tool": "convert_currency",
+         "expect": {"amount": 1000, "from": "CAD", "to": "USD"}},
+        {"prompt": "Convert 42 CHF to EUR.", "tool": "convert_currency",
+         "expect": {"amount": 42, "from": "CHF", "to": "EUR"}},
+        {"prompt": "Find up to 3 notes about backups.", "tool": "search_notes",
+         "expect": {"query": "backups", "limit": 3}},
+        {"prompt": "Find up to 5 notes about kubernetes.", "tool": "search_notes",
+         "expect": {"query": "kubernetes", "limit": 5}},
+        {"prompt": "Search my notes for proxmox, at most 10 results.", "tool": "search_notes",
+         "expect": {"query": "proxmox", "limit": 10}},
+        {"prompt": "Find 2 notes mentioning ansible.", "tool": "search_notes",
+         "expect": {"query": "ansible", "limit": 2}},
+        {"prompt": "Search notes about postgres with limit 4.", "tool": "search_notes",
+         "expect": {"query": "postgres", "limit": 4}},
+        {"prompt": "Find up to 1 note about grafana.", "tool": "search_notes",
+         "expect": {"query": "grafana", "limit": 1}},
     ],
 }
 
@@ -214,6 +276,76 @@ def classify_failure(errors: list[str], content: str | None) -> str:
     return "none"
 
 
+def _extract_call(message: dict[str, Any], fmt: str) -> tuple[str | None, dict[str, Any] | None, str | None]:
+    """Return (tool name, arguments, error) from either response shape."""
+    if fmt == "json":
+        content = (message.get("content") or "").strip()
+        if not content:
+            return None, None, "empty content"
+        try:
+            data = json.loads(content)
+        except json.JSONDecodeError as exc:
+            return None, None, f"invalid JSON: {exc}"
+        name = data.get("tool") or data.get("name")
+        args = data.get("arguments") or data.get("args")
+        if not isinstance(args, dict):
+            return name, None, "arguments missing or not an object"
+        return name, args, None
+    calls = message.get("tool_calls") or []
+    if not calls:
+        return None, None, "no tool_calls in response"
+    fn = calls[0].get("function") or {}
+    raw = fn.get("arguments")
+    try:
+        args = json.loads(raw or "{}")
+    except json.JSONDecodeError:
+        return fn.get("name"), None, "tool arguments are not JSON"
+    return fn.get("name"), args if isinstance(args, dict) else None, None
+
+
+def _semantic_ok(case: dict[str, Any], args: dict[str, Any]) -> bool:
+    expect = case.get("expect") or {}
+    tool = case["tool"]
+    if tool == "get_weather":
+        return (str(args.get("city", "")).strip().lower() == str(expect["city"]).lower()
+                and args.get("unit") == expect["unit"])
+    if tool == "convert_currency":
+        try:
+            amount = float(args.get("amount"))
+        except (TypeError, ValueError):
+            return False
+        return (abs(amount - float(expect["amount"])) < 1e-6
+                and str(args.get("from", "")).upper() == expect["from"]
+                and str(args.get("to", "")).upper() == expect["to"])
+    if tool == "search_notes":
+        try:
+            limit = int(args.get("limit"))
+        except (TypeError, ValueError):
+            return False
+        return (expect["query"].lower() in str(args.get("query", "")).lower()
+                and limit == expect["limit"])
+    return False
+
+
+def score_tool_case(case: dict[str, Any], name: str | None, args: dict[str, Any] | None,
+                    error: str | None) -> dict[str, Any]:
+    errors = [error] if error else []
+    selection = name == case["tool"]
+    if name is not None and not selection:
+        errors.append(f"wrong tool: {name!r}")
+    schema_ok = False
+    if args is not None:
+        spec = next(t["function"]["parameters"] for t in TOOLS if t["function"]["name"] == case["tool"])
+        schema_errors = validate(args, spec)
+        schema_ok = not schema_errors
+        errors.extend(schema_errors)
+    semantic = bool(args is not None and schema_ok and _semantic_ok(case, args))
+    if args is not None and schema_ok and not semantic:
+        errors.append("arguments do not match the request")
+    return {"valid": bool(selection and schema_ok and semantic), "selection": selection,
+            "schema_ok": schema_ok, "semantic": semantic, "errors": errors}
+
+
 def _post(base_url: str, model: str, payload: dict[str, Any], timeout: int) -> dict[str, Any]:
     req = urllib.request.Request(
         f"{base_url.rstrip('/')}/v1/chat/completions",
@@ -241,6 +373,7 @@ def run_suite(
     context_fill: int = 0,
     instruction: str = "schema",
     constrain: bool = False,
+    tool_format: str = "native",
 ) -> dict[str, Any]:
     if suite == "concurrency":
         cases = [{"round": i} for i in range(max(1, limit))]
@@ -256,7 +389,7 @@ def run_suite(
     round_ms: list[float] = []
     pad = FILLER * max(0, int(context_fill) // 20)
     for case in cases:
-        if pad and suite == "structured_output":
+        if pad and suite in ("structured_output", "tool_call"):
             case = {**case, "prompt": pad + "\n" + case["prompt"]}
         if suite == "concurrency":
             from concurrent.futures import ThreadPoolExecutor
@@ -330,31 +463,43 @@ def run_suite(
                             "content": content[:300],
                             "failure": None if not errors else classify_failure(errors, content)})
         else:
-            payload = {
-                "model": model,
-                "messages": [{"role": "user", "content": case["prompt"]}],
-                "tools": TOOLS,
-                "max_tokens": 256,
-                "temperature": 0,
-            }
             started = time.perf_counter()
+            if tool_format == "json":
+                payload = {
+                    "model": model,
+                    "messages": [{"role": "user", "content":
+                        case["prompt"] + " Choose exactly one tool from [get_weather, "
+                        "convert_currency, search_notes] and reply with JSON "
+                        '{"tool": "<name>", "arguments": {...}} and nothing else.'}],
+                    "max_tokens": 256,
+                    "temperature": 0,
+                    "response_format": {"type": "json_schema", "json_schema": {
+                        "name": "tool_call", "strict": True, "schema": {
+                            "type": "object", "required": ["tool", "arguments"],
+                            "properties": {"tool": {"type": "string",
+                                                    "enum": [t["function"]["name"] for t in TOOLS]},
+                                           "arguments": {"type": "object", "properties": {
+                                               "city": {"type": "string"}, "unit": {"type": "string",
+                                                   "enum": ["celsius", "fahrenheit"]},
+                                               "amount": {"type": "number"}, "from": {"type": "string"},
+                                               "to": {"type": "string"}, "query": {"type": "string"},
+                                               "limit": {"type": "integer"}}}},
+                            "additionalProperties": False}}},
+                }
+            else:
+                payload = {
+                    "model": model,
+                    "messages": [{"role": "user", "content": case["prompt"]}],
+                    "tools": TOOLS,
+                    "max_tokens": 256,
+                    "temperature": 0,
+                }
             message = _post(base_url, model, payload, timeout)["choices"][0]["message"]
             latencies_ms.append((time.perf_counter() - started) * 1000)
-            calls = message.get("tool_calls") or []
-            errors = []
-            if not calls:
-                errors.append("no tool_calls in response")
-            else:
-                args = calls[0].get("function", {}).get("arguments")
-                try:
-                    parsed_args = json.loads(args or "{}")
-                except json.JSONDecodeError:
-                    parsed_args, errors = None, ["tool arguments are not JSON"]
-                if parsed_args is not None:
-                    errors = validate(parsed_args, TOOLS[0]["function"]["parameters"])
-                if calls[0].get("function", {}).get("name") != case["tool"]:
-                    errors.append("wrong tool name")
-            details.append({"prompt": case["prompt"], "valid": not errors, "errors": errors})
+            name, args, error = _extract_call(message, tool_format)
+            score = score_tool_case(case, name, args, error)
+            details.append({"prompt": case["prompt"], "tool": name, "args": args,
+                            "content": (message.get("content") or "")[:300], **score})
     if sampler:
         sampler.stop()
     valid = sum(1 for d in details if d["valid"])
@@ -375,6 +520,10 @@ def run_suite(
                 "latency_p50_ms": latency["p50_ms"],
                 "latency_p95_ms": latency["p95_ms"],
                 "latency_n": latency["n"],
+                **({"tool_selection_rate": round(sum(1 for d in details if d.get("selection")) / len(details), 3),
+                    "args_schema_rate": round(sum(1 for d in details if d.get("schema_ok")) / len(details), 3),
+                    "semantic_rate": round(sum(1 for d in details if d.get("semantic")) / len(details), 3)}
+                   if details and suite == "tool_call" else {}),
                 **({
                     "round_p50_ms": percentile(round_ms, 50),
                     "slowest_ms": round(max(latencies_ms), 1) if latencies_ms else None,
@@ -400,6 +549,7 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--vram-csv", default=None)
     run.add_argument("--context-fill", type=int, default=0)
     run.add_argument("--instruction", choices=("schema", "strict", "example"), default="schema")
+    run.add_argument("--tool-format", choices=("native", "json"), default="native")
     run.add_argument("--constrain", action="store_true",
                      help="send response_format json_schema (constrained decoding)")
     run.add_argument("--output", required=True)
@@ -407,7 +557,7 @@ def main(argv: list[str] | None = None) -> int:
     payload = run_suite(args.base_url, args.model, args.suite, limit=args.limit,
                         seed=args.seed, clients=args.clients, vram_csv=args.vram_csv,
                         context_fill=args.context_fill, instruction=args.instruction,
-                        constrain=args.constrain)
+                        constrain=args.constrain, tool_format=args.tool_format)
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=2), encoding="utf-8")

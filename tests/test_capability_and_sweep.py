@@ -430,3 +430,51 @@ def test_constrained_decoding_sends_json_schema(monkeypatch):
     fmt = seen[0]["response_format"]
     assert fmt["type"] == "json_schema"
     assert fmt["json_schema"]["schema"] == capability.SCHEMAS["person"]
+
+
+def test_tool_cases_are_deterministic_and_well_formed():
+    cases = capability.CASES["tool_call"]
+    assert len(cases) == 18
+    assert len({c["prompt"] for c in cases}) == 18
+    tools = {t["function"]["name"]: t["function"]["parameters"] for t in capability.TOOLS}
+    assert set(tools) == {"get_weather", "convert_currency", "search_notes"}
+    for c in cases:
+        assert c["tool"] in tools
+        assert set(c["expect"]) == set(tools[c["tool"]].get("required", []))
+
+
+def test_tool_scoring_separates_selection_schema_and_semantics():
+    case = capability.CASES["tool_call"][0]  # weather Lisbon celsius
+    assert capability.score_tool_case(case, "get_weather", {"city": "Lisbon", "unit": "celsius"}, None)["valid"]
+    wrong_tool = capability.score_tool_case(case, "search_notes", {"city": "Lisbon", "unit": "celsius"}, None)
+    assert wrong_tool["selection"] is False and wrong_tool["valid"] is False
+    wrong_unit = capability.score_tool_case(case, "get_weather", {"city": "Lisbon", "unit": "kelvin"}, None)
+    assert wrong_unit["schema_ok"] is False and wrong_unit["valid"] is False
+    wrong_city = capability.score_tool_case(case, "get_weather", {"city": "Porto", "unit": "celsius"}, None)
+    assert wrong_city["schema_ok"] is True and wrong_city["semantic"] is False
+
+
+def test_json_tool_format_parses_and_scores(monkeypatch):
+    def fake_post(base_url, model, payload, timeout):
+        assert payload["response_format"]["type"] == "json_schema"
+        return {"choices": [{"message": {"content":
+            '{"tool": "convert_currency", "arguments": {"amount": 25, "from": "USD", "to": "EUR"}}'}}]}
+
+    monkeypatch.setattr(capability, "_post", fake_post)
+    out = capability.run_suite("http://x", "m", "tool_call", limit=1, tool_format="json")
+    m = out["results"]["tool_call"]
+    assert m["valid_rate,none"] >= 0.0
+    assert "tool_selection_rate" in m
+
+
+def test_tool_context_fill_prefixes_prompts(monkeypatch):
+    seen = []
+
+    def fake_post(base_url, model, payload, timeout):
+        seen.append(payload["messages"][0]["content"])
+        return {"choices": [{"message": {"tool_calls": [{"function": {
+            "name": "get_weather", "arguments": '{"city":"Lisbon","unit":"celsius"}'}}]}}]}
+
+    monkeypatch.setattr(capability, "_post", fake_post)
+    capability.run_suite("http://x", "m", "tool_call", limit=1, context_fill=400)
+    assert len(seen[0]) > 400 * 3

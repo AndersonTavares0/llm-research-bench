@@ -563,6 +563,7 @@ def build_capability_cmd(
         *(["--context-fill", str(evaluation["context_fill"])] if evaluation.get("context_fill") else []),
         *(["--instruction", str(evaluation["instruction"])] if evaluation.get("instruction") else []),
         *(["--constrain"] if evaluation.get("constrain") else []),
+        *(["--tool-format", str(evaluation["tool_format"])] if evaluation.get("tool_format") else []),
         "--output",
         str(output_path),
     ]
