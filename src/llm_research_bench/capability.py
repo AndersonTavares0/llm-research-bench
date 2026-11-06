@@ -22,6 +22,11 @@ from llm_research_bench.latency import percentile, summarize_ms
 FILLER = ("The quick brown fox jumps over the lazy dog while the engineer "
           "records the measurement carefully and repeats the run. ")
 
+EXAMPLES: dict[str, dict[str, Any]] = {
+    "person": {"name": "Ada Lovelace", "age": 36, "city": "London"},
+    "weather": {"city": "Lisbon", "unit": "celsius"},
+}
+
 SCHEMAS: dict[str, dict[str, Any]] = {
     "person": {
         "type": "object",
@@ -278,10 +283,15 @@ def run_suite(
                 "messages": [
                     {
                         "role": "user",
-                        "content": f"{case['prompt']} Reply with JSON only, matching this schema: "
-                        f"{json.dumps(schema)}"
-                        + (" Return exactly one JSON object and nothing else; do not repeat the schema."
-                           if instruction == "strict" else ""),
+                        "content": (
+                    f"{case['prompt']} Reply with one JSON object like this example: "
+                    f"{json.dumps(EXAMPLES[case['schema']])} Return it and nothing else."
+                    if instruction == "example"
+                    else f"{case['prompt']} Reply with JSON only, matching this schema: "
+                    f"{json.dumps(schema)}"
+                    + (" Return exactly one JSON object and nothing else; do not repeat the schema."
+                       if instruction == "strict" else "")
+                ),
                     }
                 ],
                 "max_tokens": 256,
@@ -368,7 +378,7 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--clients", type=int, default=2)
     run.add_argument("--vram-csv", default=None)
     run.add_argument("--context-fill", type=int, default=0)
-    run.add_argument("--instruction", choices=("schema", "strict"), default="schema")
+    run.add_argument("--instruction", choices=("schema", "strict", "example"), default="schema")
     run.add_argument("--output", required=True)
     args = parser.parse_args(argv)
     payload = run_suite(args.base_url, args.model, args.suite, limit=args.limit,

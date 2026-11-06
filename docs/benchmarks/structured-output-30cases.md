@@ -52,3 +52,28 @@ preallocated at ctx 8192.
 
 Artifacts: `results/campaigns/gpu-lab-longctx-full30-{1900,3800}/` (each with
 `vram.csv` and per-case failure classification).
+
+## Prompt-variant test: example instead of schema (negative result)
+
+Hypothesis: the schema-echo failures come from showing the raw schema, so replacing
+it with a filled example should reduce them.
+
+| Condition | Prompt | Valid / 30 | Rate | p50 |
+|---|---|---|---:|---:|
+| 1.9k | schema + strict | 18 | 0.600 | 4,890 ms |
+| 1.9k | example | 9 | 0.300 | 6,326 ms |
+| 3.8k | schema + strict | 16 | 0.533 | 6,047 ms |
+| 3.8k | example | 13 | 0.433 | 6,951 ms |
+
+**Result: the example prompt is worse, not better.** The failure mode also changes:
+under the example prompt the dominant failure is **empty content** (19/30 at 1.9k,
+11/30 at 3.8k), with a few truncated JSON objects, whereas the schema prompt
+produced schema echoes. Empty responses at this rate look like a decoding/stop
+artefact rather than a model capability limit, so this variant is not adopted.
+
+**What this rules out:** simply removing the schema from the prompt does not fix
+compliance; it trades schema-echo for empty output. The next hypothesis is
+constrained decoding (`response_format` JSON schema), which should make malformed
+output impossible rather than relying on instruction following.
+
+Artifacts: `results/campaigns/gpu-lab-longctx-exam30-{1900,3800}/`.

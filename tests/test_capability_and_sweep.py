@@ -403,3 +403,16 @@ def test_classify_failure_buckets():
 def test_schema_echo_detected_even_when_truncated():
     truncated = '{"type": "object", "required": ["city", "unit"], "properties": {"city'
     assert capability.classify_failure(["invalid JSON: Expecting value"], truncated) == "schema-echo"
+
+
+def test_example_instruction_avoids_schema_json(monkeypatch):
+    seen = []
+
+    def fake_post(base_url, model, payload, timeout):
+        seen.append(payload["messages"][0]["content"])
+        return {"choices": [{"message": {"content": '{"name":"A","age":1,"city":"B"}'}}]}
+
+    monkeypatch.setattr(capability, "_post", fake_post)
+    capability.run_suite("http://x", "m", "structured_output", limit=1, instruction="example")
+    assert "like this example" in seen[0]
+    assert '"properties"' not in seen[0]
