@@ -3,6 +3,7 @@
 set -euo pipefail
 export REPO=/workspace/repo MODELS_DIR=/models
 [ -f "$REPO/tools/homelab/longctx-config.env" ] && . "$REPO/tools/homelab/longctx-config.env"
+[ -f "$REPO/tools/homelab/longctx-config-next.env" ] && . "$REPO/tools/homelab/longctx-config-next.env"
 TAG=${TAG:-longctx}
 SPEC="/workspace/.tmp/longctx-$TAG.yaml"
 mkdir -p /workspace/.tmp
