@@ -1,0 +1,45 @@
+# Long-context capability probe: structured output with ~3.8k tokens of filler.
+campaign: gpu-lab-longctx-capability
+description: >-
+  JSON-schema adherence at ~4096-token prompts on Qwen3-1.7B, ctx 8192, q8_0 KV.
+status: measured
+hardware_profile: gpu-lab-ct108-gtx1050ti-4gib
+
+server:
+  port: 8090
+  ctx_size: 8192
+  gpu_layers: 99
+  threads: 2
+  parallel: 1
+  startup_timeout_s: 300
+  cache_ram: 0
+  cache_type_k: q8_0
+  cache_type_v: q8_0
+
+bench:
+  prompt_tokens: 512
+  gen_tokens: 128
+  repetitions: 1
+
+evaluation:
+  limit: 3
+  seed: 42
+  clients: 1
+  context_fill: 3800
+  max_gen_toks: 64
+  timeout_s: 100
+
+models:
+  - name: qwen3-1.7b-q4km
+    alias: qwen3-1.7b
+    file: Qwen3-1.7B-Q4_K_M.gguf
+    quantization: Q4_K_M
+    hf_repo: ggml-org/Qwen3-1.7B-GGUF
+    hf_revision: daeb8e2d528a760970442092f6bf1e55c3b659eb
+    license: apache-2.0
+    sha256: d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5
+
+task_groups:
+  - name: structured
+    backend: capability
+    tasks: [structured_output]

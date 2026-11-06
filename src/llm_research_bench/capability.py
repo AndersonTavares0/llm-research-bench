@@ -182,6 +182,7 @@ def run_suite(
     timeout: int = 600,
     clients: int = 2,
     vram_csv: str | None = None,
+    context_fill: int = 0,
 ) -> dict[str, Any]:
     if suite == "concurrency":
         cases = [{"round": i} for i in range(max(1, limit))]
@@ -195,7 +196,10 @@ def run_suite(
     details: list[dict[str, Any]] = []
     latencies_ms: list[float] = []
     round_ms: list[float] = []
+    pad = FILLER * max(0, int(context_fill) // 20)
     for case in cases:
+        if pad and suite == "structured_output":
+            case = {**case, "prompt": pad + "\n" + case["prompt"]}
         if suite == "concurrency":
             from concurrent.futures import ThreadPoolExecutor
 
@@ -320,10 +324,12 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--seed", type=int, default=42)
     run.add_argument("--clients", type=int, default=2)
     run.add_argument("--vram-csv", default=None)
+    run.add_argument("--context-fill", type=int, default=0)
     run.add_argument("--output", required=True)
     args = parser.parse_args(argv)
     payload = run_suite(args.base_url, args.model, args.suite, limit=args.limit,
-                        seed=args.seed, clients=args.clients, vram_csv=args.vram_csv)
+                        seed=args.seed, clients=args.clients, vram_csv=args.vram_csv,
+                        context_fill=args.context_fill)
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
