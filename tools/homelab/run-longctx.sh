@@ -8,6 +8,7 @@ SPEC="/workspace/.tmp/longctx-$TAG.yaml"
 mkdir -p /workspace/.tmp
 sed -e "s|^campaign: .*|campaign: gpu-lab-longctx-$TAG|" \
     -e "s|^  context_fill: .*|  context_fill: ${FILL:-3800}\n  vram_csv: /workspace/results/conc/$TAG-vram.csv|" \
+    -e "s|^  limit: .*|  limit: ${LIMIT:-3}|" \
     "$REPO/configs/campaigns/gpu-lab-longctx-capability.yaml" > "$SPEC"
 export SPEC GPU_LAB_TASK=campaign CAMPAIGN_NO_BENCH=1
 exec bash "$REPO/tools/homelab/campaign-entrypoint.sh"

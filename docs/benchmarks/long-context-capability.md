@@ -38,3 +38,33 @@ window and is recorded as missing rather than retried further.
 - The 4096 prefill point has a single run.
 - Leases this session: ~11 min cumulative interruption (deadline validation,
   KV arms, long-context, prefill repeat), within the 30-minute cap.
+
+## Follow-up: n=10 at 3.8k with a 1.9k control
+
+| Condition | Valid / 10 | Rate | Wilson 95% | p50 | p95 |
+|---|---:|---:|---|---:|---:|
+| ~3,800-token fill | 5 / 10 | 0.50 | 0.24–0.76 | 6,608 ms | 10,350 ms |
+| ~1,900-token fill | 4 / 10 | 0.40 | 0.17–0.69 | 5,826 ms | 6,647 ms |
+
+**Finding:** the control at half the context is *not* better (4/10 vs 5/10), and
+the Wilson intervals overlap almost completely. There is therefore **no evidence
+that 3.8k-token context reduces JSON-schema adherence relative to 1.9k** on this
+model; the failures look like formatting/schema errors rather than a
+context-length effect. The earlier 2/3 result was consistent with this and is now
+superseded by the n=10 estimate.
+
+Latency does scale with context as expected (p50 5.83 s → 6.61 s), and VRAM is
+identical (1,702 MiB) because the KV budget is preallocated at ctx 8192.
+
+## 4096-token prefill repeat
+
+| Run | Prefill tok/s | Decode tok/s | 2-client req/s |
+|---|---:|---:|---:|
+| original | 632.9 | 48.04 | 0.609 |
+| repeat | 629.7 | 47.86 | 0.608 |
+
+0.5% apart, confirming the third point of the prompt-length trend
+(880.0 / 751.3 / 629.7–632.9 tok/s at 512 / 2048 / 4096 tokens).
+
+Artifacts: `results/campaigns/gpu-lab-longctx-lc10-{3800,1900}/` and
+`…-lp4096b/`, each with `vram.csv`.
