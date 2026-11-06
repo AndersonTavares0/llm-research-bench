@@ -1,6 +1,6 @@
 # Mechanism check: is response_format json_schema actually enforced?
-# The schema requires an invented field (zzz_marker); unconstrained models
-# cannot know it, so a 3/3 pass can only come from constrained decoding.
+# The schema requires an answer field; compare the same contradictory prompts
+# with and without response_format while preserving the full response.
 campaign: gpu-lab-mechanism-probe
 description: Sentinel-field probe for constrained decoding enforcement.
 status: measured

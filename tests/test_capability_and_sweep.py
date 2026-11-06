@@ -491,8 +491,11 @@ def test_mechanism_uses_schema_and_preserves_full_response(monkeypatch):
         return response
 
     monkeypatch.setattr(capability, "_post", fake_post)
-    out = capability.run_suite("http://x", "m", "mechanism", limit=1, constrain=True)
+    out = capability.run_suite("http://x", "m", "mechanism", limit=1, constrain=True,
+                               max_gen_toks=17)
     assert seen[0]["response_format"]["json_schema"]["schema"] == capability.SCHEMAS["sentinel"]
     assert seen[0]["messages"][0]["content"] in [c["prompt"] for c in capability.CASES["mechanism"]]
     assert out["cases"][0]["content"] == "x" * 400
     assert out["cases"][0]["response"] == response
+    assert out["cases"][0]["request"] == seen[0]
+    assert seen[0]["max_tokens"] == 17

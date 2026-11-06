@@ -374,7 +374,10 @@ def run_suite(
     instruction: str = "schema",
     constrain: bool = False,
     tool_format: str = "native",
+    max_gen_toks: int = 256,
 ) -> dict[str, Any]:
+    if max_gen_toks <= 0:
+        raise ValueError("max_gen_toks must be positive")
     if suite == "concurrency":
         cases = [{"round": i} for i in range(max(1, limit))]
         clients = max(1, int(clients))
@@ -443,7 +446,7 @@ def run_suite(
                 ),
                     }
                 ],
-                "max_tokens": 256,
+                "max_tokens": max_gen_toks,
                 "temperature": 0,
             }
             started = time.perf_counter()
@@ -461,7 +464,7 @@ def run_suite(
             except json.JSONDecodeError as exc:
                 parsed, errors = None, [f"invalid JSON: {exc}"]
             details.append({"prompt": case["prompt"], "valid": not errors, "errors": errors,
-                            "content": content, "response": response,
+                            "content": content, "request": payload, "response": response,
                             "failure": None if not errors else classify_failure(errors, content)})
         else:
             started = time.perf_counter()
@@ -472,7 +475,7 @@ def run_suite(
                         case["prompt"] + " Choose exactly one tool from [get_weather, "
                         "convert_currency, search_notes] and reply with JSON "
                         '{"tool": "<name>", "arguments": {...}} and nothing else.'}],
-                    "max_tokens": 256,
+                    "max_tokens": max_gen_toks,
                     "temperature": 0,
                     "response_format": {"type": "json_schema", "json_schema": {
                         "name": "tool_call", "strict": True, "schema": {
@@ -492,7 +495,7 @@ def run_suite(
                     "model": model,
                     "messages": [{"role": "user", "content": case["prompt"]}],
                     "tools": TOOLS,
-                    "max_tokens": 256,
+                    "max_tokens": max_gen_toks,
                     "temperature": 0,
                 }
             message = _post(base_url, model, payload, timeout)["choices"][0]["message"]
@@ -547,6 +550,8 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--limit", type=int, default=10)
     run.add_argument("--seed", type=int, default=42)
     run.add_argument("--clients", type=int, default=2)
+    run.add_argument("--max-gen-toks", type=int, default=256)
+    run.add_argument("--timeout", type=int, default=600)
     run.add_argument("--vram-csv", default=None)
     run.add_argument("--context-fill", type=int, default=0)
     run.add_argument("--instruction", choices=("schema", "strict", "example"), default="schema")
@@ -558,7 +563,8 @@ def main(argv: list[str] | None = None) -> int:
     payload = run_suite(args.base_url, args.model, args.suite, limit=args.limit,
                         seed=args.seed, clients=args.clients, vram_csv=args.vram_csv,
                         context_fill=args.context_fill, instruction=args.instruction,
-                        constrain=args.constrain, tool_format=args.tool_format)
+                        constrain=args.constrain, tool_format=args.tool_format,
+                        max_gen_toks=args.max_gen_toks, timeout=args.timeout)
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=2), encoding="utf-8")

@@ -559,6 +559,8 @@ def build_capability_cmd(
         str(evaluation.get("seed", 42)),
         "--clients",
         str(evaluation.get("clients", 2)),
+        "--max-gen-toks",
+        str(evaluation.get("max_gen_toks", 256)),
         *(["--vram-csv", str(evaluation["vram_csv"])] if evaluation.get("vram_csv") else []),
         *(["--context-fill", str(evaluation["context_fill"])] if evaluation.get("context_fill") else []),
         *(["--instruction", str(evaluation["instruction"])] if evaluation.get("instruction") else []),
