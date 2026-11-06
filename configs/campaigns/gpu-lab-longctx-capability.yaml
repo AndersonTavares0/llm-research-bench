@@ -27,7 +27,7 @@ evaluation:
   clients: 1
   context_fill: 3800
   max_gen_toks: 64
-  timeout_s: 100
+  timeout_s: 600
 
 models:
   - name: qwen3-1.7b-q4km

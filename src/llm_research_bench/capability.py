@@ -183,14 +183,14 @@ class _VramSampler(threading.Thread):
 
 def classify_failure(errors: list[str], content: str | None) -> str:
     """Bucket a failed structured-output case; keeps empty distinct from echo."""
-    if not (content or "").strip():
+    text = (content or "").strip()
+    if not text:
         return "empty"
+    # A truncated schema echo is still an echo, even when json.loads fails.
+    if '"type": "object"' in text and '"required"' in text and '"properties"' in text:
+        return "schema-echo"
     if any("invalid JSON" in e for e in errors):
         return "invalid-json"
-    if any("unexpected property 'type'" in e for e in errors) and any(
-        "missing required property" in e for e in errors
-    ):
-        return "schema-echo"
     if errors:
         return "schema"
     return "none"

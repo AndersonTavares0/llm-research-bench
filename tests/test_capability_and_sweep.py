@@ -392,9 +392,14 @@ def test_schemas_accept_a_reference_instance():
 
 
 def test_classify_failure_buckets():
-    echo = ["$: unexpected property 'type'", "$: missing required property 'city'"]
+    echo = '{"type": "object", "required": ["city"], "properties": {"city": {"type": "string"'
     assert capability.classify_failure(["invalid JSON: x"], "") == "empty"
     assert capability.classify_failure(["invalid JSON: x"], "not json") == "invalid-json"
-    assert capability.classify_failure(echo, '{"type":"object"}') == "schema-echo"
-    assert capability.classify_failure(["$: expected integer"], "{}") == "schema"
+    assert capability.classify_failure(["invalid JSON: truncated"], echo) == "schema-echo"
+    assert capability.classify_failure(["$: expected integer"], '{"name": 1}') == "schema"
     assert capability.classify_failure([], "{}") == "none"
+
+
+def test_schema_echo_detected_even_when_truncated():
+    truncated = '{"type": "object", "required": ["city", "unit"], "properties": {"city'
+    assert capability.classify_failure(["invalid JSON: Expecting value"], truncated) == "schema-echo"
