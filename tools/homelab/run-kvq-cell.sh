@@ -5,12 +5,12 @@ set -euo pipefail
 export REPO=/workspace/repo
 export MODELS_DIR=/models
 [ -f "$REPO/tools/homelab/kvq-config.env" ] && . "$REPO/tools/homelab/kvq-config.env"
-KV=${KV:-f16}; TAG=${TAG:-kv}
+KV=${KV:-f16}; TAG=${TAG:-kv}; LIMIT=${LIMIT:-40}
 SPEC="/workspace/.tmp/kvq-$TAG.yaml"
 mkdir -p /workspace/.tmp
 BASE="$REPO/configs/campaigns/gpu-lab-kv-quality.yaml"
 sed -e "s|^campaign: .*|campaign: gpu-lab-kvq-$TAG|" \
-    -e "s|^  limit: .*|  limit: 40|" \
+    -e "s|^  limit: .*|  limit: $LIMIT|" \
     -e "s|^  cache_type_k: .*|  cache_type_k: $KV|" \
     -e "s|^  cache_type_v: .*|  cache_type_v: $KV|" \
     "$BASE" > "$SPEC"
