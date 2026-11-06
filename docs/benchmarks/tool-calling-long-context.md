@@ -48,3 +48,21 @@ tool invocation.
 - 18 cases → Wilson half-width ≈ ±0.11 even for a perfect score.
 
 Artifacts: `results/campaigns/gpu-lab-toolctx-{n1900,n3800,j1900,j3800,j2-1900,j2-3800}/`.
+
+## Near the context limit (~7k tokens)
+
+| Suite | Condition | Result | p50 | p95 | VRAM |
+|---|---|---|---:|---:|---:|
+| Tool calling (native) | ~6.8k fill | **18/18** selection, schema and semantics | 5,115 ms | 8,992 ms | 1,702 MiB |
+| Structured output (constrained) | ~6.8k fill | 24/30 (0.80) | 6,088 ms | 8,178 ms | 1,702 MiB |
+
+Native tool calling shows **no degradation at ~7k tokens**, well past the 3.8k
+point where JSON-mediated calls already struggled. Structured output under
+constrained decoding falls from 27/30 (3.8k) to 24/30 (7k), but the paired test
+gives 3 improved / 6 worsened, McNemar **p = 0.508** — no evidence of a real drop
+at this sample size.
+
+Latency continues to scale with prompt length (tool p50 3.58 s → 5.12 s; p95
+5.95 s → 8.99 s), and VRAM stays flat because the KV budget is preallocated.
+
+Artifacts: `results/campaigns/gpu-lab-toolctx-n7k/`, `…-longctx-s7k/`.
