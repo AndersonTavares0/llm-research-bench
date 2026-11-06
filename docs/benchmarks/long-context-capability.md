@@ -68,3 +68,30 @@ identical (1,702 MiB) because the KV budget is preallocated at ctx 8192.
 
 Artifacts: `results/campaigns/gpu-lab-longctx-lc10-{3800,1900}/` and
 `…-lp4096b/`, each with `vram.csv`.
+
+## Failure taxonomy (from the stored per-case errors)
+
+| Failure type | 3.8k | 1.9k | Total / 20 |
+|---|---:|---:|---:|
+| Valid | 5 | 4 | 9 |
+| Schema violation | 3 | 3 | 6 |
+| Invalid JSON (empty/non-JSON content) | 2 | 3 | 5 |
+
+The six schema failures share one signature: `missing required property 'city'`,
+`missing required property 'unit'`, `unexpected property 'type'`. That is the
+shape of a response that **echoes the schema object** instead of producing an
+instance — the model returns `{"type":"object","required":[...]}`. The five
+invalid-JSON errors are `Expecting value: line 1 column 1`, i.e. empty content,
+consistent with the model spending the 64-token generation budget before emitting
+anything parseable.
+
+**Interpretation (not yet proven):** both failure modes look like decoding-budget
+and instruction-following artefacts rather than a context-length limit. They occur
+at nearly the same rate at 1.9k, and the model frequently emits the schema rather
+than an instance.
+
+**Next experiment (testable):** repeat both context conditions with
+`max_gen_toks = 256` and an explicit “return one JSON object, do not repeat the
+schema” instruction. If the valid rate rises at both lengths, the failure is a
+budget/instruction effect; if only the 1.9k condition improves, context is
+implicated after all.
