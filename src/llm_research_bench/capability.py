@@ -373,11 +373,14 @@ def run_suite(
     context_fill: int = 0,
     instruction: str = "schema",
     constrain: bool = False,
+    constraint_format: str = "json_schema",
     tool_format: str = "native",
     max_gen_toks: int = 256,
 ) -> dict[str, Any]:
     if max_gen_toks <= 0:
         raise ValueError("max_gen_toks must be positive")
+    if constraint_format not in ("json_schema", "json_object"):
+        raise ValueError("constraint_format must be json_schema or json_object")
     if suite == "concurrency":
         cases = [{"round": i} for i in range(max(1, limit))]
         clients = max(1, int(clients))
@@ -451,10 +454,10 @@ def run_suite(
             }
             started = time.perf_counter()
             if constrain:
-                payload["response_format"] = {
+                payload["response_format"] = ({
                     "type": "json_schema",
                     "json_schema": {"name": case["schema"], "schema": schema, "strict": True},
-                }
+                } if constraint_format == "json_schema" else {"type": "json_object"})
             response = _post(base_url, model, payload, timeout)
             content = _extract_content(response)
             latencies_ms.append((time.perf_counter() - started) * 1000)
@@ -558,12 +561,14 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--tool-format", choices=("native", "json"), default="native")
     run.add_argument("--constrain", action="store_true",
                      help="send response_format json_schema (constrained decoding)")
+    run.add_argument("--constraint-format", choices=("json_schema", "json_object"), default="json_schema")
     run.add_argument("--output", required=True)
     args = parser.parse_args(argv)
     payload = run_suite(args.base_url, args.model, args.suite, limit=args.limit,
                         seed=args.seed, clients=args.clients, vram_csv=args.vram_csv,
                         context_fill=args.context_fill, instruction=args.instruction,
-                        constrain=args.constrain, tool_format=args.tool_format,
+                        constrain=args.constrain, constraint_format=args.constraint_format,
+                        tool_format=args.tool_format,
                         max_gen_toks=args.max_gen_toks, timeout=args.timeout)
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)

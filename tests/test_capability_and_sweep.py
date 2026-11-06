@@ -432,6 +432,25 @@ def test_constrained_decoding_sends_json_schema(monkeypatch):
     assert fmt["json_schema"]["schema"] == capability.SCHEMAS["person"]
 
 
+def test_json_object_constraint_sends_generic_json_format(monkeypatch):
+    seen = []
+
+    def fake_post(base_url, model, payload, timeout):
+        seen.append(payload)
+        return {"choices": [{"message": {"content": '{"name":"A","age":1,"city":"B"}'}}]}
+
+    monkeypatch.setattr(capability, "_post", fake_post)
+    capability.run_suite("http://x", "m", "structured_output", limit=1,
+                         constrain=True, constraint_format="json_object")
+    assert seen[0]["response_format"] == {"type": "json_object"}
+
+
+def test_invalid_constraint_format_is_rejected():
+    with pytest.raises(ValueError, match="constraint_format"):
+        capability.run_suite("http://x", "m", "structured_output", limit=1,
+                             constraint_format="freeform")
+
+
 def test_tool_cases_are_deterministic_and_well_formed():
     cases = capability.CASES["tool_call"]
     assert len(cases) == 18

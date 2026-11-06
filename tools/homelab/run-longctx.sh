@@ -12,7 +12,7 @@ sed -e "s|^campaign: .*|campaign: gpu-lab-longctx-$TAG|" \
     -e "s|^  limit: .*|  limit: ${LIMIT:-3}|" \
     -e "s|^  cache_type_k: .*|  cache_type_k: ${CACHE:-q8_0}|" \
     -e "s|^  cache_type_v: .*|  cache_type_v: ${CACHE:-q8_0}|" \
-    -e "s|^  max_gen_toks: .*|  max_gen_toks: ${GEN:-64}\n  instruction: ${INSTR:-schema}\n  constrain: ${CONSTRAIN:-false}|" \
+    -e "s|^  max_gen_toks: .*|  max_gen_toks: ${GEN:-64}\n  instruction: ${INSTR:-schema}\n  constrain: ${CONSTRAIN:-false}\n  constraint_format: ${CONSTRAINT_FORMAT:-json_schema}|" \
     "$REPO/configs/campaigns/gpu-lab-longctx-capability.yaml" > "$SPEC"
 export SPEC GPU_LAB_TASK=campaign CAMPAIGN_NO_BENCH=1
 exec bash "$REPO/tools/homelab/campaign-entrypoint.sh"
