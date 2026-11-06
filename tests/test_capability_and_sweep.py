@@ -348,3 +348,15 @@ def test_context_fill_prefixes_structured_prompts(monkeypatch):
     capability.run_suite("http://x", "m", "structured_output", limit=1, context_fill=400)
     assert len(seen[0]) > 400 * 3
     assert "Extract:" in seen[0] or "Weather in" in seen[0]
+
+
+def test_strict_instruction_adds_constraint(monkeypatch):
+    seen = []
+
+    def fake_post(base_url, model, payload, timeout):
+        seen.append(payload["messages"][0]["content"])
+        return {"choices": [{"message": {"content": '{"name":"A","age":1,"city":"B"}'}}]}
+
+    monkeypatch.setattr(capability, "_post", fake_post)
+    capability.run_suite("http://x", "m", "structured_output", limit=1, instruction="strict")
+    assert "do not repeat the schema" in seen[0]

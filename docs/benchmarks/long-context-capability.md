@@ -95,3 +95,25 @@ than an instance.
 schema” instruction. If the valid rate rises at both lengths, the failure is a
 budget/instruction effect; if only the 1.9k condition improves, context is
 implicated after all.
+
+## Instruction/budget test: strict instruction + 256 output tokens
+
+| Condition | Instruction | max_gen_toks | Valid / 10 | Wilson 95% | p50 |
+|---|---|---:|---:|---|---:|
+| 1.9k | schema | 64 | 4 / 10 (0.40) | 0.17–0.69 | 5,826 ms |
+| 1.9k | strict | 256 | **7 / 10 (0.70)** | 0.40–0.89 | 5,105 ms |
+| 3.8k | schema | 64 | 5 / 10 (0.50) | 0.24–0.76 | 6,608 ms |
+| 3.8k | strict | 256 | 5 / 10 (0.50) | 0.24–0.76 | 6,109 ms |
+
+**Observation:** the stricter instruction plus a larger budget lifted the 1.9k
+condition by 30 percentage points (0.40 → 0.70) but left the 3.8k condition
+unchanged (0.50). This is the first evidence of an **interaction**: instruction
+and generation budget fix short-context formatting failures, but something else
+persists at 3.8k.
+
+**Uncertainty:** intervals overlap heavily at n=10 (0.40–0.89 vs 0.24–0.76), so
+this is a hypothesis, not a conclusion. The next test is a replication at n=30
+for the 3.8k strict condition, plus error classification of the 3 remaining
+failures (truncation vs schema echo vs empty).
+
+Artifacts: `results/campaigns/gpu-lab-longctx-lc10s-{1900,3800}/`.

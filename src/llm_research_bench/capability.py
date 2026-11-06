@@ -183,6 +183,7 @@ def run_suite(
     clients: int = 2,
     vram_csv: str | None = None,
     context_fill: int = 0,
+    instruction: str = "schema",
 ) -> dict[str, Any]:
     if suite == "concurrency":
         cases = [{"round": i} for i in range(max(1, limit))]
@@ -240,7 +241,9 @@ def run_suite(
                     {
                         "role": "user",
                         "content": f"{case['prompt']} Reply with JSON only, matching this schema: "
-                        f"{json.dumps(schema)}",
+                        f"{json.dumps(schema)}"
+                        + (" Return exactly one JSON object and nothing else; do not repeat the schema."
+                           if instruction == "strict" else ""),
                     }
                 ],
                 "max_tokens": 256,
@@ -325,11 +328,12 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--clients", type=int, default=2)
     run.add_argument("--vram-csv", default=None)
     run.add_argument("--context-fill", type=int, default=0)
+    run.add_argument("--instruction", choices=("schema", "strict"), default="schema")
     run.add_argument("--output", required=True)
     args = parser.parse_args(argv)
     payload = run_suite(args.base_url, args.model, args.suite, limit=args.limit,
                         seed=args.seed, clients=args.clients, vram_csv=args.vram_csv,
-                        context_fill=args.context_fill)
+                        context_fill=args.context_fill, instruction=args.instruction)
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
