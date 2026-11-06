@@ -478,3 +478,21 @@ def test_tool_context_fill_prefixes_prompts(monkeypatch):
     monkeypatch.setattr(capability, "_post", fake_post)
     capability.run_suite("http://x", "m", "tool_call", limit=1, context_fill=400)
     assert len(seen[0]) > 400 * 3
+
+
+def test_mechanism_uses_schema_and_preserves_full_response(monkeypatch):
+    seen = []
+    response = {"choices": [{"message": {"content": "x" * 400},
+                             "finish_reason": "length"}],
+                "usage": {"completion_tokens": 256}}
+
+    def fake_post(base_url, model, payload, timeout):
+        seen.append(payload)
+        return response
+
+    monkeypatch.setattr(capability, "_post", fake_post)
+    out = capability.run_suite("http://x", "m", "mechanism", limit=1, constrain=True)
+    assert seen[0]["response_format"]["json_schema"]["schema"] == capability.SCHEMAS["sentinel"]
+    assert seen[0]["messages"][0]["content"] in [c["prompt"] for c in capability.CASES["mechanism"]]
+    assert out["cases"][0]["content"] == "x" * 400
+    assert out["cases"][0]["response"] == response

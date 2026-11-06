@@ -1,5 +1,12 @@
 # Tool calling at 1.9k and 3.8k context (GTX 1050 Ti)
 
+> **Audit correction:** The historical interpretation below overstates these
+> exploratory results. Nominal fill settings were not verified token counts;
+> native and JSON arms differ in interface, prompt, and schema, not just decoding
+> constraint. Empty or invalid content does not establish EOS or grammar behavior,
+> and missing tool selections must not be counted as wrong tool choices. A perfect
+> score on 18 fixed cases does not establish robustness or no degradation.
+
 18 deterministic cases across three tools (`get_weather`, `convert_currency`,
 `search_notes`), each with an expected tool and expected argument semantics.
 Scoring separates **tool selection**, **argument-schema validity**, and

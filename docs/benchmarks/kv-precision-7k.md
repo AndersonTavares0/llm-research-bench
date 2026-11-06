@@ -1,5 +1,21 @@
 # KV-cache precision at ~7k context: f16 vs q8_0 (paired)
 
+> **Audit correction:** The historical text below overstates the evidence. The
+> evaluator measured schema validity, not semantic correctness, and stored only
+> 300 characters without finish reasons or token usage. Empty or invalid output
+> does not establish EOS or its cause. The 6,800 filler setting is not a verified
+> token count. The claimed separate fit check was not performed: VRAM was sampled
+> during full runs. Separate run keys and commands exist, but repeats use identical
+> deterministic cases and yield identical per-case prompt/content/validity hashes
+> within each precision; they are not independent quality samples. McNemar
+> p=0.581 neither establishes equivalence nor bounds a practical quality penalty.
+> Latency and memory differences are descriptive; their causes are unverified.
+> The recommendations and causal claims below should not be relied upon.
+
+Audit informed by the Scientific Agent Skills critical-thinking and experimental-design
+workflows: Kassis et al. (2026), *Scientific Agent Skills: A Library of Procedural
+Knowledge for Research Agents*, https://doi.org/10.48550/arXiv.2609.00065.
+
 Controlled comparison: identical model file, prompts, 6,800-token filler, ctx 8192,
 strict instruction, `response_format` JSON schema, `max_tokens` 256, temperature 0,
 one client. The **only** changed factor is `--cache-type-k/--cache-type-v`.

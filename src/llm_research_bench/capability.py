@@ -423,7 +423,7 @@ def run_suite(
             details.append({"round": case["round"], "wall_ms": [round(w, 1) for w in walls],
                             "round_ms": round(elapsed, 1), "valid": True})
             continue
-        if suite == "structured_output":
+        if suite in ("structured_output", "mechanism"):
             schema = SCHEMAS[case["schema"]]
             payload = {
                 "model": model,
@@ -452,7 +452,8 @@ def run_suite(
                     "type": "json_schema",
                     "json_schema": {"name": case["schema"], "schema": schema, "strict": True},
                 }
-            content = _extract_content(_post(base_url, model, payload, timeout))
+            response = _post(base_url, model, payload, timeout)
+            content = _extract_content(response)
             latencies_ms.append((time.perf_counter() - started) * 1000)
             try:
                 parsed = json.loads(content)
@@ -460,7 +461,7 @@ def run_suite(
             except json.JSONDecodeError as exc:
                 parsed, errors = None, [f"invalid JSON: {exc}"]
             details.append({"prompt": case["prompt"], "valid": not errors, "errors": errors,
-                            "content": content[:300],
+                            "content": content, "response": response,
                             "failure": None if not errors else classify_failure(errors, content)})
         else:
             started = time.perf_counter()

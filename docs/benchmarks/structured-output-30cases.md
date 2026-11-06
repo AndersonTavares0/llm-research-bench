@@ -1,5 +1,11 @@
 # Structured output at long context: 30-case paired test
 
+> **Audit correction:** Filler settings are not verified tokenizer counts and
+> validity measures schema adherence, not semantic correctness. The historical
+> mechanism probe did not execute the intended structured-output path; empty
+> responses therefore do not verify grammar enforcement, EOS behavior, or its
+> cause. Non-significant paired tests do not establish absence of a context effect.
+
 The 10-case suite was expanded to 30 deterministic cases (first ten byte-identical
 to the original set). This run uses **all 30** cases per arm, strict instruction
 (“return one JSON object, do not repeat the schema”), `max_gen_toks = 256`,
