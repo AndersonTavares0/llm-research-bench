@@ -139,6 +139,7 @@ CASES: dict[str, list[dict[str, Any]]] = {
     "needle_precedence_tail_conflict": [],
     "needle_archived_rank_conflict": [],
     "needle_status_label_conflict": [],
+    "needle_authoritative_flag_conflict": [],
     "structured_output": [
         {"prompt": "Extract: Ada Lovelace, 36, London.", "schema": "person"},
         {"prompt": "Extract: Grace Hopper, 85, New York.", "schema": "person"},
@@ -477,6 +478,34 @@ def _needle_status_label_conflict_pair(case_id: str, value: str) -> dict[str, An
             "distractor_prompt": instruction + "Context:\n" + "".join(early_rows) + query}
 
 
+def _needle_authoritative_flag_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    """Nine one-line JSON candidates; only the boolean flag distinguishes them."""
+    target_index = round((NEEDLE_FILLERS - 1) * 50 / 100)
+    instruction = (
+        "Find the code in the requested record. Use only the context below; "
+        "answer with the code and nothing else.\n\n"
+    )
+    query = f"\nWhat is the code in record {case_id}?"
+
+    def candidate(code: str, authoritative: bool) -> str:
+        flag = "true" if authoritative else "false"
+        return f'{{"record": "{case_id}", "code": "{code}", "authoritative": {flag}}} '
+
+    rows = [FILLER] * NEEDLE_FILLERS
+    rows[target_index] = candidate(value, True)
+    decoys = [candidate(code, False) for _, code in NEEDLE_DECOYS]
+    baseline_rows = rows.copy()
+    for index, line in zip(NEEDLE_DISTRACTOR_ROWS, decoys):
+        baseline_rows[index] = line
+
+    early_rows = rows.copy()
+    for index, line in zip(tuple(range(20, 170, 19)), decoys):
+        early_rows[index] = line
+    return {"case_id": case_id, "needle_value": value, "depth_pct": 50,
+            "baseline_prompt": instruction + "Context:\n" + "".join(baseline_rows) + query,
+            "distractor_prompt": instruction + "Context:\n" + "".join(early_rows) + query}
+
+
 PAIRED_NEEDLE_SUITES = {
     "needle_distractor": (_needle_distractor_pair, "distractor"),
     "needle_recency_conflict": (_needle_recency_conflict_pair, "recency_conflict"),
@@ -485,6 +514,7 @@ PAIRED_NEEDLE_SUITES = {
     "needle_precedence_tail_conflict": (_needle_precedence_tail_conflict_pair, "precedence_tail_conflict"),
     "needle_archived_rank_conflict": (_needle_archived_rank_conflict_pair, "archived_rank_conflict"),
     "needle_status_label_conflict": (_needle_status_label_conflict_pair, "status_label_conflict"),
+    "needle_authoritative_flag_conflict": (_needle_authoritative_flag_conflict_pair, "authoritative_flag_conflict"),
     "needle_archived_conflict": (_needle_archived_conflict_pair, "archived_conflict"),
     "needle_unlabeled_conflict": (_needle_unlabeled_conflict_pair, "unlabeled_conflict"),
     "needle_position_conflict": (_needle_position_conflict_pair, "position_conflict"),

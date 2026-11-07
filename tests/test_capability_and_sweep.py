@@ -1177,3 +1177,57 @@ def test_status_label_conflict_batches_match_tokens_and_track_condition(monkeypa
         assert all(row["matched_input_tokens"] == row["usage_prompt_tokens"] for row in rows)
         assert all("status_label_conflict_after_padding" in row["count_provenance"] for row in rows)
         assert out["results"]["needle_status_label_conflict"]["usage_mismatch_count"] == 0
+
+
+def test_authoritative_flag_conflict_marks_one_candidate_true():
+    import json
+    import re
+
+    case_id, value = capability.NEEDLE_CASES[0]
+    pair = capability._needle_authoritative_flag_conflict_pair(case_id, value)
+    baseline, early = pair["baseline_prompt"], pair["distractor_prompt"]
+    candidate = re.compile(r'\{"record": "[A-Z0-9]+", "code": "[A-Z0-9]+", "authoritative": (?:true|false)\}')
+
+    assert len(baseline) == len(early)
+    for prompt in (baseline, early):
+        found = [json.loads(text) for text in candidate.findall(prompt)]
+        assert len(found) == 9
+        assert [row["authoritative"] for row in found].count(True) == 1
+        assert {row["record"] for row in found} == {case_id}
+        assert sorted(row["code"] for row in found) == sorted([value, *[c for _, c in capability.NEEDLE_DECOYS]])
+        assert prompt.endswith(f"\nWhat is the code in record {case_id}?")
+        assert "authoritative" not in prompt.split("Context:\n")[0]
+    assert json.loads(candidate.findall(baseline)[0]) == {"record": case_id, "code": value, "authoritative": True}
+    assert json.loads(candidate.findall(early)[0])["authoritative"] is False
+    assert json.loads(candidate.findall(early)[-1]) == {"record": case_id, "code": value, "authoritative": True}
+
+
+def test_authoritative_flag_conflict_batches_match_tokens_and_track_condition(monkeypatch):
+    def token_count(prompt):
+        return len(prompt.split()) + 3
+
+    def fake_endpoint(url, payload, timeout):
+        assert payload["chat_template_kwargs"] == {"enable_thinking": False}
+        return {"input_tokens": token_count(payload["messages"][0]["content"])}
+
+    def fake_post(base_url, model, payload, timeout):
+        prompt = payload["messages"][0]["content"]
+        case_id = prompt.rsplit("record ", 1)[1].split("?", 1)[0]
+        code = dict(capability.NEEDLE_CASES)[case_id]
+        return {"choices": [{"message": {"content": code}, "finish_reason": "stop"}],
+                "usage": {"prompt_tokens": token_count(prompt), "completion_tokens": 6}}
+
+    monkeypatch.setattr(capability, "_post_endpoint", fake_endpoint)
+    monkeypatch.setattr(capability, "_post", fake_post)
+    outputs = [capability.run_suite("http://x", "m", "needle_authoritative_flag_conflict", limit=5,
+                                    needle_batch=batch, think=False, max_gen_toks=512)
+               for batch in (0, 1)]
+    ids = [{row["case_id"] for row in out["cases"]} for out in outputs]
+    assert len(ids[0]) == len(ids[1]) == 5 and ids[0].isdisjoint(ids[1])
+    for out in outputs:
+        rows = out["cases"]
+        assert {row["condition"] for row in rows} == {"baseline", "authoritative_flag_conflict"}
+        assert all(row["usage_matches_input_tokens"] for row in rows)
+        assert all(row["matched_input_tokens"] == row["usage_prompt_tokens"] for row in rows)
+        assert all("authoritative_flag_conflict_after_padding" in row["count_provenance"] for row in rows)
+        assert out["results"]["needle_authoritative_flag_conflict"]["usage_mismatch_count"] == 0
