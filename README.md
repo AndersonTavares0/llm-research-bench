@@ -108,6 +108,9 @@ flowchart TD
 > runtime and evaluator protocols on one GPU; see the [evidence index](docs/benchmarks/evidence-index.md)
 > for current, bounded conclusions and raw artifacts. Current official-tool
 > runs are documented separately in [official campaigns](docs/benchmarks/official-campaigns.md).
+> The source-pinned HotpotQA support-order pilot is incomplete (15/100 paired
+> items) and descriptive; it tests supplied-context QA, not live retrieval or
+> conflicting document versions. See the [partial report](docs/benchmarks/hotpotqa-support-order-partial.md).
 
 ### Reference Edge Testbed
 

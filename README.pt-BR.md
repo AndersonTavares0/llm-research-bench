@@ -109,6 +109,9 @@ flowchart TD
 > o [índice de evidências](docs/benchmarks/evidence-index.md) para conclusões
 > atuais, limitadas e ligadas aos artefatos brutos. As execuções com ferramentas
 > oficiais estão documentadas separadamente em [campanhas oficiais](docs/benchmarks/official-campaigns.pt-BR.md).
+> O piloto de ordem de suporte no HotpotQA, com fonte fixada, está incompleto
+> (15/100 pares) e é descritivo; avalia QA com contexto fornecido, não recuperação
+> ao vivo nem conflitos entre versões. Veja o [relatório parcial](docs/benchmarks/hotpotqa-support-order-partial.md).
 
 ### Bancada Experimental de Referência
 

@@ -51,4 +51,3 @@ Gerado em 2026-11-05T13:22:01Z a partir de saídas oficiais do lm-evaluation-har
 | qwen3-1.7b-q8 | 0 | 128 | 179.99 | 0.16 | ddf48f85c | NVIDIA GeForce RTX 3060 Ti | CUDA |
 | qwen3-1.7b-q4km | 512 | 0 | 850.30 | 1.12 | ddf48f85c | NVIDIA GeForce GTX 1050 Ti | CUDA |
 | qwen3-1.7b-q4km | 0 | 128 | 48.15 | 0.02 | ddf48f85c | NVIDIA GeForce GTX 1050 Ti | CUDA |
-

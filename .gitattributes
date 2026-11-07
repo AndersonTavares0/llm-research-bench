@@ -1,2 +1,7 @@
 # Shell entry points run inside Linux containers; CRLF makes them fail.
 *.sh text eol=lf
+# These four trailing spaces are part of recorded prompt templates, not noise.
+docs/benchmarks/needle-archived-rank-conflict.md whitespace=-blank-at-eol
+docs/benchmarks/needle-status-label-conflict.md whitespace=-blank-at-eol
+# Preserve raw telemetry CRLF while excluding the carriage return from whitespace checks.
+results/sweeps/*/*-vram.csv whitespace=cr-at-eol
