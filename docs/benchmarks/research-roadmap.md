@@ -26,8 +26,11 @@ not replace the campaign records; every claim below points at an artifact.
     pilot, not a confirmatory result. The dataset supplies candidate passages:
     it tests closed-context multi-hop QA, not live retrieval or version-history
     conflicts. See the [partial report](hotpotqa-support-order-partial.md).
-    Do not resume GPU work until an operator repairs the missing production model
-    and the authoritative real-completion verifier passes.
+    A subsequent read-only operational check on 2026-11-07 passed the authoritative
+    real-completion verifier for production generation 347 (active leases: 0), but
+    the previously reported GGUF path remains absent. No new campaign has been
+    launched; verify the current model/configuration state before scheduling more
+    GPU work. See the [partial report](hotpotqa-support-order-partial.md).
 2. **Generalization across models and retrieval systems is unknown.** Current
    conflict findings use Qwen3-1.7B Q4_K_M, one runtime, one GPU and hand-built
    candidate orderings. Replicate only after the natural-document protocol is
@@ -102,11 +105,15 @@ verified recovery gates intact.
   Qwen3-1.7B (10/10 and 5/5, respectively); HotpotQA evaluator and fixture are
   implemented. Only 15/100 paired HotpotQA items (batches 0–2/20) ran; treat
   these as an incomplete descriptive pilot, halted after the production recovery
-  verifier returned HTTP 500 because `/models/Qwen3.5-4B-Q4_K_M-MTP.gguf` was
-  missing. The source supplies candidates, so this is closed-context QA, not
-  retrieval or version-conflict evidence. See the
-  [partial report](hotpotqa-support-order-partial.md). No more GPU leases until
-  production is repaired and the authoritative verifier passes.
+  verifier returned HTTP 500. A later read-only check (2026-11-07) passed the
+  exact authoritative verifier (SHA-256
+  `74157aec20bb160dce1361b645d33a87f48bcf03ff53b302203672480cc292e0`) for
+  production generation 347 with zero active leases; however, the historical
+  `/models/Qwen3.5-4B-Q4_K_M-MTP.gguf` path still tested absent. This establishes
+  a successful completion through the alias at check time, not that the old
+  pathname has returned. No further study batch has run. The source supplies
+  candidates, so this is closed-context QA, not retrieval or version-conflict
+  evidence. See the [partial report](hotpotqa-support-order-partial.md).
 - Campaign spec: `configs/campaigns/gpu-lab-capability-probe.yaml` runs both
   probes as `backend: capability` groups under one lease; each response is timed
   client-side and reported as p50/p95 end-to-end latency.
