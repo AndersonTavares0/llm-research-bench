@@ -143,8 +143,8 @@ def run_mtp_ablation_experiment(
     # Calculate exact delta and speedup ratio with statistical bounds
     mtp_mean = ablation_results["gemma4:E2B"]["stats_tok_s"]["mean"]
     nomtp_mean = ablation_results["gemma4:MTP"]["stats_tok_s"]["mean"]
-    speedup_ratio = round(mtp_mean / max(0.01, nomtp_mean), 2)
-    delta_pct = round(((mtp_mean - nomtp_mean) / max(0.01, nomtp_mean)) * 100.0, 1)
+    speedup_ratio = round(mtp_mean / nomtp_mean, 2) if nomtp_mean not in (None, 0) and mtp_mean is not None else None
+    delta_pct = round(((mtp_mean - nomtp_mean) / nomtp_mean) * 100.0, 1) if nomtp_mean not in (None, 0) and mtp_mean is not None else None
 
     ablation_summary = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
