@@ -52,9 +52,13 @@ def score_response(content: str, gold_answer: str, gold_titles: list[str]) -> di
             isinstance(title, str) for title in titles
         ):
             raise ValueError("expected string answer and list of title strings")
-        parse_error = None
-    except (json.JSONDecodeError, ValueError) as exc:
-        parsed, answer, titles, parse_error = None, "", [], str(exc)
+        parse_error, parse_status = None, "ok"
+    except json.JSONDecodeError as exc:
+        parsed, answer, titles = None, "", []
+        parse_error, parse_status = str(exc), "malformed_json"
+    except ValueError as exc:
+        parsed, answer, titles = None, "", []
+        parse_error, parse_status = str(exc), "invalid_response_shape"
 
     gold = {normalize_answer(title) for title in gold_titles}
     predicted = {normalize_answer(title) for title in titles}
@@ -64,6 +68,7 @@ def score_response(content: str, gold_answer: str, gold_titles: list[str]) -> di
     return {
         "parsed": parsed,
         "parse_error": parse_error,
+        "parse_status": parse_status,
         "answer": answer,
         "answer_exact_match": normalize_answer(answer) == normalize_answer(gold_answer),
         "support_titles_precision": precision,
@@ -144,6 +149,8 @@ def run_batch(base_url: str, model: str, dataset_path: Path, batch_index: int,
                 latencies.append(latency)
                 content = capability._extract_content(response)
                 scored = score_response(content, row["answer"], gold_titles)
+                finish_reason = ((response.get("choices") or [{}])[0]).get("finish_reason")
+                response_status = "truncated" if finish_reason == "length" else scored["parse_status"]
                 usage_tokens = (response.get("usage") or {}).get("prompt_tokens")
                 details.append({
                     "id": row["id"], "type": row["type"], "level": row["level"],
@@ -152,6 +159,7 @@ def run_batch(base_url: str, model: str, dataset_path: Path, batch_index: int,
                     "gold_support_facts": row["supporting_facts"],
                     "prompt": payload["messages"][0]["content"], "request": payload,
                     "response": response, "content": content, **scored,
+                    "response_status": response_status,
                     "matched_input_tokens": target,
                     "usage_prompt_tokens": usage_tokens,
                     "usage_matches_input_tokens": usage_tokens == target,

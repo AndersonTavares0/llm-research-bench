@@ -53,6 +53,18 @@ at the time, not a statement about current production status; the historical GGU
 pathname may be obsolete, and current deployment routing remains unverified. No
 result here supports a general ordering effect.
 
+## Supplemental raw-response audit
+
+An offline audit of the 30 preserved raw responses found 30 `finish_reason=stop`
+and one JSON parse failure (b01, comparison case
+`5a80caac554299260e20a161`, support last). That response contains 85 completion
+tokens and is malformed JSON; it is not labeled truncated by the server. The
+other 29 responses parse. These are response-format observations only: answer
+EM and supporting-title overlap do not adjudicate factual correctness or whether
+the cited passages entail the answer. Those claims require independent review
+against the supplied passages and gold facts. Historical metrics above and raw
+artifacts are unchanged.
+
 ## Subsequent operational status (2026-11-07)
 
 A historical read-only check on 2026-11-07 found the authoritative verifier
