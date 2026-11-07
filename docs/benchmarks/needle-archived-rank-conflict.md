@@ -83,7 +83,7 @@ contrast is now sharp:
 | `ACTIVE` vs `ARCHIVED` status word | 9 | **10/10** |
 
 A categorical status word is usable by this model where a date comparison and a
-prose selection rule are not. Two readings are consistent with the data:
+prose selection rule are not. Two readings were consistent with this result:
 
 1. **Label semantics** — the model treats `ACTIVE` as the authoritative marker
    and prefers that row.
@@ -91,15 +91,17 @@ prose selection rule are not. Two readings are consistent with the data:
    `ACTIVE` line is the only line containing that word, so the answer may be a
    token match rather than a judgement about status.
 
-The second reading is a live alternative and matters for deployment: if the
-success depends on echoing the label in the question, then a real RAG prompt that
-asks "what is the price for SKU-1?" will not get this benefit from a `status:
-active` field.
+**Follow-up resolved this in favour of lexical anchoring.**
+`needle_status_label_conflict` reuses the same `ACTIVE`/`ARCHIVED` vocabulary but
+in a template the question does not echo (`Record {id}: status ACTIVE; value is
+{code}.` with the query `What is the value in record {id}?`). With the same rank
+reversal it scores **2/10**, and 7 of the 8 misses return the earliest `ARCHIVED`
+code. So the 10/10 above is not evidence that the model reads status; it is
+evidence that the model matches a word from the question against a line.
 
-Either way, the practical recommendation changes from the earlier reports. It is
-not "only position works": a status vocabulary can also work, and it is cheaper
-than de-duplicating when the upstream data already carries one. But the recipe
-should be validated on the actual query wording, not assumed.
+The practical recommendation is therefore unchanged and narrower than it first
+appeared: put the authoritative record first, or de-duplicate before prompting.
+A status vocabulary helps only when the question itself names the discriminator.
 
 Observation, not a general claim: ten synthetic records, one line format, one
 status vocabulary, temperature 0 with a single sample per condition, thinking
