@@ -147,9 +147,11 @@ class CodeEvaluator(BaseEvaluator):
                     "error": f"SandboxError: {exc}", "extracted_code": extracted_code[:200],
                 }
             output.seek(0)
+            stdout = output.read(1_048_576)
+            sandbox_diagnostic = stdout.decode("utf-8", errors="replace")[-300:].strip()
             result_parse_failed = False
             try:
-                result = json.loads(output.read(1_048_576).splitlines()[-1])
+                result = json.loads(stdout.splitlines()[-1])
             except (json.JSONDecodeError, UnicodeDecodeError, IndexError):
                 result = {"passed": False, "syntax_valid": None,
                           "error": "ProcessTerminatedWithoutResult"}
@@ -168,5 +170,7 @@ class CodeEvaluator(BaseEvaluator):
             "passed": passed,
             "syntax_valid": syntax_valid,
             "error": None if passed else result.get("error") or "SandboxProcessFailed",
+            **({"sandbox_diagnostic": sandbox_diagnostic} if result_parse_failed
+               and sandbox_diagnostic else {}),
             "extracted_code": extracted_code[:200],
         }

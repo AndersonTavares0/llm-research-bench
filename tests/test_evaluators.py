@@ -136,8 +136,8 @@ class TestCodeEvaluator(unittest.TestCase):
         class EmptyWorker:
             returncode = 0
 
-            def __init__(self, *args, **kwargs):
-                pass
+            def __init__(self, *args, stdout=None, **kwargs):
+                stdout.write(b"namespace setup failed\n" + b"x" * 400)
 
             def communicate(self, *args, **kwargs):
                 pass
@@ -151,6 +151,8 @@ class TestCodeEvaluator(unittest.TestCase):
             )
         self.assertEqual(result["error"], "ProcessTerminatedWithoutResult")
         self.assertIsNone(result["syntax_valid"])
+        self.assertEqual(len(result["sandbox_diagnostic"]), 300)
+        self.assertTrue(result["sandbox_diagnostic"].startswith("x"))
 
     def test_code_execution_rejects_oversized_input_before_parsing(self):
         result = self.evaluator.evaluate(
