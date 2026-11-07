@@ -147,6 +147,11 @@ CASES: dict[str, list[dict[str, Any]]] = {
     "needle_adjacent_pair_conflict": [],
     "needle_distant_pair_conflict": [],
     "needle_short_context_conflict": [],
+    "needle_compact_context_conflict": [],
+    "needle_early_pair_conflict": [],
+    "needle_late_pair_conflict": [],
+    "needle_mid_context_conflict": [],
+    "needle_long_context_conflict": [],
     "structured_output": [
         {"prompt": "Extract: Ada Lovelace, 36, London.", "schema": "person"},
         {"prompt": "Extract: Grace Hopper, 85, New York.", "schema": "person"},
@@ -643,6 +648,73 @@ def _needle_short_context_conflict_pair(case_id: str, value: str) -> dict[str, A
             "baseline_prompt": baseline, "distractor_prompt": challenge}
 
 
+def _needle_length_panel(case_id: str, value: str, fillers: int) -> dict[str, Any]:
+    """Two adjacent duplicate chunks inside a context of a given size."""
+    instruction = (
+        "Find the exact field code in the requested record. Use only the "
+        "context below; answer with the code and nothing else.\n\n"
+    )
+    query = f"\nWhat is the code in record {case_id}?"
+    newest = _needle_prose_chunk(case_id, NEEDLE_CURRENT_DATE, value)
+    older = _needle_prose_chunk(case_id, NEEDLE_DECOY_DATES[-1], NEEDLE_DECOYS[-1][1])
+    first = round((fillers - 1) * 45 / 100)
+
+    rows = [FILLER] * fillers
+    rows[first] = newest
+    rows[first + 1] = older
+    baseline = instruction + "Context:\n" + "".join(rows) + query
+
+    swapped = [FILLER] * fillers
+    swapped[first] = older
+    swapped[first + 1] = newest
+    challenge = instruction + "Context:\n" + "".join(swapped) + query
+    return {"case_id": case_id, "needle_value": value, "depth_pct": 45,
+            "baseline_prompt": baseline, "distractor_prompt": challenge}
+
+
+def _needle_pair_position_panel(case_id: str, value: str, index: int) -> dict[str, Any]:
+    """The same adjacent duplicate pair, placed at a given filler index."""
+    instruction = (
+        "Find the exact field code in the requested record. Use only the "
+        "context below; answer with the code and nothing else.\n\n"
+    )
+    query = f"\nWhat is the code in record {case_id}?"
+    newest = _needle_prose_chunk(case_id, NEEDLE_CURRENT_DATE, value)
+    older = _needle_prose_chunk(case_id, NEEDLE_DECOY_DATES[-1], NEEDLE_DECOYS[-1][1])
+
+    rows = [FILLER] * NEEDLE_FILLERS
+    rows[index] = newest
+    rows[index + 1] = older
+    baseline = instruction + "Context:\n" + "".join(rows) + query
+
+    swapped = [FILLER] * NEEDLE_FILLERS
+    swapped[index] = older
+    swapped[index + 1] = newest
+    challenge = instruction + "Context:\n" + "".join(swapped) + query
+    return {"case_id": case_id, "needle_value": value, "depth_pct": round(index * 100 / NEEDLE_FILLERS),
+            "baseline_prompt": baseline, "distractor_prompt": challenge}
+
+
+def _needle_early_pair_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    return _needle_pair_position_panel(case_id, value, 30)
+
+
+def _needle_late_pair_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    return _needle_pair_position_panel(case_id, value, 310)
+
+
+def _needle_compact_context_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    return _needle_length_panel(case_id, value, 40)
+
+
+def _needle_mid_context_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    return _needle_length_panel(case_id, value, 80)
+
+
+def _needle_long_context_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    return _needle_length_panel(case_id, value, 160)
+
+
 PAIRED_NEEDLE_SUITES = {
     "needle_distractor": (_needle_distractor_pair, "distractor"),
     "needle_recency_conflict": (_needle_recency_conflict_pair, "recency_conflict"),
@@ -658,6 +730,11 @@ PAIRED_NEEDLE_SUITES = {
     "needle_adjacent_pair_conflict": (_needle_adjacent_pair_conflict_pair, "adjacent_pair_conflict"),
     "needle_distant_pair_conflict": (_needle_distant_pair_conflict_pair, "distant_pair_conflict"),
     "needle_short_context_conflict": (_needle_short_context_conflict_pair, "short_context_conflict"),
+    "needle_compact_context_conflict": (_needle_compact_context_conflict_pair, "compact_context_conflict"),
+    "needle_early_pair_conflict": (_needle_early_pair_conflict_pair, "early_pair_conflict"),
+    "needle_late_pair_conflict": (_needle_late_pair_conflict_pair, "late_pair_conflict"),
+    "needle_mid_context_conflict": (_needle_mid_context_conflict_pair, "mid_context_conflict"),
+    "needle_long_context_conflict": (_needle_long_context_conflict_pair, "long_context_conflict"),
     "needle_archived_conflict": (_needle_archived_conflict_pair, "archived_conflict"),
     "needle_unlabeled_conflict": (_needle_unlabeled_conflict_pair, "unlabeled_conflict"),
     "needle_position_conflict": (_needle_position_conflict_pair, "position_conflict"),

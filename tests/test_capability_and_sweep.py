@@ -1559,3 +1559,85 @@ def test_short_context_conflict_batches_match_tokens_and_track_condition(monkeyp
         assert all(row["matched_input_tokens"] == row["usage_prompt_tokens"] for row in rows)
         assert all("short_context_conflict_after_padding" in row["count_provenance"] for row in rows)
         assert out["results"]["needle_short_context_conflict"]["usage_mismatch_count"] == 0
+
+
+def test_context_length_panels_scale_the_same_two_chunk_panel():
+    import re
+
+    case_id, value = capability.NEEDLE_CASES[0]
+    panel = re.compile(rf"## Record {case_id} — audit note \((\S+)\)")
+    sizes = {"needle_compact_context_conflict": 40, "needle_mid_context_conflict": 80,
+             "needle_long_context_conflict": 160}
+    lengths = []
+    for suite, fillers in sizes.items():
+        builder, condition = capability.PAIRED_NEEDLE_SUITES[suite]
+        pair = builder(case_id, value)
+        baseline, swapped = pair["baseline_prompt"], pair["distractor_prompt"]
+        assert len(baseline) == len(swapped)
+        assert [m.group(1) for m in panel.finditer(baseline)] == [
+            capability.NEEDLE_CURRENT_DATE, capability.NEEDLE_DECOY_DATES[-1]]
+        assert [m.group(1) for m in panel.finditer(swapped)] == [
+            capability.NEEDLE_DECOY_DATES[-1], capability.NEEDLE_CURRENT_DATE]
+        for prompt in (baseline, swapped):
+            assert prompt.endswith(f"\nWhat is the code in record {case_id}?")
+            assert prompt.count(value) == 1
+            assert "most recent" not in prompt
+        lengths.append(len(baseline))
+    short = capability._needle_short_context_conflict_pair(case_id, value)["baseline_prompt"]
+    long_panel = capability._needle_prose_conflict_pair(case_id, value)["baseline_prompt"]
+    assert len(short) < lengths[0] < lengths[1] < lengths[2] < len(long_panel)
+
+
+def test_context_length_panels_batch_tokens_and_condition(monkeypatch):
+    def token_count(prompt):
+        return len(prompt.split()) + 3
+
+    def fake_endpoint(url, payload, timeout):
+        assert payload["chat_template_kwargs"] == {"enable_thinking": False}
+        return {"input_tokens": token_count(payload["messages"][0]["content"])}
+
+    def fake_post(base_url, model, payload, timeout):
+        prompt = payload["messages"][0]["content"]
+        case_id = prompt.rsplit("record ", 1)[1].split("?", 1)[0]
+        code = dict(capability.NEEDLE_CASES)[case_id]
+        return {"choices": [{"message": {"content": code}, "finish_reason": "stop"}],
+                "usage": {"prompt_tokens": token_count(prompt), "completion_tokens": 6}}
+
+    monkeypatch.setattr(capability, "_post_endpoint", fake_endpoint)
+    monkeypatch.setattr(capability, "_post", fake_post)
+    for suite, condition in (("needle_compact_context_conflict", "compact_context_conflict"),
+                             ("needle_mid_context_conflict", "mid_context_conflict"),
+                             ("needle_long_context_conflict", "long_context_conflict"),
+                             ("needle_early_pair_conflict", "early_pair_conflict"),
+                             ("needle_late_pair_conflict", "late_pair_conflict")):
+        outputs = [capability.run_suite("http://x", "m", suite, limit=5,
+                                        needle_batch=batch, think=False, max_gen_toks=512)
+                   for batch in (0, 1)]
+        ids = [{row["case_id"] for row in out["cases"]} for out in outputs]
+        assert len(ids[0]) == len(ids[1]) == 5 and ids[0].isdisjoint(ids[1])
+        for out in outputs:
+            rows = out["cases"]
+            assert {row["condition"] for row in rows} == {"baseline", condition}
+            assert all(row["usage_matches_input_tokens"] for row in rows)
+            assert all(row["matched_input_tokens"] == row["usage_prompt_tokens"] for row in rows)
+            assert all(f"{condition}_after_padding" in row["count_provenance"] for row in rows)
+            assert out["results"][suite]["usage_mismatch_count"] == 0
+
+
+def test_pair_position_panels_keep_the_pair_adjacent_and_swap_order():
+    import re
+
+    case_id, value = capability.NEEDLE_CASES[0]
+    panel = re.compile(rf"## Record {case_id} — audit note \((\S+)\)")
+    for suite, index in (("needle_early_pair_conflict", 30), ("needle_late_pair_conflict", 310)):
+        builder, _ = capability.PAIRED_NEEDLE_SUITES[suite]
+        pair = builder(case_id, value)
+        baseline, swapped = pair["baseline_prompt"], pair["distractor_prompt"]
+        assert len(baseline) == len(swapped)
+        assert [m.group(1) for m in panel.finditer(baseline)] == [
+            capability.NEEDLE_CURRENT_DATE, capability.NEEDLE_DECOY_DATES[-1]]
+        assert [m.group(1) for m in panel.finditer(swapped)] == [
+            capability.NEEDLE_DECOY_DATES[-1], capability.NEEDLE_CURRENT_DATE]
+        body = baseline.split("Context:\n", 1)[1].rsplit(f"\nWhat is the code in record {case_id}?", 1)[0]
+        assert body.startswith(capability.FILLER * index)
+        assert body[index * len(capability.FILLER):].startswith("## Record ")
