@@ -39,3 +39,10 @@ F1 and joint exact. This is closed-context multi-hop QA, not live retrieval or
 version-history conflict resolution. Source-title overlap is low but nonzero. See
 [`data/rag/README.md`](../../data/rag/README.md), the fixture manifest, and
 [`rag_evaluator.py`](../../src/llm_research_bench/rag_evaluator.py).
+
+## Security-model research
+
+The initial, source-bounded review found no specialist model ready to designate
+as a validated candidate; it records model-card claims, provenance and hardware
+limits separately from independent evidence and proposes a safe staged
+evaluation. See [cybersecurity model evidence](../research/cybersecurity-model-evidence.md).
