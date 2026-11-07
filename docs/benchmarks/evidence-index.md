@@ -22,9 +22,11 @@ uncertainty, caveats, and raw artifacts.
 The source-pinned fixture supports a planned 100-item study; only 15 paired
 questions across three of twenty batches completed before GPU work was halted.
 The partial outcomes are descriptive and not a representative estimate. A
-subsequent operational check passed the production real-completion verifier but
-did not resolve the historical GGUF-path discrepancy; no new batch followed.
-See the
+historical operational check passed the then-production alias verifier, but this
+environment cannot verify today's deployed route or model mapping. The old GGUF
+pathname observation does not imply a current production failure; no new batch
+followed. Require authorized owner-side confirmation of the current route,
+mapping, and recovery procedure before further GPU work. See the
 [interrupted pilot report](hotpotqa-support-order-partial.md) for per-batch
 metrics, raw artifact hashes, and the operational stop reason. Protocol: 50
 bridge + 50 comparison (all labeled hard), interleaved into twenty five-question

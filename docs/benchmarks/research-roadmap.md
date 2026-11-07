@@ -26,11 +26,13 @@ not replace the campaign records; every claim below points at an artifact.
     pilot, not a confirmatory result. The dataset supplies candidate passages:
     it tests closed-context multi-hop QA, not live retrieval or version-history
     conflicts. See the [partial report](hotpotqa-support-order-partial.md).
-    A subsequent read-only operational check on 2026-11-07 passed the authoritative
-    real-completion verifier for production generation 347 (active leases: 0), but
-    the previously reported GGUF path remains absent. No new campaign has been
-    launched; verify the current model/configuration state before scheduling more
-    GPU work. See the [partial report](hotpotqa-support-order-partial.md).
+    A historical read-only check on 2026-11-07 passed the real-completion verifier
+    through the then-production alias (generation 347; active leases: 0). The old
+    GGUF-path observation does not establish a current production failure or
+    current model mapping. This environment cannot verify today's deployment
+    route/model mapping. No new campaign has run; resume GPU work only after an
+    authorized owner-side source confirms the current route, model mapping, and
+    recovery procedure. See the [partial report](hotpotqa-support-order-partial.md).
 2. **Generalization across models and retrieval systems is unknown.** Current
    conflict findings use Qwen3-1.7B Q4_K_M, one runtime, one GPU and hand-built
    candidate orderings. Replicate only after the natural-document protocol is
@@ -108,10 +110,12 @@ verified recovery gates intact.
   verifier returned HTTP 500. A later read-only check (2026-11-07) passed the
   exact authoritative verifier (SHA-256
   `74157aec20bb160dce1361b645d33a87f48bcf03ff53b302203672480cc292e0`) for
-  production generation 347 with zero active leases; however, the historical
-  `/models/Qwen3.5-4B-Q4_K_M-MTP.gguf` path still tested absent. This establishes
-  a successful completion through the alias at check time, not that the old
-  pathname has returned. No further study batch has run. The source supplies
+  the then-production alias at generation 347 with zero active leases. The
+  historical `/models/Qwen3.5-4B-Q4_K_M-MTP.gguf` observation is not evidence
+  of current production failure or the current model mapping; this environment
+  cannot verify today's deployment route/model mapping. No further study batch
+  has run. Resume GPU work only after an authorized owner-side source confirms
+  the current route, model mapping, and recovery procedure. The source supplies
   candidates, so this is closed-context QA, not retrieval or version-conflict
   evidence. See the [partial report](hotpotqa-support-order-partial.md).
 - Campaign spec: `configs/campaigns/gpu-lab-capability-probe.yaml` runs both

@@ -48,18 +48,22 @@ No further GPU batches were launched after the authoritative production-recovery
 verifier's real completion check returned HTTP 500. The production alias
 `qwen3.5:4B` referenced the absent file
 `/models/Qwen3.5-4B-Q4_K_M-MTP.gguf`. Controller state and the health endpoint
-alone were insufficient to establish recovery. The study remains stopped until
-the model-path issue is resolved by the operator and the authoritative real
-completion verifier succeeds. No result here supports a general ordering effect.
+alone were insufficient to establish recovery. That was the study's stop decision
+at the time, not a statement about current production status; the historical GGUF
+pathname may be obsolete, and current deployment routing remains unverified. No
+result here supports a general ordering effect.
 
 ## Subsequent operational status (2026-11-07)
 
-A later read-only check found the authoritative verifier passing for production
-generation 347 with zero active leases. The verifier SHA-256 was
+A historical read-only check on 2026-11-07 found the authoritative verifier
+passing for production generation 347 with zero active leases. The verifier SHA-256 was
 `74157aec20bb160dce1361b645d33a87f48bcf03ff53b302203672480cc292e0`; its real
 completion check through alias `qwen3.5:4B` succeeded. However, the previously
 reported file `/models/Qwen3.5-4B-Q4_K_M-MTP.gguf` still tested absent. The
-successful alias completion does not establish that this historical pathname
-returned or explain the discrepancy. No additional study batch was launched;
-recheck current model/configuration state and the authoritative verifier before
-resuming. The 15-pair pilot remains incomplete and descriptive.
+path observation is not evidence of current production failure: the deployment
+architecture or alias-to-model mapping may have changed. This environment could
+not verify the current deployed route or model mapping, and the 2026-11-07 check
+does not establish today's state. No additional study batch was launched. Do not
+resume GPU work until an authorized owner-side source confirms the current route,
+model mapping, and recovery procedure. The 15-pair pilot remains incomplete and
+descriptive.
