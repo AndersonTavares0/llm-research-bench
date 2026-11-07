@@ -31,6 +31,7 @@ NEEDLE_CASES = [
 ]
 NEEDLE_DEPTHS = (10, 50, 90)
 NEEDLE_FILLERS = 340
+NEEDLE_SHORT_FILLERS = 20
 NEEDLE_DECOYS = [
     ("D01", "A7C3M9"), ("D02", "F2R8K4"), ("D03", "J5W1P6"), ("D04", "N9B4T2"),
     ("D05", "C6X2L8"), ("D06", "V3H7Q1"), ("D07", "G8D5Y2"), ("D08", "M1P6Z4"),
@@ -145,6 +146,7 @@ CASES: dict[str, list[dict[str, Any]]] = {
     "needle_prose_conflict": [],
     "needle_adjacent_pair_conflict": [],
     "needle_distant_pair_conflict": [],
+    "needle_short_context_conflict": [],
     "structured_output": [
         {"prompt": "Extract: Ada Lovelace, 36, London.", "schema": "person"},
         {"prompt": "Extract: Grace Hopper, 85, New York.", "schema": "person"},
@@ -618,6 +620,29 @@ def _needle_distant_pair_conflict_pair(case_id: str, value: str) -> dict[str, An
             "baseline_prompt": baseline, "distractor_prompt": challenge}
 
 
+def _needle_short_context_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    """Same two adjacent duplicate chunks, but in a short context instead of 7k tokens."""
+    instruction = (
+        "Find the exact field code in the requested record. Use only the "
+        "context below; answer with the code and nothing else.\n\n"
+    )
+    query = f"\nWhat is the code in record {case_id}?"
+    newest = _needle_prose_chunk(case_id, NEEDLE_CURRENT_DATE, value)
+    older = _needle_prose_chunk(case_id, NEEDLE_DECOY_DATES[-1], NEEDLE_DECOYS[-1][1])
+
+    rows = [FILLER] * NEEDLE_SHORT_FILLERS
+    rows[8] = newest
+    rows[9] = older
+    baseline = instruction + "Context:\n" + "".join(rows) + query
+
+    swapped = [FILLER] * NEEDLE_SHORT_FILLERS
+    swapped[8] = older
+    swapped[9] = newest
+    challenge = instruction + "Context:\n" + "".join(swapped) + query
+    return {"case_id": case_id, "needle_value": value, "depth_pct": 45,
+            "baseline_prompt": baseline, "distractor_prompt": challenge}
+
+
 PAIRED_NEEDLE_SUITES = {
     "needle_distractor": (_needle_distractor_pair, "distractor"),
     "needle_recency_conflict": (_needle_recency_conflict_pair, "recency_conflict"),
@@ -632,6 +657,7 @@ PAIRED_NEEDLE_SUITES = {
     "needle_prose_conflict": (_needle_prose_conflict_pair, "prose_conflict"),
     "needle_adjacent_pair_conflict": (_needle_adjacent_pair_conflict_pair, "adjacent_pair_conflict"),
     "needle_distant_pair_conflict": (_needle_distant_pair_conflict_pair, "distant_pair_conflict"),
+    "needle_short_context_conflict": (_needle_short_context_conflict_pair, "short_context_conflict"),
     "needle_archived_conflict": (_needle_archived_conflict_pair, "archived_conflict"),
     "needle_unlabeled_conflict": (_needle_unlabeled_conflict_pair, "unlabeled_conflict"),
     "needle_position_conflict": (_needle_position_conflict_pair, "position_conflict"),
