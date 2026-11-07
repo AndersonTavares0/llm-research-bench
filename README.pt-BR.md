@@ -58,44 +58,23 @@ Enquanto a pesquisa de ponta em IA foca majoritariamente em aceleradores corpora
 
 ## 2. Arquitetura do Sistema e Fluxo
 
-A suíte de testes organiza a leitura de configurações, checagens de prontidão, telemetria em segundo plano, envio de prompts e exportação estatística em um ciclo de quatro etapas:
+O repositório possui pontos de entrada distintos; o diagrama descreve o executor local de campanhas incluído no código, não o deployment atual de produção. `campaign.py` valida uma especificação, registra proveniência, invoca as ferramentas oficiais `lm-eval` e `llama.cpp` e resume os artefatos. Outros módulos oferecem avaliadores legados/de API direta e telemetria opcional; eles não formam um único pipeline de quatro etapas.
 
 ```mermaid
 flowchart TD
-    subgraph S1["1. Configuração e Runtime"]
-        direction TB
-        CFG["Configurações e Modelos<br/>(models.ini / CLI)"] --> RUN["Servidor de Inferência<br/>(llama.cpp runtime)"]
-    end
-
-    subgraph S2["2. Execução e Telemetria"]
-        direction TB
-        DISP["Despachante de Prompts<br/>(Segurança e Raciocínio)"] --> EXEC["Motor de Inferência<br/>(Passos de Prefill e Decode)"]
-        EXEC <-->|Amostragem Concorrente a 4 Hz| NVML["Daemon de Telemetria NVML<br/>(libnvidia-ml.so)"]
-    end
-
-    subgraph S3["3. Persistência de Traces"]
-        direction TB
-        EXEC --> STORE["Armazenamento de Microdados<br/>(Traces em JSON e CSV)"]
-        NVML --> STORE
-    end
-
-    subgraph S4["4. Análise e Artefatos"]
-        direction TB
-        STORE --> STAT["Motor Estatístico<br/>(CIs e Clopper-Pearson)"]
-        STAT --> OUT["Artefatos Visuais<br/>(Figuras PNG e PDFs LaTeX)"]
-    end
-
-    S1 ==> S2
-    S2 ==> S3
-    S3 ==> S4
+    SPEC["YAML da campanha"] --> RUN["campaign.py<br/>valida e registra proveniência"]
+    RUN --> TOOLS["Ferramentas oficiais<br/>lm-eval + llama.cpp"]
+    TOOLS --> ART["Artefatos da campanha<br/>saídas brutas + manifestos"]
+    ART --> SUM["resumo / auditoria da campanha"]
+    OTHER["Avaliadores legados e de API direta"] -. pontos de entrada separados .-> API["Endpoint local compatível com OpenAI"]
 ```
 
 ### Componentes Principais do Pipeline
 
-- [`benchmark_suite.py`](src/llm_research_bench/benchmark_suite.py): Orquestrador central com protocolo padronizado em 3 níveis (Nível A Smoke Test, Nível B Comparativo Intercalado, Nível C Estresse Térmico), perfis de tempo monotônicos e guardrails de temperatura.
-- [`telemetry_collector.py`](src/llm_research_bench/telemetry_collector.py): Thread dedicada que consulta a biblioteca de gerenciamento da NVIDIA (`libnvidia-ml.so.1`) para registrar picos reais de VRAM, clocks do núcleo e temperatura da junção a 250 ms (4 Hz).
-- [`statistical_engine.py`](src/llm_research_bench/statistical_engine.py): Módulo matemático para cálculo de intervalos de confiança Student-$t$ e intervalos binomiais exatos de Clopper-Pearson.
-- [`generate_readme_figures.py`](src/llm_research_bench/generate_readme_figures.py): Gerador automatizado de gráficos PNG de alta resolução gerados diretamente a partir dos resultados experimentais.
+- [`campaign.py`](src/llm_research_bench/campaign.py): CLI atual de campanhas do repositório; valida especificações e proveniência, executa ferramentas oficiais e resume/audita artefatos. Isso não identifica a rota de produção ativa.
+- [`benchmark_suite.py`](src/llm_research_bench/benchmark_suite.py) e [`capability.py`](src/llm_research_bench/capability.py): avaliadores separados que chamam diretamente a API Chat Completions; conjuntos de casos, métricas e limites devem ser consultados nos resultados correspondentes.
+- [`telemetry_collector.py`](src/llm_research_bench/telemetry_collector.py): amostrador NVML opcional a cada 250 ms, registra VRAM e temperatura; não registra clocks da GPU.
+- [`generate_readme_figures.py`](src/llm_research_bench/generate_readme_figures.py): gera figuras com valores transcritos no script/README, não lê diretamente os arquivos brutos; confira-os contra os artefatos canônicos antes de tratá-los como medições atualizadas.
 
 ---
 

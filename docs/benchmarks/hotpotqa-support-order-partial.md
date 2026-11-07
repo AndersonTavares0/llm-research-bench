@@ -55,15 +55,19 @@ result here supports a general ordering effect.
 
 ## Supplemental raw-response audit
 
+See the [case-level manual adjudication](hotpotqa-support-order-adjudication.md)
+for answer, reasoning, and cited-evidence judgments, including scoring artifacts.
+
 An offline audit of the 30 preserved raw responses found 30 `finish_reason=stop`
 and one JSON parse failure (b01, comparison case
 `5a80caac554299260e20a161`, support last). That response contains 85 completion
 tokens and is malformed JSON; it is not labeled truncated by the server. The
 other 29 responses parse. These are response-format observations only: answer
-EM and supporting-title overlap do not adjudicate factual correctness or whether
-the cited passages entail the answer. Those claims require independent review
-against the supplied passages and gold facts. Historical metrics above and raw
-artifacts are unchanged.
+EM and supporting-title overlap do not by themselves adjudicate factual
+correctness or whether the cited passages entail the answer. A single-reviewer,
+exploratory case review is recorded separately below; it is not independent
+replication or confirmatory scoring. Historical metrics above and raw artifacts
+are unchanged.
 
 ## Subsequent operational status (2026-11-07)
 
