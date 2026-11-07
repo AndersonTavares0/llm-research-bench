@@ -141,6 +141,7 @@ CASES: dict[str, list[dict[str, Any]]] = {
     "needle_status_label_conflict": [],
     "needle_authoritative_flag_conflict": [],
     "needle_authoritative_query_conflict": [],
+    "needle_authoritative_literal_conflict": [],
     "structured_output": [
         {"prompt": "Extract: Ada Lovelace, 36, London.", "schema": "person"},
         {"prompt": "Extract: Grace Hopper, 85, New York.", "schema": "person"},
@@ -517,6 +518,16 @@ def _needle_authoritative_query_conflict_pair(case_id: str, value: str) -> dict[
             "distractor_prompt": pair["distractor_prompt"].replace(plain, cued, 1)}
 
 
+def _needle_authoritative_literal_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    """Same JSON candidates; the question quotes the literal flag fragment from the context."""
+    pair = _needle_authoritative_flag_conflict_pair(case_id, value)
+    plain = f"\nWhat is the code in record {case_id}?"
+    cued = f'\nWhat is the code in record {case_id} in the line containing "authoritative": true?'
+    return {**pair,
+            "baseline_prompt": pair["baseline_prompt"].replace(plain, cued, 1),
+            "distractor_prompt": pair["distractor_prompt"].replace(plain, cued, 1)}
+
+
 PAIRED_NEEDLE_SUITES = {
     "needle_distractor": (_needle_distractor_pair, "distractor"),
     "needle_recency_conflict": (_needle_recency_conflict_pair, "recency_conflict"),
@@ -527,6 +538,7 @@ PAIRED_NEEDLE_SUITES = {
     "needle_status_label_conflict": (_needle_status_label_conflict_pair, "status_label_conflict"),
     "needle_authoritative_flag_conflict": (_needle_authoritative_flag_conflict_pair, "authoritative_flag_conflict"),
     "needle_authoritative_query_conflict": (_needle_authoritative_query_conflict_pair, "authoritative_query_conflict"),
+    "needle_authoritative_literal_conflict": (_needle_authoritative_literal_conflict_pair, "authoritative_literal_conflict"),
     "needle_archived_conflict": (_needle_archived_conflict_pair, "archived_conflict"),
     "needle_unlabeled_conflict": (_needle_unlabeled_conflict_pair, "unlabeled_conflict"),
     "needle_position_conflict": (_needle_position_conflict_pair, "position_conflict"),
