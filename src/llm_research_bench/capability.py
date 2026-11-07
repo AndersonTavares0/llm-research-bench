@@ -135,6 +135,7 @@ CASES: dict[str, list[dict[str, Any]]] = {
     "needle_position_conflict": [],
     "needle_recency_conflict": [],
     "needle_rank_conflict": [],
+    "needle_precedence_conflict": [],
     "structured_output": [
         {"prompt": "Extract: Ada Lovelace, 36, London.", "schema": "person"},
         {"prompt": "Extract: Grace Hopper, 85, New York.", "schema": "person"},
@@ -391,10 +392,25 @@ def _needle_rank_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
             "baseline_prompt": baseline, "distractor_prompt": challenge}
 
 
+def _needle_precedence_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    """Dated same-ID records as the recency suite, plus an explicit precedence rule."""
+    pair = _needle_recency_conflict_pair(case_id, value)
+    plain = ("Find the exact field code in the requested record. Use only the "
+             "context below; answer with the code and nothing else.\n\n")
+    ruled = ("Find the exact field code in the requested record. If several "
+             "records share the requested ID, use the one with the most recent "
+             "date. Use only the context below; answer with the code and "
+             "nothing else.\n\n")
+    return {**pair,
+            "baseline_prompt": pair["baseline_prompt"].replace(plain, ruled, 1),
+            "distractor_prompt": pair["distractor_prompt"].replace(plain, ruled, 1)}
+
+
 PAIRED_NEEDLE_SUITES = {
     "needle_distractor": (_needle_distractor_pair, "distractor"),
     "needle_recency_conflict": (_needle_recency_conflict_pair, "recency_conflict"),
     "needle_rank_conflict": (_needle_rank_conflict_pair, "rank_conflict"),
+    "needle_precedence_conflict": (_needle_precedence_conflict_pair, "precedence_conflict"),
     "needle_archived_conflict": (_needle_archived_conflict_pair, "archived_conflict"),
     "needle_unlabeled_conflict": (_needle_unlabeled_conflict_pair, "unlabeled_conflict"),
     "needle_position_conflict": (_needle_position_conflict_pair, "position_conflict"),
