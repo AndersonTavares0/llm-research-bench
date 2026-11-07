@@ -31,6 +31,13 @@ NEEDLE_CASES = [
 ]
 NEEDLE_DEPTHS = (10, 50, 90)
 NEEDLE_FILLERS = 340
+NEEDLE_DECOYS = [
+    ("D01", "A7C3M9"), ("D02", "F2R8K4"), ("D03", "J5W1P6"), ("D04", "N9B4T2"),
+    ("D05", "C6X2L8"), ("D06", "V3H7Q1"), ("D07", "G8D5Y2"), ("D08", "M1P6Z4"),
+]
+NEEDLE_DISTRACTOR_ROWS = (205, 220, 235, 250, 265, 280, 295, 310)
+NEEDLE_PAD_TOKENS = ("x", "a", "note", "item", "blue", "the", "and", "z")
+NEEDLE_BATCH_SIZE = 5
 
 EXAMPLES: dict[str, dict[str, Any]] = {
     "person": {"name": "Ada Lovelace", "age": 36, "city": "London"},
@@ -116,6 +123,7 @@ CASES: dict[str, list[dict[str, Any]]] = {
     # argparse can offer the suite name.
     "concurrency": [],
     "needle_retrieval": [],
+    "needle_distractor": [],
     "structured_output": [
         {"prompt": "Extract: Ada Lovelace, 36, London.", "schema": "person"},
         {"prompt": "Extract: Grace Hopper, 85, New York.", "schema": "person"},
@@ -217,6 +225,79 @@ def _needle_retrieval_cases() -> list[dict[str, Any]]:
             cases.append({"case_id": case_id, "depth_pct": depth,
                           "needle_value": value, "prompt": prompt})
     return cases
+
+
+def _needle_distractor_pair(case_id: str, value: str) -> dict[str, Any]:
+    """Keep the existing 50%-depth filler prompt and replace eight filler rows with decoys."""
+    baseline = next(c["prompt"] for c in _needle_retrieval_cases()
+                    if c["case_id"] == case_id and c["depth_pct"] == 50)
+    rows = [FILLER] * NEEDLE_FILLERS
+    target_index = round((NEEDLE_FILLERS - 1) * 50 / 100)
+    rows[target_index] = f"Record {case_id}: the exact field code is {value}. "
+    for index, (decoy_id, decoy_value) in zip(NEEDLE_DISTRACTOR_ROWS, NEEDLE_DECOYS):
+        rows[index] = f"Record {decoy_id}: exact field code is {decoy_value}. "
+    distractor = (
+        "Find the exact field code in the requested record. Use only the "
+        "context below; answer with the code and nothing else.\n\n"
+        "Context:\n" + "".join(rows) +
+        f"\nWhat is the code in record {case_id}?"
+    )
+    return {"case_id": case_id, "needle_value": value, "depth_pct": 50,
+            "baseline_prompt": baseline, "distractor_prompt": distractor}
+
+
+def _count_input_tokens(
+    base_url: str, payload: dict[str, Any], timeout: int
+) -> tuple[int, dict[str, Any]]:
+    response = _post_endpoint(
+        f"{base_url.rstrip('/')}/v1/chat/completions/input_tokens", payload, timeout
+    )
+    count = response.get("input_tokens")
+    if type(count) is not int or count < 0:
+        raise ValueError(f"input_tokens endpoint returned invalid count: {response!r}")
+    return count, response
+
+
+def _pad_prompt_to_tokens(
+    base_url: str, payload: dict[str, Any], target_tokens: int, timeout: int
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Pad before the query until llama.cpp reports an exact rendered-token match."""
+    prompt = payload["messages"][0]["content"]
+    query_start = prompt.rfind("\nWhat is the code in record ")
+    if query_start < 0:
+        raise ValueError("needle prompt is missing its final query")
+    context, query = prompt[:query_start], prompt[query_start:]
+    base_count, _ = _count_input_tokens(base_url, payload, timeout)
+    if base_count > target_tokens:
+        raise ValueError(f"distractor prompt has {base_count} tokens, over target {target_tokens}")
+    if base_count == target_tokens:
+        count, response = _count_input_tokens(base_url, payload, timeout)
+        return {"prompt": prompt, "count": count, "padding": "", "response": response}, payload
+
+    deficit = target_tokens - base_count
+    for token in NEEDLE_PAD_TOKENS:
+        unit = f" {token}"
+        low, high = 0, deficit + 8
+        candidate_payload = {**payload, "messages": [{"role": "user", "content": context + unit * high + query}]}
+        high_count, _ = _count_input_tokens(base_url, candidate_payload, timeout)
+        if high_count < target_tokens:
+            continue
+        while low < high:
+            mid = (low + high) // 2
+            candidate_payload = {**payload, "messages": [{"role": "user", "content": context + unit * mid + query}]}
+            count, _ = _count_input_tokens(base_url, candidate_payload, timeout)
+            if count < target_tokens:
+                low = mid + 1
+            else:
+                high = mid
+        for repetitions in range(max(0, low - 3), min(deficit + 8, low + 3) + 1):
+            candidate = context + unit * repetitions + query
+            candidate_payload = {**payload, "messages": [{"role": "user", "content": candidate}]}
+            count, response = _count_input_tokens(base_url, candidate_payload, timeout)
+            if count == target_tokens:
+                return {"prompt": candidate, "count": count,
+                        "padding": unit * repetitions, "response": response}, candidate_payload
+    raise ValueError(f"could not exactly pad distractor prompt to {target_tokens} tokens")
 
 TYPES = {
     "object": dict,
@@ -378,8 +459,12 @@ def score_tool_case(case: dict[str, Any], name: str | None, args: dict[str, Any]
 
 
 def _post(base_url: str, model: str, payload: dict[str, Any], timeout: int) -> dict[str, Any]:
+    return _post_endpoint(f"{base_url.rstrip('/')}/v1/chat/completions", payload, timeout)
+
+
+def _post_endpoint(url: str, payload: dict[str, Any], timeout: int) -> dict[str, Any]:
     req = urllib.request.Request(
-        f"{base_url.rstrip('/')}/v1/chat/completions",
+        url,
         data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json"},
     )
@@ -408,6 +493,7 @@ def run_suite(
     tool_format: str = "native",
     max_gen_toks: int = 256,
     needle_depth: int | None = None,
+    needle_batch: int | None = None,
 ) -> dict[str, Any]:
     if max_gen_toks <= 0:
         raise ValueError("max_gen_toks must be positive")
@@ -419,9 +505,60 @@ def run_suite(
     elif suite == "needle_retrieval":
         cases = [case for case in _needle_retrieval_cases()
                  if needle_depth is None or case["depth_pct"] == needle_depth][:limit]
+    elif suite == "needle_distractor":
+        if needle_batch not in (0, 1):
+            raise ValueError("needle_distractor requires needle_batch 0 or 1")
+        if limit <= 0:
+            raise ValueError("needle_distractor requires a positive limit")
+        pairs = [_needle_distractor_pair(case_id, value) for case_id, value in NEEDLE_CASES]
+        random.Random(seed).shuffle(pairs)
+        start = needle_batch * NEEDLE_BATCH_SIZE
+        cases = pairs[start:start + min(limit, NEEDLE_BATCH_SIZE)]
     else:
         cases = CASES[suite][:limit]
     random.Random(seed).shuffle(cases)
+    prepared_pairs = []
+    if suite == "needle_distractor":
+        for pair in cases:
+            baseline_payload = {
+                "model": model,
+                "messages": [{"role": "user", "content": pair["baseline_prompt"]}],
+                "max_tokens": max_gen_toks,
+                "temperature": 0,
+            }
+            distractor_payload = {
+                "model": model,
+                "messages": [{"role": "user", "content": pair["distractor_prompt"]}],
+                "max_tokens": max_gen_toks,
+                "temperature": 0,
+            }
+            baseline_tokens, baseline_count_response = _count_input_tokens(
+                base_url, baseline_payload, timeout
+            )
+            distractor_tokens, distractor_count_response = _count_input_tokens(
+                base_url, distractor_payload, timeout
+            )
+            padded, padded_payload = _pad_prompt_to_tokens(
+                base_url, distractor_payload, baseline_tokens, timeout
+            )
+            if padded["count"] != baseline_tokens:
+                raise ValueError(f"token match failed for {pair['case_id']}")
+            prepared_pairs.append({
+                **pair,
+                "baseline_tokens": baseline_tokens,
+                "distractor_tokens_before_padding": distractor_tokens,
+                "distractor_tokens": padded["count"],
+                "padding": padded["padding"],
+                "baseline_payload": baseline_payload,
+                "distractor_payload": padded_payload,
+                "count_provenance": {
+                    "baseline": {"request": baseline_payload, "response": baseline_count_response},
+                    "distractor_before_padding": {
+                        "request": distractor_payload, "response": distractor_count_response},
+                    "distractor_after_padding": {
+                        "request": padded_payload, "response": padded["response"]},
+                },
+            })
     sampler = _VramSampler(Path(vram_csv)) if vram_csv else None
     if sampler:
         sampler.start()
@@ -429,6 +566,35 @@ def run_suite(
     latencies_ms: list[float] = []
     round_ms: list[float] = []
     pad = FILLER * max(0, int(context_fill) // 20)
+    if suite == "needle_distractor":
+        for pair_index, pair in enumerate(prepared_pairs):
+            conditions = ("baseline", "distractor") if pair_index % 2 == 0 else ("distractor", "baseline")
+            for condition in conditions:
+                payload = pair[f"{condition}_payload"]
+                started = time.perf_counter()
+                response = _post(base_url, model, payload, timeout)
+                latency_ms = (time.perf_counter() - started) * 1000
+                latencies_ms.append(latency_ms)
+                content = _extract_content(response)
+                scored = LongContextEvaluator().evaluate(
+                    {"needle_key": pair["case_id"], "needle_value": pair["needle_value"],
+                     "context_len": pair["baseline_tokens"], "depth_pct": pair["depth_pct"]}, content)
+                usage_tokens = (response.get("usage") or {}).get("prompt_tokens")
+                details.append({
+                    "case_id": pair["case_id"], "condition": condition,
+                    "depth_pct": pair["depth_pct"], "needle_value": pair["needle_value"],
+                    "prompt": payload["messages"][0]["content"], "content": content,
+                    **scored, "valid": bool(scored["exact_match"]),
+                    "matched_input_tokens": pair["baseline_tokens"],
+                    "condition_input_tokens": pair[f"{condition}_tokens"],
+                    "usage_prompt_tokens": usage_tokens,
+                    "usage_matches_input_tokens": usage_tokens == pair["baseline_tokens"],
+                    "baseline_input_tokens": pair["baseline_tokens"],
+                    "distractor_input_tokens_before_padding": pair["distractor_tokens_before_padding"],
+                    "padding": pair["padding"], "count_provenance": pair["count_provenance"],
+                    "latency_ms": round(latency_ms, 1), "request": payload, "response": response,
+                })
+        cases = []
     for case in cases:
         if pad and suite in ("structured_output", "tool_call"):
             case = {**case, "prompt": pad + "\n" + case["prompt"]}
@@ -585,12 +751,26 @@ def run_suite(
                     "args_schema_rate": round(sum(1 for d in details if d.get("schema_ok")) / len(details), 3),
                     "semantic_rate": round(sum(1 for d in details if d.get("semantic")) / len(details), 3)}
                    if details and suite == "tool_call" else {}),
-                **({"retrieval_by_depth": {
+                 **({"retrieval_by_depth": {
                     str(depth): round(sum(1 for d in details if d["depth_pct"] == depth and d["valid"])
                                       / sum(1 for d in details if d["depth_pct"] == depth), 3)
                     for depth in NEEDLE_DEPTHS
                     if any(d["depth_pct"] == depth for d in details)}}
                    if details and suite == "needle_retrieval" else {}),
+                **({
+                    "exact_retrieval_by_condition": {
+                        condition: round(sum(1 for d in details if d["condition"] == condition
+                                              and d["exact_match"])
+                                          / max(1, sum(1 for d in details if d["condition"] == condition)), 3)
+                        for condition in ("baseline", "distractor")
+                    },
+                    "empty_by_condition": {
+                        condition: sum(1 for d in details if d["condition"] == condition
+                                       and not (d["content"] or "").strip())
+                        for condition in ("baseline", "distractor")
+                    },
+                    "usage_mismatch_count": sum(1 for d in details if not d["usage_matches_input_tokens"]),
+                } if details and suite == "needle_distractor" else {}),
                 **({
                     "round_p50_ms": percentile(round_ms, 50),
                     "slowest_ms": round(max(latencies_ms), 1) if latencies_ms else None,
@@ -615,6 +795,7 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--clients", type=int, default=2)
     run.add_argument("--max-gen-toks", type=int, default=256)
     run.add_argument("--needle-depth", type=int, choices=NEEDLE_DEPTHS)
+    run.add_argument("--needle-batch", type=int, choices=(0, 1))
     run.add_argument("--timeout", type=int, default=600)
     run.add_argument("--vram-csv", default=None)
     run.add_argument("--context-fill", type=int, default=0)
@@ -631,7 +812,7 @@ def main(argv: list[str] | None = None) -> int:
                         constrain=args.constrain, constraint_format=args.constraint_format,
                         tool_format=args.tool_format,
                         max_gen_toks=args.max_gen_toks, timeout=args.timeout,
-                        needle_depth=args.needle_depth)
+                        needle_depth=args.needle_depth, needle_batch=args.needle_batch)
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=2), encoding="utf-8")

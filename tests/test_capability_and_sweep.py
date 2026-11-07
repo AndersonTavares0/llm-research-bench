@@ -562,3 +562,90 @@ def test_needle_retrieval_depth_filter_selects_one_paired_stratum(monkeypatch):
     assert len(out["cases"]) == 10
     assert {case["depth_pct"] for case in out["cases"]} == {50}
     assert out["results"]["needle_retrieval"]["retrieval_by_depth"] == {"50": 1.0}
+
+
+def test_input_token_endpoint_and_padding_find_exact_rendered_count(monkeypatch):
+    seen = []
+
+    def fake_endpoint(url, payload, timeout):
+        seen.append((url, payload, timeout))
+        return {"input_tokens": len(payload["messages"][0]["content"].split()) + 3}
+
+    monkeypatch.setattr(capability, "_post_endpoint", fake_endpoint)
+    payload = {"model": "m", "messages": [{"role": "user", "content":
+               "context\nWhat is the code in record K01?"}],
+               "max_tokens": 512, "temperature": 0}
+    count, response = capability._count_input_tokens("http://x/", payload, 5)
+    padded, padded_payload = capability._pad_prompt_to_tokens("http://x", payload, count + 7, 5)
+    assert seen[0][0] == "http://x/v1/chat/completions/input_tokens"
+    assert response["input_tokens"] == count
+    assert padded["count"] == count + 7
+    assert padded_payload["messages"][0]["content"].endswith("\nWhat is the code in record K01?")
+    assert len(padded["padding"].split()) == 7
+
+
+def test_distractor_batches_are_disjoint_complete_and_token_matched(monkeypatch):
+    def token_count(prompt):
+        return len(prompt.split()) + 3
+
+    def fake_endpoint(url, payload, timeout):
+        assert url.endswith("/v1/chat/completions/input_tokens")
+        return {"input_tokens": token_count(payload["messages"][0]["content"])}
+
+    def fake_completion(base_url, model, payload, timeout):
+        prompt = payload["messages"][0]["content"]
+        case_id = prompt.rsplit("record ", 1)[1].split("?", 1)[0]
+        expected = dict(capability.NEEDLE_CASES)[case_id]
+        return {"choices": [{"message": {"content": expected}, "finish_reason": "stop"}],
+                "usage": {"prompt_tokens": token_count(prompt), "completion_tokens": 5}}
+
+    monkeypatch.setattr(capability, "_post_endpoint", fake_endpoint)
+    monkeypatch.setattr(capability, "_post", fake_completion)
+    outputs = [capability.run_suite("http://x", "m", "needle_distractor", limit=5,
+                                    needle_batch=batch) for batch in (0, 1)]
+    ids = [{case["case_id"] for case in output["cases"]} for output in outputs]
+    assert len(ids[0]) == len(ids[1]) == 5
+    assert ids[0].isdisjoint(ids[1])
+    assert ids[0] | ids[1] == {case_id for case_id, _ in capability.NEEDLE_CASES}
+    for output in outputs:
+        cases = output["cases"]
+        assert len(cases) == 10
+        assert {case["condition"] for case in cases} == {"baseline", "distractor"}
+        for case in cases:
+            assert case["valid"] and case["exact_match"]
+            assert case["condition_input_tokens"] == case["matched_input_tokens"]
+            assert case["usage_prompt_tokens"] == case["matched_input_tokens"]
+            assert case["usage_matches_input_tokens"]
+            assert case["request"]["messages"][0]["content"] == case["prompt"]
+            assert case["response"]["usage"]["completion_tokens"] == 5
+            assert case["count_provenance"]["baseline"]["response"]["input_tokens"] == case["baseline_input_tokens"]
+        assert output["results"]["needle_distractor"]["usage_mismatch_count"] == 0
+        assert output["results"]["needle_distractor"]["exact_retrieval_by_condition"] == {
+            "baseline": 1.0, "distractor": 1.0}
+
+
+def test_distractor_padding_failure_prevents_all_generation(monkeypatch):
+    generations = []
+
+    def fake_count(base_url, payload, timeout):
+        return 100, {"input_tokens": 100}
+
+    def fail_padding(*args, **kwargs):
+        raise ValueError("cannot match prompt lengths")
+
+    monkeypatch.setattr(capability, "_count_input_tokens", fake_count)
+    monkeypatch.setattr(capability, "_pad_prompt_to_tokens", fail_padding)
+    monkeypatch.setattr(capability, "_post", lambda *a, **k: generations.append(a))
+    with pytest.raises(ValueError, match="cannot match"):
+        capability.run_suite("http://x", "m", "needle_distractor", limit=5,
+                             needle_batch=0)
+    assert generations == []
+
+
+def test_capability_cmd_passes_needle_batch(tmp_path):
+    cmd = campaign.build_capability_cmd(
+        campaign.TaskGroup("c", "capability", ["needle_distractor"]), "m", 8090,
+        {"limit": 5, "needle_batch": 1}, tmp_path / "r.json",
+    )
+    assert cmd.count("--needle-batch") == 1
+    assert cmd[cmd.index("--needle-batch") + 1] == "1"

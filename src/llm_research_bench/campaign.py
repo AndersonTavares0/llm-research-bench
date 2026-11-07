@@ -568,6 +568,7 @@ def build_capability_cmd(
         *(["--constraint-format", str(evaluation["constraint_format"])] if evaluation.get("constraint_format") else []),
         *(["--tool-format", str(evaluation["tool_format"])] if evaluation.get("tool_format") else []),
         *(["--needle-depth", str(evaluation["needle_depth"])] if evaluation.get("needle_depth") is not None else []),
+        *(["--needle-batch", str(evaluation["needle_batch"])] if evaluation.get("needle_batch") is not None else []),
         "--output",
         str(output_path),
     ]
