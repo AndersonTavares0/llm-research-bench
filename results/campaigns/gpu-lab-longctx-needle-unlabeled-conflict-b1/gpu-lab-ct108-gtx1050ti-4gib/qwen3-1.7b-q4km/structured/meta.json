@@ -1,0 +1,138 @@
+{
+  "campaign": "gpu-lab-longctx-needle-unlabeled-conflict-b1",
+  "hardware_profile": "gpu-lab-ct108-gtx1050ti-4gib",
+  "status": "measured",
+  "environment": {
+    "hostname": "gpu-lab",
+    "platform": "Linux-7.0.14-26-pve-x86_64-with-glibc2.36",
+    "kernel": "7.0.14-26-pve",
+    "machine": "x86_64",
+    "python": "3.11.17",
+    "cpu_count": 12,
+    "cpu_model": "AMD Ryzen 5 3600 6-Core Processor",
+    "ram_mib": 15899,
+    "gpu": {
+      "available": true,
+      "source": "llama-server --list-devices",
+      "devices": [
+        {
+          "id": "CUDA0",
+          "name": "NVIDIA GeForce GTX 1050 Ti",
+          "memory_total": "4023 MiB",
+          "memory_free": "3975 MiB"
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "llama_cpp": "version: 0.8.0-dev (build 12024, commit ddf48f85c)",
+    "llama_bench": "version: 0.8.0-dev (build 12024, commit ddf48f85c)",
+    "lm_eval": "lm-eval 0.4.14.dev0",
+    "schema": "campaign/v1"
+  },
+  "server": {
+    "port": 8090,
+    "ctx_size": 8192,
+    "gpu_layers": 99,
+    "threads": 2,
+    "parallel": 1,
+    "startup_timeout_s": 300,
+    "cache_ram": 0,
+    "cache_type_k": "q8_0",
+    "cache_type_v": "q8_0"
+  },
+  "evaluation": {
+    "limit": 5,
+    "seed": 42,
+    "clients": 1,
+    "context_fill": 0,
+    "vram_csv": "/workspace/results/conc/needle-unlabeled-conflict-b1-vram.csv",
+    "needle_depth": null,
+    "needle_batch": 1,
+    "max_gen_toks": 512,
+    "instruction": "strict",
+    "constrain": false,
+    "constraint_format": "json_schema",
+    "timeout_s": 600
+  },
+  "model": {
+    "name": "qwen3-1.7b-q4km",
+    "file": "Qwen3-1.7B-Q4_K_M.gguf",
+    "quantization": "Q4_K_M",
+    "hf_repo": "ggml-org/Qwen3-1.7B-GGUF",
+    "hf_revision": "daeb8e2d528a760970442092f6bf1e55c3b659eb",
+    "license": "apache-2.0",
+    "alias": "qwen3-1.7b",
+    "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+    "path": "/models/Qwen3-1.7B-Q4_K_M.gguf",
+    "size_bytes": 1282439264
+  },
+  "task_group": {
+    "name": "structured",
+    "backend": "capability",
+    "tasks": [
+      "needle_unlabeled_conflict"
+    ]
+  },
+  "server_command": [
+    "llama-server",
+    "-m",
+    "/models/Qwen3-1.7B-Q4_K_M.gguf",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "8090",
+    "--ctx-size",
+    "8192",
+    "--n-gpu-layers",
+    "99",
+    "--threads",
+    "2",
+    "--alias",
+    "qwen3-1.7b",
+    "--parallel",
+    "1",
+    "--jinja",
+    "--no-webui",
+    "--cache-type-k",
+    "q8_0",
+    "--cache-type-v",
+    "q8_0",
+    "--cache-ram",
+    "0"
+  ],
+  "command": [
+    "/workspace/venv/bin/python",
+    "-m",
+    "llm_research_bench.capability",
+    "run",
+    "--base-url",
+    "http://127.0.0.1:8090",
+    "--model",
+    "qwen3-1.7b",
+    "--suite",
+    "needle_unlabeled_conflict",
+    "--limit",
+    "5",
+    "--seed",
+    "42",
+    "--clients",
+    "1",
+    "--max-gen-toks",
+    "512",
+    "--vram-csv",
+    "/workspace/results/conc/needle-unlabeled-conflict-b1-vram.csv",
+    "--instruction",
+    "strict",
+    "--constraint-format",
+    "json_schema",
+    "--needle-batch",
+    "1",
+    "--output",
+    "/workspace/results/campaigns/gpu-lab-longctx-needle-unlabeled-conflict-b1/gpu-lab-ct108-gtx1050ti-4gib/qwen3-1.7b-q4km/structured/raw/capability/results.json"
+  ],
+  "run_key": "7759aa13aae5bc58",
+  "started_at_utc": "2026-11-07T06:44:33Z",
+  "finished_at_utc": "2026-11-07T06:47:28Z",
+  "exit_code": 0
+}

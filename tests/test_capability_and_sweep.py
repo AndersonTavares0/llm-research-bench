@@ -712,3 +712,54 @@ def test_archived_conflict_batches_preserve_token_and_response_provenance(monkey
         assert metrics["exact_retrieval_by_condition"] == {
             "baseline": 1.0, "archived_conflict": 1.0}
         assert metrics["usage_mismatch_count"] == 0
+
+
+def test_unlabeled_conflict_pair_differs_only_in_same_id_rows():
+    case_id, current = capability.NEEDLE_CASES[0]
+    pair = capability._needle_unlabeled_conflict_pair(case_id, current)
+    baseline, conflict = pair["baseline_prompt"], pair["distractor_prompt"]
+
+    assert baseline.split("Context:")[0] == conflict.split("Context:")[0]
+    assert "ACTIVE" not in conflict and "ARCHIVED" not in conflict
+    assert baseline.count(f"Record {case_id}:") == 1
+    assert conflict.count(f"Record {case_id}:") == 9
+    assert conflict.count(current) == 1
+    for _, other in capability.NEEDLE_DECOYS:
+        assert f"Record {case_id}: the exact field code is {other}." in conflict
+        assert other != current
+
+
+def test_unlabeled_conflict_batches_match_tokens_and_track_condition(monkeypatch):
+    def token_count(prompt):
+        return len(prompt.split()) + 3
+
+    def fake_endpoint(url, payload, timeout):
+        assert url.endswith("/v1/chat/completions/input_tokens")
+        return {"input_tokens": token_count(payload["messages"][0]["content"])}
+
+    def fake_completion(base_url, model, payload, timeout):
+        prompt = payload["messages"][0]["content"]
+        case_id = prompt.rsplit("record ", 1)[1].split("?", 1)[0]
+        return {"choices": [{"message": {"content": dict(capability.NEEDLE_CASES)[case_id]},
+                            "finish_reason": "stop"}],
+                "usage": {"prompt_tokens": token_count(prompt), "completion_tokens": 5}}
+
+    monkeypatch.setattr(capability, "_post_endpoint", fake_endpoint)
+    monkeypatch.setattr(capability, "_post", fake_completion)
+    outputs = [capability.run_suite(
+        "http://x", "m", "needle_unlabeled_conflict", limit=5, seed=42,
+        max_gen_toks=512, needle_batch=batch,
+    ) for batch in (0, 1)]
+
+    ids = [{row["case_id"] for row in out["cases"]} for out in outputs]
+    assert len(ids[0]) == len(ids[1]) == 5 and ids[0].isdisjoint(ids[1])
+    assert ids[0] | ids[1] == {case_id for case_id, _ in capability.NEEDLE_CASES}
+    for out in outputs:
+        rows = out["cases"]
+        assert {row["condition"] for row in rows} == {"baseline", "unlabeled_conflict"}
+        assert all(row["exact_match"] and row["usage_matches_input_tokens"] for row in rows)
+        assert all(row["matched_input_tokens"] == row["usage_prompt_tokens"] for row in rows)
+        metrics = out["results"]["needle_unlabeled_conflict"]
+        assert metrics["exact_retrieval_by_condition"] == {
+            "baseline": 1.0, "unlabeled_conflict": 1.0}
+        assert metrics["usage_mismatch_count"] == 0

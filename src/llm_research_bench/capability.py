@@ -126,6 +126,7 @@ CASES: dict[str, list[dict[str, Any]]] = {
     "needle_retrieval": [],
     "needle_distractor": [],
     "needle_archived_conflict": [],
+    "needle_unlabeled_conflict": [],
     "structured_output": [
         {"prompt": "Extract: Ada Lovelace, 36, London.", "schema": "person"},
         {"prompt": "Extract: Grace Hopper, 85, New York.", "schema": "person"},
@@ -276,6 +277,33 @@ def _needle_archived_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
     )
     return {"case_id": case_id, "needle_value": value, "depth_pct": 50,
             "baseline_prompt": baseline, "distractor_prompt": archived}
+
+
+def _needle_unlabeled_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    """Same-ID conflicting codes with no status labels, so only position separates them."""
+    baseline = next(c["prompt"] for c in _needle_retrieval_cases()
+                    if c["case_id"] == case_id and c["depth_pct"] == 50)
+    rows = [FILLER] * NEEDLE_FILLERS
+    rows[round((NEEDLE_FILLERS - 1) * 50 / 100)] = (
+        f"Record {case_id}: the exact field code is {value}. "
+    )
+    for index, (_, other) in zip(NEEDLE_DISTRACTOR_ROWS, NEEDLE_DECOYS):
+        rows[index] = f"Record {case_id}: the exact field code is {other}. "
+    conflict = (
+        "Find the exact field code in the requested record. Use only the "
+        "context below; answer with the code and nothing else.\n\n"
+        "Context:\n" + "".join(rows) +
+        f"\nWhat is the code in record {case_id}?"
+    )
+    return {"case_id": case_id, "needle_value": value, "depth_pct": 50,
+            "baseline_prompt": baseline, "distractor_prompt": conflict}
+
+
+PAIRED_NEEDLE_SUITES = {
+    "needle_distractor": (_needle_distractor_pair, "distractor"),
+    "needle_archived_conflict": (_needle_archived_conflict_pair, "archived_conflict"),
+    "needle_unlabeled_conflict": (_needle_unlabeled_conflict_pair, "unlabeled_conflict"),
+}
 
 
 def _count_input_tokens(
@@ -531,8 +559,9 @@ def run_suite(
         raise ValueError("max_gen_toks must be positive")
     if constraint_format not in ("json_schema", "json_object"):
         raise ValueError("constraint_format must be json_schema or json_object")
-    paired_needle_suite = suite in ("needle_distractor", "needle_archived_conflict")
-    challenge_condition = "archived_conflict" if suite == "needle_archived_conflict" else "distractor"
+    paired_needle_suite = suite in PAIRED_NEEDLE_SUITES
+    challenge_condition = (PAIRED_NEEDLE_SUITES[suite][1] if paired_needle_suite
+                           else "distractor")
     if suite == "concurrency":
         cases = [{"round": i} for i in range(max(1, limit))]
         clients = max(1, int(clients))
@@ -544,8 +573,7 @@ def run_suite(
             raise ValueError(f"{suite} requires needle_batch 0 or 1")
         if limit <= 0:
             raise ValueError(f"{suite} requires a positive limit")
-        make_pair = (_needle_archived_conflict_pair if suite == "needle_archived_conflict"
-                     else _needle_distractor_pair)
+        make_pair = PAIRED_NEEDLE_SUITES[suite][0]
         pairs = [make_pair(case_id, value) for case_id, value in NEEDLE_CASES]
         random.Random(seed).shuffle(pairs)
         start = needle_batch * NEEDLE_BATCH_SIZE
