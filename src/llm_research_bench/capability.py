@@ -143,6 +143,8 @@ CASES: dict[str, list[dict[str, Any]]] = {
     "needle_authoritative_query_conflict": [],
     "needle_authoritative_literal_conflict": [],
     "needle_prose_conflict": [],
+    "needle_adjacent_pair_conflict": [],
+    "needle_distant_pair_conflict": [],
     "structured_output": [
         {"prompt": "Extract: Ada Lovelace, 36, London.", "schema": "person"},
         {"prompt": "Extract: Grace Hopper, 85, New York.", "schema": "person"},
@@ -567,6 +569,55 @@ def _needle_prose_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
             "baseline_prompt": baseline, "distractor_prompt": challenge}
 
 
+def _needle_adjacent_pair_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    """Only two duplicate versions, adjacent in the context; the order swaps between arms."""
+    instruction = (
+        "Find the exact field code in the requested record. Use only the "
+        "context below; answer with the code and nothing else.\n\n"
+    )
+    query = f"\nWhat is the code in record {case_id}?"
+    newest = _needle_prose_chunk(case_id, NEEDLE_CURRENT_DATE, value)
+    older = _needle_prose_chunk(case_id, NEEDLE_DECOY_DATES[-1], NEEDLE_DECOYS[-1][1])
+
+    target_index = round((NEEDLE_FILLERS - 1) * 50 / 100)
+    rows = [FILLER] * NEEDLE_FILLERS
+    rows[target_index] = newest
+    rows[target_index + 1] = older
+    baseline = instruction + "Context:\n" + "".join(rows) + query
+
+    swapped = [FILLER] * NEEDLE_FILLERS
+    swapped[target_index] = older
+    swapped[target_index + 1] = newest
+    challenge = instruction + "Context:\n" + "".join(swapped) + query
+    return {"case_id": case_id, "needle_value": value, "depth_pct": 50,
+            "baseline_prompt": baseline, "distractor_prompt": challenge}
+
+
+def _needle_distant_pair_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    """Two duplicate versions far apart, so adjacency cannot explain any improvement."""
+    instruction = (
+        "Find the exact field code in the requested record. Use only the "
+        "context below; answer with the code and nothing else.\n\n"
+    )
+    query = f"\nWhat is the code in record {case_id}?"
+    newest = _needle_prose_chunk(case_id, NEEDLE_CURRENT_DATE, value)
+    older = _needle_prose_chunk(case_id, NEEDLE_DECOY_DATES[-1], NEEDLE_DECOYS[-1][1])
+
+    target_index = round((NEEDLE_FILLERS - 1) * 50 / 100)
+    far_index = NEEDLE_DISTRACTOR_ROWS[-1]
+    rows = [FILLER] * NEEDLE_FILLERS
+    rows[target_index] = newest
+    rows[far_index] = older
+    baseline = instruction + "Context:\n" + "".join(rows) + query
+
+    swapped = [FILLER] * NEEDLE_FILLERS
+    swapped[target_index] = older
+    swapped[far_index] = newest
+    challenge = instruction + "Context:\n" + "".join(swapped) + query
+    return {"case_id": case_id, "needle_value": value, "depth_pct": 50,
+            "baseline_prompt": baseline, "distractor_prompt": challenge}
+
+
 PAIRED_NEEDLE_SUITES = {
     "needle_distractor": (_needle_distractor_pair, "distractor"),
     "needle_recency_conflict": (_needle_recency_conflict_pair, "recency_conflict"),
@@ -579,6 +630,8 @@ PAIRED_NEEDLE_SUITES = {
     "needle_authoritative_query_conflict": (_needle_authoritative_query_conflict_pair, "authoritative_query_conflict"),
     "needle_authoritative_literal_conflict": (_needle_authoritative_literal_conflict_pair, "authoritative_literal_conflict"),
     "needle_prose_conflict": (_needle_prose_conflict_pair, "prose_conflict"),
+    "needle_adjacent_pair_conflict": (_needle_adjacent_pair_conflict_pair, "adjacent_pair_conflict"),
+    "needle_distant_pair_conflict": (_needle_distant_pair_conflict_pair, "distant_pair_conflict"),
     "needle_archived_conflict": (_needle_archived_conflict_pair, "archived_conflict"),
     "needle_unlabeled_conflict": (_needle_unlabeled_conflict_pair, "unlabeled_conflict"),
     "needle_position_conflict": (_needle_position_conflict_pair, "position_conflict"),
