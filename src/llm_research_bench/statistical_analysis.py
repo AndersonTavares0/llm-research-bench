@@ -19,10 +19,10 @@ from scipy import stats
 def compute_sample_stats(data: list) -> dict:
     if not data:
         return {
-            "n": 0, "mean": 0.0, "std": None, "sem": None,
+            "n": 0, "mean": None, "std": None, "sem": None,
             "ci_95_margin": None, "ci_low": None, "ci_high": None,
-            "median": 0.0, "q1": 0.0, "q3": 0.0, "iqr": 0.0,
-            "min": 0.0, "max": 0.0,
+            "median": None, "q1": None, "q3": None, "iqr": None,
+            "min": None, "max": None,
         }
     arr = np.array(data, dtype=float)
     n = len(arr)
@@ -52,6 +52,16 @@ def compute_sample_stats(data: list) -> dict:
         "min": round(float(np.min(arr)), 2),
         "max": round(float(np.max(arr)), 2),
     }
+
+
+def validate_analysis_samples(label: str, *groups: tuple[str, list]) -> None:
+    for name, values in groups:
+        try:
+            arr = np.asarray(values, dtype=float)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{label} {name} observations must be numeric") from exc
+        if arr.ndim != 1 or len(arr) < 3 or not np.isfinite(arr).all():
+            raise ValueError(f"{label} {name} requires at least three finite one-dimensional observations")
 
 
 def compute_cohens_d(x1: list, x2: list) -> float | None:
@@ -108,6 +118,8 @@ def run_full_statistical_analysis(repo_dir: Path) -> dict:
         
     runs_mtp = mtp_data["models"]["gemma4:E2B"]["individual_runs_tok_s"]
     runs_base = mtp_data["models"]["gemma4:MTP"]["individual_runs_tok_s"]
+
+    validate_analysis_samples("MTP", ("MTP", runs_mtp), ("baseline", runs_base))
     
     stats_mtp = compute_sample_stats(runs_mtp)
     stats_base = compute_sample_stats(runs_base)
@@ -142,6 +154,7 @@ def run_full_statistical_analysis(repo_dir: Path) -> dict:
         
     runs_iq4 = quant_data["gemma4:E2B"]["runs"]
     runs_q4km = quant_data["gemma4:Q4KM"]["runs"]
+    validate_analysis_samples("Quantization", ("IQ4_XS", runs_iq4), ("Q4_K_M", runs_q4km))
     stats_iq4 = compute_sample_stats(runs_iq4)
     stats_q4km = compute_sample_stats(runs_q4km)
     
@@ -251,8 +264,8 @@ def run_full_statistical_analysis(repo_dir: Path) -> dict:
             "p_value_holm_adjusted": round(adjusted["mtp_overall"], 6),
             "cohens_d": round(d_mtp, 4) if d_mtp is not None else None,
             "cohens_d_bootstrap_95ci": d_mtp_ci,
-            "overall_speedup_ratio": round(stats_mtp["mean"] / stats_base["mean"], 3),
-            "overall_delta_pct": round(((stats_mtp["mean"] - stats_base["mean"]) / stats_base["mean"]) * 100.0, 1),
+            "overall_speedup_ratio": round(stats_mtp["mean"] / stats_base["mean"], 3) if stats_base["mean"] not in (None, 0) else None,
+            "overall_delta_pct": round(((stats_mtp["mean"] - stats_base["mean"]) / stats_base["mean"]) * 100.0, 1) if stats_base["mean"] not in (None, 0) else None,
             "warmed_execution": {
                 "mtp_stats": stats_warmed_mtp,
                 "base_stats": stats_warmed_base,
@@ -260,8 +273,8 @@ def run_full_statistical_analysis(repo_dir: Path) -> dict:
                 "p_value": float(p_val_warmed),
                 "cohens_d": round(d_warmed, 4) if d_warmed is not None else None,
                 "p_value_holm_adjusted": round(adjusted["mtp_warmed"], 6),
-                "speedup_ratio": round(stats_warmed_mtp["mean"] / stats_warmed_base["mean"], 3),
-                "delta_pct": round(((stats_warmed_mtp["mean"] - stats_warmed_base["mean"]) / stats_warmed_base["mean"]) * 100.0, 1),
+                "speedup_ratio": round(stats_warmed_mtp["mean"] / stats_warmed_base["mean"], 3) if stats_warmed_base["mean"] not in (None, 0) else None,
+                "delta_pct": round(((stats_warmed_mtp["mean"] - stats_warmed_base["mean"]) / stats_warmed_base["mean"]) * 100.0, 1) if stats_warmed_base["mean"] not in (None, 0) else None,
             }
         },
         "quantization_comparison": {
@@ -282,7 +295,7 @@ def run_full_statistical_analysis(repo_dir: Path) -> dict:
                 "t_statistic": round(float(t_stat_w_quant), 4),
                 "p_value": float(p_val_w_quant),
                 "cohens_d": round(d_w_quant, 4) if d_w_quant is not None else None,
-                "speedup_ratio": round(stats_warmed_iq4["mean"] / stats_warmed_q4km["mean"], 3),
+                "speedup_ratio": round(stats_warmed_iq4["mean"] / stats_warmed_q4km["mean"], 3) if stats_warmed_q4km["mean"] not in (None, 0) else None,
             }
         },
         "model_system_efficiencies": model_efficiencies,

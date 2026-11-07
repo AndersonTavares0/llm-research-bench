@@ -23,7 +23,7 @@ def calculate_metrics_with_ci(values: List[float]) -> Dict[str, Any]:
     """
     n = len(values)
     if n == 0:
-        return {"mean": 0.0, "std_dev": 0.0, "ci_95_margin": None, "ci_low": None, "ci_high": None, "n": 0}
+        return {"mean": None, "std_dev": None, "ci_95_margin": None, "ci_low": None, "ci_high": None, "n": 0}
 
     mean = sum(values) / n
     if n == 1:

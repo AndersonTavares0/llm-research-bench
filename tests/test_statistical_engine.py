@@ -1,6 +1,8 @@
 import sys
 import unittest
 from pathlib import Path
+import json
+import tempfile
 import numpy as np
 
 # Dynamically ensure repo root is on sys.path
@@ -14,6 +16,8 @@ from src.llm_research_bench.statistical_analysis import (
     compute_cohens_d,
     compute_sample_stats,
     holm_adjust,
+    run_full_statistical_analysis,
+    validate_analysis_samples,
 )
 
 
@@ -30,7 +34,8 @@ class TestStatisticalEngine(unittest.TestCase):
     def test_calculate_metrics_with_ci_empty(self):
         metrics = calculate_metrics_with_ci([])
         self.assertEqual(metrics["n"], 0)
-        self.assertEqual(metrics["mean"], 0.0)
+        self.assertIsNone(metrics["mean"])
+        self.assertIsNone(metrics["std_dev"])
         self.assertIsNone(metrics["ci_95_margin"])
 
     def test_calculate_metrics_with_ci_single_value(self):
@@ -43,8 +48,32 @@ class TestStatisticalEngine(unittest.TestCase):
     def test_compute_sample_stats_empty(self):
         stats = compute_sample_stats([])
         self.assertEqual(stats["n"], 0)
-        self.assertEqual(stats["mean"], 0.0)
-        self.assertIsNone(stats["ci_95_margin"])
+        self.assertIsNone(stats["mean"])
+        self.assertIsNone(stats["median"])
+        self.assertIsNone(stats["std"])
+        self.assertIsNone(stats["q1"])
+        self.assertIsNone(stats["q3"])
+        self.assertIsNone(stats["iqr"])
+        self.assertIsNone(stats["min"])
+        self.assertIsNone(stats["max"])
+
+    def test_full_analysis_rejects_undersized_groups_before_inference(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            controlled = Path(tmp) / "results" / "controlled_experiments"
+            controlled.mkdir(parents=True)
+            (controlled / "mtp_ablation_results.json").write_text(
+                json.dumps({"models": {
+                    "gemma4:E2B": {"individual_runs_tok_s": []},
+                    "gemma4:MTP": {"individual_runs_tok_s": [1.0, 2.0, 3.0]},
+                }}),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "at least three finite"):
+                run_full_statistical_analysis(Path(tmp))
+
+    def test_analysis_rejects_nonfinite_observations(self):
+        with self.assertRaisesRegex(ValueError, "at least three finite"):
+            validate_analysis_samples("MTP", ("model", [1.0, np.nan, 3.0]))
 
     def test_compute_sample_stats_rich(self):
         samples = [10.0, 20.0, 30.0, 40.0, 50.0]
