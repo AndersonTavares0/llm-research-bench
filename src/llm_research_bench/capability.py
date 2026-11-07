@@ -37,6 +37,11 @@ NEEDLE_DECOYS = [
 ]
 NEEDLE_DISTRACTOR_ROWS = (205, 220, 235, 250, 265, 280, 295, 310)
 NEEDLE_ARCHIVE_REVISIONS = range(2017, 2025)
+NEEDLE_CURRENT_DATE = "2025-08-21"
+NEEDLE_DECOY_DATES = (
+    "2021-03-04", "2021-09-17", "2022-01-28", "2022-07-11",
+    "2023-02-19", "2023-10-05", "2024-04-22", "2024-12-08",
+)
 NEEDLE_PAD_TOKENS = ("x", "a", "note", "item", "blue", "the", "and", "z")
 NEEDLE_BATCH_SIZE = 5
 
@@ -128,6 +133,7 @@ CASES: dict[str, list[dict[str, Any]]] = {
     "needle_archived_conflict": [],
     "needle_unlabeled_conflict": [],
     "needle_position_conflict": [],
+    "needle_recency_conflict": [],
     "structured_output": [
         {"prompt": "Extract: Ada Lovelace, 36, London.", "schema": "person"},
         {"prompt": "Extract: Grace Hopper, 85, New York.", "schema": "person"},
@@ -327,8 +333,37 @@ def _needle_position_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
             "baseline_prompt": baseline, "distractor_prompt": challenge}
 
 
+def _needle_recency_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    """Same nine dated codes in both arms; only the newest one's position changes."""
+    line = "Record {}: updated {}; field code is {}. "
+    decoy_codes = [code for _, code in NEEDLE_DECOYS]
+    target_index = round((NEEDLE_FILLERS - 1) * 50 / 100)
+    instruction = (
+        "Find the exact field code in the requested record. Use only the "
+        "context below; answer with the code and nothing else.\n\n"
+    )
+    query = f"\nWhat is the code in record {case_id}?"
+
+    rows = [FILLER] * NEEDLE_FILLERS
+    rows[target_index] = line.format(case_id, NEEDLE_CURRENT_DATE, value)
+    for index, code, date in zip(NEEDLE_DISTRACTOR_ROWS, decoy_codes, NEEDLE_DECOY_DATES):
+        rows[index] = line.format(case_id, date, code)
+    baseline = instruction + "Context:\n" + "".join(rows) + query
+
+    moved = [FILLER] * NEEDLE_FILLERS
+    moved[target_index] = line.format(case_id, NEEDLE_DECOY_DATES[-1], decoy_codes[-1])
+    for index, code, date in zip(NEEDLE_DISTRACTOR_ROWS[:-1], decoy_codes[:-1],
+                                 NEEDLE_DECOY_DATES[:-1]):
+        moved[index] = line.format(case_id, date, code)
+    moved[NEEDLE_DISTRACTOR_ROWS[-1]] = line.format(case_id, NEEDLE_CURRENT_DATE, value)
+    challenge = instruction + "Context:\n" + "".join(moved) + query
+    return {"case_id": case_id, "needle_value": value, "depth_pct": 50,
+            "baseline_prompt": baseline, "distractor_prompt": challenge}
+
+
 PAIRED_NEEDLE_SUITES = {
     "needle_distractor": (_needle_distractor_pair, "distractor"),
+    "needle_recency_conflict": (_needle_recency_conflict_pair, "recency_conflict"),
     "needle_archived_conflict": (_needle_archived_conflict_pair, "archived_conflict"),
     "needle_unlabeled_conflict": (_needle_unlabeled_conflict_pair, "unlabeled_conflict"),
     "needle_position_conflict": (_needle_position_conflict_pair, "position_conflict"),

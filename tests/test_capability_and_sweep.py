@@ -857,3 +857,65 @@ def test_position_conflict_batches_match_tokens_and_track_condition(monkeypatch)
         metrics = out["results"]["needle_position_conflict"]
         assert set(metrics["exact_retrieval_by_condition"]) == {"baseline", "position_conflict"}
         assert metrics["usage_mismatch_count"] == 0
+
+
+def test_recency_conflict_moves_only_the_newest_code():
+    case_id, value = capability.NEEDLE_CASES[0]
+    pair = capability._needle_recency_conflict_pair(case_id, value)
+    baseline, moved = pair["baseline_prompt"], pair["distractor_prompt"]
+    marker = f"Record {case_id}: updated "
+    decoy_codes = [code for _, code in capability.NEEDLE_DECOYS]
+    dates = (capability.NEEDLE_CURRENT_DATE, *capability.NEEDLE_DECOY_DATES)
+
+    def entries(prompt):
+        return [(d, c) for d, c in
+                __import__("re").findall(r"updated (\S+); field code is (\S+)\.", prompt)]
+
+    assert len(baseline) == len(moved)
+    assert entries(baseline) and sorted(entries(baseline)) == sorted(entries(moved))
+    for prompt in (baseline, moved):
+        assert prompt.count(marker) == 9
+        assert prompt.endswith(f"\nWhat is the code in record {case_id}?")
+        assert "ACTIVE" not in prompt and "ARCHIVED" not in prompt
+        assert sorted(d for d, _ in entries(prompt)) == sorted(dates)
+        assert sorted(c for _, c in entries(prompt)) == sorted([value, *decoy_codes])
+
+    assert entries(baseline)[0] == (capability.NEEDLE_CURRENT_DATE, value)
+    assert entries(moved)[-1] == (capability.NEEDLE_CURRENT_DATE, value)
+    assert entries(moved)[0][1] != value
+
+
+def test_recency_conflict_batches_match_tokens_and_track_condition(monkeypatch):
+    def token_count(prompt):
+        return len(prompt.split()) + 3
+
+    def fake_endpoint(url, payload, timeout):
+        assert url.endswith("/v1/chat/completions/input_tokens")
+        assert payload["chat_template_kwargs"] == {"enable_thinking": False}
+        return {"input_tokens": token_count(payload["messages"][0]["content"])}
+
+    def fake_post(base_url, model, payload, timeout):
+        prompt = payload["messages"][0]["content"]
+        case_id = prompt.rsplit("record ", 1)[1].split("?", 1)[0]
+        code = dict(capability.NEEDLE_CASES)[case_id]
+        return {"choices": [{"message": {"content": code}, "finish_reason": "stop"}],
+                "usage": {"prompt_tokens": token_count(prompt), "completion_tokens": 6}}
+
+    monkeypatch.setattr(capability, "_post_endpoint", fake_endpoint)
+    monkeypatch.setattr(capability, "_post", fake_post)
+    outputs = [capability.run_suite("http://x", "m", "needle_recency_conflict", limit=5,
+                                    needle_batch=batch, think=False, max_gen_toks=512)
+               for batch in (0, 1)]
+    ids = [{row["case_id"] for row in out["cases"]} for out in outputs]
+    assert len(ids[0]) == len(ids[1]) == 5 and ids[0].isdisjoint(ids[1])
+    assert ids[0] | ids[1] == {case_id for case_id, _ in capability.NEEDLE_CASES}
+    for out in outputs:
+        rows = out["cases"]
+        assert len(rows) == 10
+        assert {row["condition"] for row in rows} == {"baseline", "recency_conflict"}
+        assert all(row["usage_matches_input_tokens"] for row in rows)
+        assert all(row["matched_input_tokens"] == row["usage_prompt_tokens"] for row in rows)
+        assert all("recency_conflict_after_padding" in row["count_provenance"] for row in rows)
+        metrics = out["results"]["needle_recency_conflict"]
+        assert set(metrics["exact_retrieval_by_condition"]) == {"baseline", "recency_conflict"}
+        assert metrics["usage_mismatch_count"] == 0
