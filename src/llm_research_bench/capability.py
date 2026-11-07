@@ -36,6 +36,7 @@ NEEDLE_DECOYS = [
     ("D05", "C6X2L8"), ("D06", "V3H7Q1"), ("D07", "G8D5Y2"), ("D08", "M1P6Z4"),
 ]
 NEEDLE_DISTRACTOR_ROWS = (205, 220, 235, 250, 265, 280, 295, 310)
+NEEDLE_ARCHIVE_REVISIONS = range(2017, 2025)
 NEEDLE_PAD_TOKENS = ("x", "a", "note", "item", "blue", "the", "and", "z")
 NEEDLE_BATCH_SIZE = 5
 
@@ -124,6 +125,7 @@ CASES: dict[str, list[dict[str, Any]]] = {
     "concurrency": [],
     "needle_retrieval": [],
     "needle_distractor": [],
+    "needle_archived_conflict": [],
     "structured_output": [
         {"prompt": "Extract: Ada Lovelace, 36, London.", "schema": "person"},
         {"prompt": "Extract: Grace Hopper, 85, New York.", "schema": "person"},
@@ -246,6 +248,36 @@ def _needle_distractor_pair(case_id: str, value: str) -> dict[str, Any]:
             "baseline_prompt": baseline, "distractor_prompt": distractor}
 
 
+def _needle_archived_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    """Contrast one active record with later-positioned archived values for that same ID."""
+    target_index = round((NEEDLE_FILLERS - 1) * 50 / 100)
+    active = f"Record {case_id}: ACTIVE revision 2025; current field code is {value}. "
+    rows = [FILLER] * NEEDLE_FILLERS
+    rows[target_index] = active
+    baseline = (
+        "Find the current field code for the requested record. Use only the "
+        "context below; answer with the code and nothing else.\n\n"
+        "Context:\n" + "".join(rows) +
+        f"\nWhat is the active field code in record {case_id}?"
+    )
+    archived_rows = rows.copy()
+    for index, (revision, (_, old_code)) in zip(
+        NEEDLE_DISTRACTOR_ROWS, zip(NEEDLE_ARCHIVE_REVISIONS, NEEDLE_DECOYS)
+    ):
+        archived_rows[index] = (
+            f"Record {case_id}: ARCHIVED revision {revision}; superseded field code was "
+            f"{old_code}. "
+        )
+    archived = (
+        "Find the current field code for the requested record. Use only the "
+        "context below; answer with the code and nothing else.\n\n"
+        "Context:\n" + "".join(archived_rows) +
+        f"\nWhat is the active field code in record {case_id}?"
+    )
+    return {"case_id": case_id, "needle_value": value, "depth_pct": 50,
+            "baseline_prompt": baseline, "distractor_prompt": archived}
+
+
 def _count_input_tokens(
     base_url: str, payload: dict[str, Any], timeout: int
 ) -> tuple[int, dict[str, Any]]:
@@ -263,7 +295,7 @@ def _pad_prompt_to_tokens(
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Pad before the query until llama.cpp reports an exact rendered-token match."""
     prompt = payload["messages"][0]["content"]
-    query_start = prompt.rfind("\nWhat is the code in record ")
+    query_start = prompt.rfind("\nWhat is ")
     if query_start < 0:
         raise ValueError("needle prompt is missing its final query")
     context, query = prompt[:query_start], prompt[query_start:]
@@ -499,18 +531,22 @@ def run_suite(
         raise ValueError("max_gen_toks must be positive")
     if constraint_format not in ("json_schema", "json_object"):
         raise ValueError("constraint_format must be json_schema or json_object")
+    paired_needle_suite = suite in ("needle_distractor", "needle_archived_conflict")
+    challenge_condition = "archived_conflict" if suite == "needle_archived_conflict" else "distractor"
     if suite == "concurrency":
         cases = [{"round": i} for i in range(max(1, limit))]
         clients = max(1, int(clients))
     elif suite == "needle_retrieval":
         cases = [case for case in _needle_retrieval_cases()
                  if needle_depth is None or case["depth_pct"] == needle_depth][:limit]
-    elif suite == "needle_distractor":
+    elif paired_needle_suite:
         if needle_batch not in (0, 1):
-            raise ValueError("needle_distractor requires needle_batch 0 or 1")
+            raise ValueError(f"{suite} requires needle_batch 0 or 1")
         if limit <= 0:
-            raise ValueError("needle_distractor requires a positive limit")
-        pairs = [_needle_distractor_pair(case_id, value) for case_id, value in NEEDLE_CASES]
+            raise ValueError(f"{suite} requires a positive limit")
+        make_pair = (_needle_archived_conflict_pair if suite == "needle_archived_conflict"
+                     else _needle_distractor_pair)
+        pairs = [make_pair(case_id, value) for case_id, value in NEEDLE_CASES]
         random.Random(seed).shuffle(pairs)
         start = needle_batch * NEEDLE_BATCH_SIZE
         cases = pairs[start:start + min(limit, NEEDLE_BATCH_SIZE)]
@@ -518,7 +554,7 @@ def run_suite(
         cases = CASES[suite][:limit]
     random.Random(seed).shuffle(cases)
     prepared_pairs = []
-    if suite == "needle_distractor":
+    if paired_needle_suite:
         for pair in cases:
             baseline_payload = {
                 "model": model,
@@ -526,7 +562,7 @@ def run_suite(
                 "max_tokens": max_gen_toks,
                 "temperature": 0,
             }
-            distractor_payload = {
+            challenge_payload = {
                 "model": model,
                 "messages": [{"role": "user", "content": pair["distractor_prompt"]}],
                 "max_tokens": max_gen_toks,
@@ -535,28 +571,44 @@ def run_suite(
             baseline_tokens, baseline_count_response = _count_input_tokens(
                 base_url, baseline_payload, timeout
             )
-            distractor_tokens, distractor_count_response = _count_input_tokens(
-                base_url, distractor_payload, timeout
+            challenge_tokens, challenge_count_response = _count_input_tokens(
+                base_url, challenge_payload, timeout
             )
-            padded, padded_payload = _pad_prompt_to_tokens(
-                base_url, distractor_payload, baseline_tokens, timeout
-            )
-            if padded["count"] != baseline_tokens:
-                raise ValueError(f"token match failed for {pair['case_id']}")
+            # Either arm can be the shorter one; pad the short arm to the common count.
+            target_tokens = max(baseline_tokens, challenge_tokens)
+            if baseline_tokens == target_tokens:
+                baseline_final, baseline_padding = baseline_payload, ""
+                baseline_final_response = baseline_count_response
+            else:
+                baseline_pad, baseline_final = _pad_prompt_to_tokens(
+                    base_url, baseline_payload, target_tokens, timeout)
+                baseline_padding = baseline_pad["padding"]
+                baseline_final_response = baseline_pad["response"]
+            if challenge_tokens == target_tokens:
+                challenge_final, challenge_padding = challenge_payload, ""
+                challenge_final_response = challenge_count_response
+            else:
+                challenge_pad, challenge_final = _pad_prompt_to_tokens(
+                    base_url, challenge_payload, target_tokens, timeout)
+                challenge_padding = challenge_pad["padding"]
+                challenge_final_response = challenge_pad["response"]
             prepared_pairs.append({
                 **pair,
-                "baseline_tokens": baseline_tokens,
-                "distractor_tokens_before_padding": distractor_tokens,
-                "distractor_tokens": padded["count"],
-                "padding": padded["padding"],
-                "baseline_payload": baseline_payload,
-                "distractor_payload": padded_payload,
+                "baseline_tokens": target_tokens,
+                f"{challenge_condition}_tokens_before_padding": challenge_tokens,
+                f"{challenge_condition}_tokens": target_tokens,
+                "padding": challenge_padding,
+                "baseline_padding": baseline_padding,
+                "baseline_payload": baseline_final,
+                f"{challenge_condition}_payload": challenge_final,
                 "count_provenance": {
                     "baseline": {"request": baseline_payload, "response": baseline_count_response},
-                    "distractor_before_padding": {
-                        "request": distractor_payload, "response": distractor_count_response},
-                    "distractor_after_padding": {
-                        "request": padded_payload, "response": padded["response"]},
+                    "baseline_after_padding": {
+                        "request": baseline_final, "response": baseline_final_response},
+                    f"{challenge_condition}_before_padding": {
+                        "request": challenge_payload, "response": challenge_count_response},
+                    f"{challenge_condition}_after_padding": {
+                        "request": challenge_final, "response": challenge_final_response},
                 },
             })
     sampler = _VramSampler(Path(vram_csv)) if vram_csv else None
@@ -566,9 +618,10 @@ def run_suite(
     latencies_ms: list[float] = []
     round_ms: list[float] = []
     pad = FILLER * max(0, int(context_fill) // 20)
-    if suite == "needle_distractor":
+    if paired_needle_suite:
         for pair_index, pair in enumerate(prepared_pairs):
-            conditions = ("baseline", "distractor") if pair_index % 2 == 0 else ("distractor", "baseline")
+            conditions = (("baseline", challenge_condition) if pair_index % 2 == 0
+                          else (challenge_condition, "baseline"))
             for condition in conditions:
                 payload = pair[f"{condition}_payload"]
                 started = time.perf_counter()
@@ -590,8 +643,10 @@ def run_suite(
                     "usage_prompt_tokens": usage_tokens,
                     "usage_matches_input_tokens": usage_tokens == pair["baseline_tokens"],
                     "baseline_input_tokens": pair["baseline_tokens"],
-                    "distractor_input_tokens_before_padding": pair["distractor_tokens_before_padding"],
-                    "padding": pair["padding"], "count_provenance": pair["count_provenance"],
+                    f"{challenge_condition}_input_tokens_before_padding":
+                        pair[f"{challenge_condition}_tokens_before_padding"],
+                    "padding": pair["padding"], "baseline_padding": pair["baseline_padding"],
+                    "count_provenance": pair["count_provenance"],
                     "latency_ms": round(latency_ms, 1), "request": payload, "response": response,
                 })
         cases = []
@@ -758,19 +813,19 @@ def run_suite(
                     if any(d["depth_pct"] == depth for d in details)}}
                    if details and suite == "needle_retrieval" else {}),
                 **({
-                    "exact_retrieval_by_condition": {
-                        condition: round(sum(1 for d in details if d["condition"] == condition
-                                              and d["exact_match"])
-                                          / max(1, sum(1 for d in details if d["condition"] == condition)), 3)
-                        for condition in ("baseline", "distractor")
-                    },
-                    "empty_by_condition": {
-                        condition: sum(1 for d in details if d["condition"] == condition
-                                       and not (d["content"] or "").strip())
-                        for condition in ("baseline", "distractor")
+                     "exact_retrieval_by_condition": {
+                         condition: round(sum(1 for d in details if d["condition"] == condition
+                                               and d["exact_match"])
+                                           / max(1, sum(1 for d in details if d["condition"] == condition)), 3)
+                         for condition in ("baseline", challenge_condition)
+                     },
+                     "empty_by_condition": {
+                         condition: sum(1 for d in details if d["condition"] == condition
+                                        and not (d["content"] or "").strip())
+                         for condition in ("baseline", challenge_condition)
                     },
                     "usage_mismatch_count": sum(1 for d in details if not d["usage_matches_input_tokens"]),
-                } if details and suite == "needle_distractor" else {}),
+                 } if details and paired_needle_suite else {}),
                 **({
                     "round_p50_ms": percentile(round_ms, 50),
                     "slowest_ms": round(max(latencies_ms), 1) if latencies_ms else None,

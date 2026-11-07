@@ -628,7 +628,8 @@ def test_distractor_padding_failure_prevents_all_generation(monkeypatch):
     generations = []
 
     def fake_count(base_url, payload, timeout):
-        return 100, {"input_tokens": 100}
+        count = 90 if "Record D01" in payload["messages"][0]["content"] else 100
+        return count, {"input_tokens": count}
 
     def fail_padding(*args, **kwargs):
         raise ValueError("cannot match prompt lengths")
@@ -649,3 +650,65 @@ def test_capability_cmd_passes_needle_batch(tmp_path):
     )
     assert cmd.count("--needle-batch") == 1
     assert cmd[cmd.index("--needle-batch") + 1] == "1"
+
+
+def test_archived_conflict_pair_keeps_active_fact_and_query_fixed():
+    case_id, current = capability.NEEDLE_CASES[0]
+    pair = capability._needle_archived_conflict_pair(case_id, current)
+    active = f"Record {case_id}: ACTIVE revision 2025; current field code is {current}. "
+    query = f"\nWhat is the active field code in record {case_id}?"
+    baseline, conflict = pair["baseline_prompt"], pair["distractor_prompt"]
+
+    assert baseline.endswith(query) and conflict.endswith(query)
+    assert baseline.count(active) == conflict.count(active) == 1
+    assert baseline.index(active) == conflict.index(active)
+    assert "ARCHIVED revision" not in baseline
+    assert conflict.count("ARCHIVED revision") == 8
+    for _, old_code in capability.NEEDLE_DECOYS:
+        assert f"superseded field code was {old_code}" in conflict
+        assert old_code != current
+
+
+def test_archived_conflict_batches_preserve_token_and_response_provenance(monkeypatch):
+    def token_count(prompt):
+        return len(prompt.split()) + 3
+
+    def fake_endpoint(url, payload, timeout):
+        assert url.endswith("/v1/chat/completions/input_tokens")
+        return {"input_tokens": token_count(payload["messages"][0]["content"])}
+
+    def fake_completion(base_url, model, payload, timeout):
+        prompt = payload["messages"][0]["content"]
+        case_id = prompt.rsplit("record ", 1)[1].split("?", 1)[0]
+        current = dict(capability.NEEDLE_CASES)[case_id]
+        assert payload["max_tokens"] == 512 and payload["temperature"] == 0
+        return {"choices": [{"message": {"content": current}, "finish_reason": "stop"}],
+                "usage": {"prompt_tokens": token_count(prompt), "completion_tokens": 7}}
+
+    monkeypatch.setattr(capability, "_post_endpoint", fake_endpoint)
+    monkeypatch.setattr(capability, "_post", fake_completion)
+    outputs = [capability.run_suite(
+        "http://x", "m", "needle_archived_conflict", limit=5, seed=42,
+        max_gen_toks=512, needle_batch=batch,
+    ) for batch in (0, 1)]
+    ids = [{row["case_id"] for row in output["cases"]} for output in outputs]
+    assert ids[0].isdisjoint(ids[1])
+    assert ids[0] | ids[1] == {case_id for case_id, _ in capability.NEEDLE_CASES}
+
+    for output in outputs:
+        rows = output["cases"]
+        assert len(rows) == 10
+        assert {row["condition"] for row in rows} == {"baseline", "archived_conflict"}
+        assert all(row["exact_match"] and row["valid"] for row in rows)
+        assert all(row["usage_matches_input_tokens"] for row in rows)
+        assert all(row["usage_prompt_tokens"] == row["matched_input_tokens"] for row in rows)
+        assert all(row["request"]["max_tokens"] == 512 for row in rows)
+        assert all("ARCHIVED revision" not in row["prompt"] for row in rows
+                   if row["condition"] == "baseline")
+        assert all("ARCHIVED revision" in row["prompt"] for row in rows
+                   if row["condition"] == "archived_conflict")
+        assert all("archived_conflict_after_padding" in row["count_provenance"] for row in rows)
+        metrics = output["results"]["needle_archived_conflict"]
+        assert metrics["exact_retrieval_by_condition"] == {
+            "baseline": 1.0, "archived_conflict": 1.0}
+        assert metrics["usage_mismatch_count"] == 0
