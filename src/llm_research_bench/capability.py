@@ -554,12 +554,16 @@ def run_suite(
     max_gen_toks: int = 256,
     needle_depth: int | None = None,
     needle_batch: int | None = None,
+    think: bool = True,
 ) -> dict[str, Any]:
     if max_gen_toks <= 0:
         raise ValueError("max_gen_toks must be positive")
     if constraint_format not in ("json_schema", "json_object"):
         raise ValueError("constraint_format must be json_schema or json_object")
     paired_needle_suite = suite in PAIRED_NEEDLE_SUITES
+    if not think and not paired_needle_suite:
+        raise ValueError("think=False is only wired for paired needle suites")
+    think_kwargs = {} if think else {"chat_template_kwargs": {"enable_thinking": False}}
     challenge_condition = (PAIRED_NEEDLE_SUITES[suite][1] if paired_needle_suite
                            else "distractor")
     if suite == "concurrency":
@@ -589,12 +593,14 @@ def run_suite(
                 "messages": [{"role": "user", "content": pair["baseline_prompt"]}],
                 "max_tokens": max_gen_toks,
                 "temperature": 0,
+                **think_kwargs,
             }
             challenge_payload = {
                 "model": model,
                 "messages": [{"role": "user", "content": pair["distractor_prompt"]}],
                 "max_tokens": max_gen_toks,
                 "temperature": 0,
+                **think_kwargs,
             }
             baseline_tokens, baseline_count_response = _count_input_tokens(
                 base_url, baseline_payload, timeout
@@ -879,6 +885,8 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--max-gen-toks", type=int, default=256)
     run.add_argument("--needle-depth", type=int, choices=NEEDLE_DEPTHS)
     run.add_argument("--needle-batch", type=int, choices=(0, 1))
+    run.add_argument("--no-think", action="store_true",
+                     help="disable Qwen3 thinking mode via chat_template_kwargs")
     run.add_argument("--timeout", type=int, default=600)
     run.add_argument("--vram-csv", default=None)
     run.add_argument("--context-fill", type=int, default=0)
@@ -895,7 +903,8 @@ def main(argv: list[str] | None = None) -> int:
                         constrain=args.constrain, constraint_format=args.constraint_format,
                         tool_format=args.tool_format,
                         max_gen_toks=args.max_gen_toks, timeout=args.timeout,
-                        needle_depth=args.needle_depth, needle_batch=args.needle_batch)
+                        needle_depth=args.needle_depth, needle_batch=args.needle_batch,
+                        think=not args.no_think)
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=2), encoding="utf-8")

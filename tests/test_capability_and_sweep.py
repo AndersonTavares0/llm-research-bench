@@ -763,3 +763,37 @@ def test_unlabeled_conflict_batches_match_tokens_and_track_condition(monkeypatch
         assert metrics["exact_retrieval_by_condition"] == {
             "baseline": 1.0, "unlabeled_conflict": 1.0}
         assert metrics["usage_mismatch_count"] == 0
+
+
+def test_no_think_kwargs_reach_both_arms_and_count_requests(monkeypatch):
+    payloads = []
+
+    def fake_endpoint(url, payload, timeout):
+        payloads.append(payload)
+        return {"input_tokens": len(payload["messages"][0]["content"].split()) + 3}
+
+    def fake_post(base_url, model, payload, timeout):
+        payloads.append(payload)
+        return {"choices": [{"message": {"content": "Q7M4K2"}, "finish_reason": "stop"}],
+                "usage": {"prompt_tokens": len(payload["messages"][0]["content"].split()) + 3}}
+
+    monkeypatch.setattr(capability, "_post_endpoint", fake_endpoint)
+    monkeypatch.setattr(capability, "_post", fake_post)
+    out = capability.run_suite("http://x", "m", "needle_unlabeled_conflict", limit=5,
+                               needle_batch=0, think=False)
+    assert all(p.get("chat_template_kwargs") == {"enable_thinking": False} for p in payloads)
+    assert all(p.get("chat_template_kwargs") == {"enable_thinking": False}
+               for row in out["cases"] for p in (row["request"],))
+
+    with pytest.raises(ValueError):
+        capability.run_suite("http://x", "m", "structured_output", limit=1, think=False)
+
+
+def test_capability_cmd_forwards_no_think_only_when_disabled(tmp_path):
+    group = campaign.TaskGroup("c", "capability", ["needle_unlabeled_conflict"])
+    on = campaign.build_capability_cmd(group, "m", 8090, {"limit": 5, "think": True},
+                                       tmp_path / "r.json")
+    off = campaign.build_capability_cmd(group, "m", 8090, {"limit": 5, "think": False},
+                                        tmp_path / "r.json")
+    assert "--no-think" not in on
+    assert off.count("--no-think") == 1

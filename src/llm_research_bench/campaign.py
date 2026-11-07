@@ -569,6 +569,7 @@ def build_capability_cmd(
         *(["--tool-format", str(evaluation["tool_format"])] if evaluation.get("tool_format") else []),
         *(["--needle-depth", str(evaluation["needle_depth"])] if evaluation.get("needle_depth") is not None else []),
         *(["--needle-batch", str(evaluation["needle_batch"])] if evaluation.get("needle_batch") is not None else []),
+        *(["--no-think"] if evaluation.get("think") is False else []),
         "--output",
         str(output_path),
     ]
