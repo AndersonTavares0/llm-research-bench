@@ -1,0 +1,32 @@
+[
+  {
+    "campaign": "gpu-lab-concurrency-qwen3-ctx2048-kvq8_0-par1",
+    "ctx": 2048,
+    "kv": "q8_0",
+    "status": "measured",
+    "error": null,
+    "duration_s": 35.1,
+    "peak_vram_mib": 1530.1,
+    "telemetry_csv": "/workspace/results/sweeps/concurrency/gpu-lab-concurrency-qwen3-ctx2048-kvq8_0-par1-vram.csv"
+  },
+  {
+    "campaign": "gpu-lab-concurrency-qwen3-ctx2048-kvq8_0-par2",
+    "ctx": 2048,
+    "kv": "q8_0",
+    "status": "measured",
+    "error": null,
+    "duration_s": 32.5,
+    "peak_vram_mib": 1530.1,
+    "telemetry_csv": "/workspace/results/sweeps/concurrency/gpu-lab-concurrency-qwen3-ctx2048-kvq8_0-par2-vram.csv"
+  },
+  {
+    "campaign": "gpu-lab-concurrency-qwen3-ctx2048-kvq8_0-par4",
+    "ctx": 2048,
+    "kv": "q8_0",
+    "status": "measured",
+    "error": null,
+    "duration_s": 21.3,
+    "peak_vram_mib": 1530.1,
+    "telemetry_csv": "/workspace/results/sweeps/concurrency/gpu-lab-concurrency-qwen3-ctx2048-kvq8_0-par4-vram.csv"
+  }
+]

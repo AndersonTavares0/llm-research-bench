@@ -5,7 +5,7 @@ for repeated benchmark trials.
 """
 
 import math
-from typing import Dict, List
+from typing import Any, Dict, List
 
 try:
     from scipy import stats
@@ -14,18 +14,20 @@ except ImportError:
     _HAS_SCIPY = False
 
 
-def calculate_metrics_with_ci(values: List[float]) -> Dict[str, float]:
+def calculate_metrics_with_ci(values: List[float]) -> Dict[str, Any]:
     """Calculate sample mean, standard deviation, and 95% confidence interval margin.
 
     Uses Student's t distribution critical values for two-tailed alpha=0.05.
+    A single observation carries no information about between-run variance, so
+    its interval is reported as ``None`` rather than as a zero-width interval.
     """
     n = len(values)
     if n == 0:
-        return {"mean": 0.0, "std_dev": 0.0, "ci_95_margin": 0.0, "ci_low": 0.0, "ci_high": 0.0, "n": 0}
+        return {"mean": 0.0, "std_dev": 0.0, "ci_95_margin": None, "ci_low": None, "ci_high": None, "n": 0}
 
     mean = sum(values) / n
     if n == 1:
-        return {"mean": round(mean, 2), "std_dev": 0.0, "ci_95_margin": 0.0, "ci_low": round(mean, 2), "ci_high": round(mean, 2), "n": 1}
+        return {"mean": round(mean, 2), "std_dev": None, "ci_95_margin": None, "ci_low": None, "ci_high": None, "n": 1}
 
     variance = sum((x - mean) ** 2 for x in values) / (n - 1)
     std_dev = math.sqrt(variance)

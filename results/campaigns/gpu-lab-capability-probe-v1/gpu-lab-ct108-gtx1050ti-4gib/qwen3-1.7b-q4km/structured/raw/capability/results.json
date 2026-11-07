@@ -1,0 +1,66 @@
+{
+  "results": {
+    "structured_output": {
+      "name": "structured_output",
+      "alias": "structured_output",
+      "sample_len": 10,
+      "valid_rate,none": 1.0,
+      "valid_rate_stderr,none": 0.0,
+      "latency_p50_ms": 497.314,
+      "latency_p95_ms": 618.866,
+      "latency_n": 10
+    }
+  },
+  "cases": [
+    {
+      "prompt": "Weather in Miami, use fahrenheit.",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "prompt": "Extract: Katherine Johnson, 101, Hampton.",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "prompt": "Extract: Alan Turing, 41, Manchester.",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "prompt": "Weather in Tokyo, use celsius.",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "prompt": "Weather in Lisbon, use celsius.",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "prompt": "Weather in Oslo, use celsius.",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "prompt": "Weather in Lima, use celsius.",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "prompt": "Extract: Linus Torvalds, 54, Portland.",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "prompt": "Extract: Ada Lovelace, 36, London.",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "prompt": "Extract: Grace Hopper, 85, New York.",
+      "valid": true,
+      "errors": []
+    }
+  ]
+}

@@ -661,6 +661,10 @@ A compara\c{c}\~ao no GSM8K cobre somente 20 itens de teste, um modelo quantizad
 
 A extens\~ao planejada para 100 pares n\~ao foi conclu\'ida; portanto, nenhum resultado dela \`e apresentado. Esta avalia\c{c}\~ao sustenta somente uma compara\c{c}\~ao dentro desta amostra; s\~ao necess\'arias avalia\c{c}\~oes maiores, pr\'e-registradas e replica\c{c}\~oes independentes.
 
+\subsection{Piloto Explorat\'orio de Ordem de Suporte no HotpotQA}
+
+Um piloto com um recorte de valida\c{c}\~ao \texttt{distractor} do HotpotQA, cuja revis\~ao da fonte foi fixada, comparou passagens de suporte no in\'icio e no fim das dez passagens candidatas fornecidas. Foram conclu\'idos somente 15 dos 100 pares planejados (uma resposta exata normalizada em cada condi\c{c}\~ao; exatid\~ao conjunta de resposta e suporte: 0/15 em ambas). As contagens de tokens de entrada foram igualadas. Este piloto descritivo e incompleto n\~ao demonstra efeito geral da ordem, n\~ao avalia um recuperador ativo e n\~ao testa conflitos entre vers\~oes de documentos. O verificador hist\'orico de recupera\c{c}\~ao da produ\c{c}\~ao falhou inicialmente na verifica\c{c}\~ao de conclus\~ao real; uma consulta posterior somente de leitura, em 2026-11-07, passou para a ent\~ao gera\c{c}\~ao de produ\c{c}\~ao 347, sem leases ativos. Essa consulta e a observa\c{c}\~ao do caminho GGUF s\~ao hist\'oricas: a implanta\c{c}\~ao e o mapeamento do alias podem ter mudado, o caminho pode estar obsoleto, e sua aus\^encia n\~ao demonstra falha atual em produ\c{c}\~ao. A rota e o modelo atualmente implantados n\~ao puderam ser verificados neste ambiente. Nenhum lote adicional foi executado. M\'etodos, limita\c{c}\~oes, hashes e artefatos brutos est\~ao registrados em \url{../../docs/benchmarks/hotpotqa-support-order-partial.md}. O relato seguiu orienta\c{c}\~oes de rastreabilidade e distin\c{c}\~ao entre evid\^encia explorat\'oria e confirmat\'oria~\cite{kassis2026skills}; essas orienta\c{c}\~oes procedimentais n\~ao constituem evid\^encia emp\'irica dos resultados.
+
 \section{Conclus\~oes e Trabalhos Futuros}
 
 Este trabalho realizou uma investiga\c{c}\~ao experimental, matem\'atica e de sistemas sobre a viabilidade, efici\^encia arquitetural e limites operacionais de Modelos de Linguagem Pequenos (SLMs) na GPU NVIDIA GeForce GTX 1050 Ti de 4 GiB.
@@ -711,6 +715,9 @@ Trabalhos futuros contemplam a execu\c{c}\~ao de infer\^encia f\'isica da su\'it
 \bibitem{kwon2023} Kwon, W., et al. Efficient Memory Management for Large Language Model Serving with PagedAttention. In \emph{Proc. SOSP}, 2023.
 \bibitem{miao2024} Miao, X., et al. SpecInfer: Accelerating Generative Large Language Model Serving with Tree-based Speculative Inference and Verification. In \emph{Proc. ASPLOS}, 2024.
 \bibitem{anthropic2024mcp} Anthropic. Model Context Protocol: Open Standard for Secure AI Agent Tool Integration. Technical Specification, 2024. \url{https://modelcontextprotocol.io}
+\bibitem{hochreiter1997} Hochreiter, S., Schmidhuber, J. Long Short-Term Memory. \emph{Neural Computation}, 9(8), 1735--1780, 1997. \url{https://doi.org/10.1162/neco.1997.9.8.1735}
+\bibitem{cho2014} Cho, K., van Merri\"enboer, B., Gulcehre, C., Bahdanau, D., Bougares, F., Schwenk, H., Bengio, Y. Learning Phrase Representations using RNN Encoder--Decoder for Statistical Machine Translation. In \emph{Proc. EMNLP}, pp. 1724--1734, 2014. \url{https://doi.org/10.3115/v1/D14-1179}
+\bibitem{kassis2026skills} Kassis, T., Agarwal, V., He, Y., Patel, D., Brueckner, A. M. Scientific Agent Skills: A Library of Procedural Knowledge for Research Agents. arXiv:2609.00065, 2026. \url{https://doi.org/10.48550/arXiv.2609.00065}
 \end{singlespace}
 \end{thebibliography}
 

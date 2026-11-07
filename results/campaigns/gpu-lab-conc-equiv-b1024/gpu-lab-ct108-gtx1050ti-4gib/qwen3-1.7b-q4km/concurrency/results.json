@@ -1,0 +1,73 @@
+{
+  "results": {
+    "concurrency": {
+      "name": "concurrency",
+      "alias": "concurrency",
+      "sample_len": 6,
+      "valid_rate,none": 1.0,
+      "valid_rate_stderr,none": 0.0,
+      "latency_p50_ms": 2466.61,
+      "latency_p95_ms": 3301.104,
+      "latency_n": 12,
+      "round_p50_ms": 3266.527,
+      "slowest_ms": 3334.6,
+      "aggregate_rps": 0.61
+    }
+  },
+  "cases": [
+    {
+      "round": 3,
+      "wall_ms": [
+        1668.6,
+        3334.6
+      ],
+      "round_ms": 3335.7,
+      "valid": true
+    },
+    {
+      "round": 1,
+      "wall_ms": [
+        1634.9,
+        3264.6
+      ],
+      "round_ms": 3265.3,
+      "valid": true
+    },
+    {
+      "round": 2,
+      "wall_ms": [
+        3265.4,
+        1632.4
+      ],
+      "round_ms": 3265.7,
+      "valid": true
+    },
+    {
+      "round": 4,
+      "wall_ms": [
+        1640.5,
+        3266.4
+      ],
+      "round_ms": 3266.9,
+      "valid": true
+    },
+    {
+      "round": 0,
+      "wall_ms": [
+        1637.6,
+        3265.7
+      ],
+      "round_ms": 3266.1,
+      "valid": true
+    },
+    {
+      "round": 5,
+      "wall_ms": [
+        1639.2,
+        3273.7
+      ],
+      "round_ms": 3274.1,
+      "valid": true
+    }
+  ]
+}

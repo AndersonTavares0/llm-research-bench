@@ -101,13 +101,27 @@ flowchart TD
 
 ## 3. Resultados Empíricos e Benchmarks
 
+> [!CAUTION]
+> A tabela comparativa e os números de quantização/MTP abaixo são **resultados
+> exploratórios históricos**, não recomendações atuais de modelos nem resultados
+> diretamente comparáveis às campanhas posteriores com Qwen3-1.7B. Foram obtidos
+> com outros modelos, versões do runtime e protocolos, em uma única GPU; consulte
+> o [índice de evidências](docs/benchmarks/evidence-index.md) para conclusões
+> atuais, limitadas e ligadas aos artefatos brutos. As execuções com ferramentas
+> oficiais estão documentadas separadamente em [campanhas oficiais](docs/benchmarks/official-campaigns.pt-BR.md).
+> O piloto de ordem de suporte no HotpotQA, com fonte fixada, está incompleto
+> (15/100 pares) e é descritivo; avalia QA com contexto fornecido, não recuperação
+> ao vivo nem conflitos entre versões. Veja o [relatório parcial](docs/benchmarks/hotpotqa-support-order-partial.md).
+
 ### Bancada Experimental de Referência
 
-Todas as medições empíricas foram coletadas na bancada física dedicada:
+Os resultados históricos da tabela abaixo usaram esta bancada física. Campanhas
+posteriores também usaram a GTX 1050 Ti, mas com outros modelos, versões do
+runtime e protocolos; elas não estão todas representadas na tabela histórica:
 - **GPU:** NVIDIA GeForce GTX 1050 Ti (4096 MiB GDDR5, barramento de 128 bits, 112,0 GB/s de banda, 768 núcleos CUDA, arquitetura Pascal GP107).
 - **CPU e Memória Host:** AMD Ryzen 5 3600 (6C/12T @ 3.6 GHz base), 16 GiB DDR4 3200 MT/s.
 - **Ambiente Isolado:** Container Debian 12 minimal com passthrough PCI direto (modo headless, sem X11 disputando VRAM).
-- **Motor de Inferência:** `llama-server` (commit b4120+) com descarregamento cuBLAS e quantização GGUF.
+- **Motor de inferência histórico:** `llama-server` (commit b4120+) com descarregamento cuBLAS e quantização GGUF. Campanhas posteriores com Qwen3-1.7B usam llama.cpp build 12024; consulte os manifestos.
 
 ### Tabela Comparativa Mestra (Configurações Avaliadas)
 
@@ -186,8 +200,8 @@ pip install -e .
 A base de código inclui suíte completa de testes unitários que valida motores estatísticos, parsers de telemetria, cálculos de Clopper-Pearson e guardrails de segurança:
 
 ```bash
-# Executa todos os 64 testes unitários (execução verificada: conclui em ~0,2s)
-python -m unittest discover -s tests -p "test_*.py"
+# Executa a suíte de testes do repositório
+python -m pytest
 ```
 
 ### Execução de uma Passagem de Benchmark Ponta a Ponta
@@ -262,7 +276,7 @@ llm-research-bench/
 │   ├── generate_readme_figures.py       # Gerador de gráficos PNG para documentação
 │   ├── statistical_engine.py            # Fórmulas de IC e Clopper-Pearson
 │   └── telemetry_collector.py           # Coletor nativo de telemetria via NVML
-├── tests/                               # 64 testes unitários (100% de aprovação)
+├── tests/                               # testes unitários e de regressão via pytest
 ├── CONTRIBUTING.md                      # Diretrizes para novos colaboradores
 ├── LICENSE                              # Licença MIT
 ├── pyproject.toml                       # Metadados e dependências do pacote
@@ -296,6 +310,7 @@ Em conformidade com a prática científica aberta, o projeto documenta explicita
 Além da série histórica descrita neste README, o repositório agora inclui uma camada de orquestração para **llama.cpp/llama-bench** e **EleutherAI lm-evaluation-harness**. Os resultados oficiais são mantidos separadamente e não substituem nem reclassificam os dados históricos.
 
 - [Metodologia, resultados smoke e reprodução (PT-BR)](docs/benchmarks/official-campaigns.pt-BR.md)
+- [Índice de evidências: conclusões, amostras, limitações e artefatos](docs/benchmarks/evidence-index.md)
 - [Official campaign methodology and results (English)](docs/benchmarks/official-campaigns.md)
 - [Artefatos brutos e manifestos da campanha](results/campaigns/smoke-qwen3-1.7b-v1/)
 

@@ -1,0 +1,238 @@
+{
+  "results": {
+    "mechanism": {
+      "name": "mechanism",
+      "alias": "mechanism",
+      "sample_len": 3,
+      "valid_rate,none": 1.0,
+      "valid_rate_stderr,none": 0.0,
+      "latency_p50_ms": 3347.65,
+      "latency_p95_ms": 4582.654,
+      "latency_n": 3
+    }
+  },
+  "cases": [
+    {
+      "prompt": "Repeat exactly the word WORLD. Do not output JSON.",
+      "valid": true,
+      "errors": [],
+      "content": "{\"answer\": \"WORLD\"}",
+      "request": {
+        "model": "qwen3-1.7b",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Repeat exactly the word WORLD. Do not output JSON."
+          }
+        ],
+        "max_tokens": 256,
+        "temperature": 0,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "sentinel",
+            "schema": {
+              "type": "object",
+              "required": [
+                "answer"
+              ],
+              "properties": {
+                "answer": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        }
+      },
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"answer\": \"WORLD\"}",
+              "reasoning_content": "Okay, the user wants me to repeat the word \"WORLD\" exactly. Let me make sure I understand the request correctly. They specified not to output JSON, so I need to avoid any formatting. Just the word \"WORLD\" repeated. Let me check if there's any hidden instruction or if I need to add anything else. No, the user is straightforward. Just repeat \"WORLD\" as is. I'll make sure it's exactly that word, no typos. Alright, that's simple enough.\n"
+            }
+          }
+        ],
+        "created": 1794005511,
+        "model": "qwen3-1.7b",
+        "system_fingerprint": "b12024-ddf48f85c",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 125,
+          "prompt_tokens": 19,
+          "total_tokens": 144,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-oz9KxVkYvOkREdhdVKb6elwG5rfEMnYZ",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 19,
+          "prompt_ms": 78.133,
+          "prompt_per_token_ms": 4.112263157894737,
+          "prompt_per_second": 243.17509886987574,
+          "predicted_n": 125,
+          "predicted_ms": 2797.194,
+          "predicted_per_token_ms": 22.558016129032257,
+          "predicted_per_second": 44.33013941828847
+        }
+      },
+      "failure": null
+    },
+    {
+      "prompt": "Repeat exactly the word HELLO. Do not output JSON.",
+      "valid": true,
+      "errors": [],
+      "content": "{\n  \"answer\": \"HELLO\"\n}",
+      "request": {
+        "model": "qwen3-1.7b",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Repeat exactly the word HELLO. Do not output JSON."
+          }
+        ],
+        "max_tokens": 256,
+        "temperature": 0,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "sentinel",
+            "schema": {
+              "type": "object",
+              "required": [
+                "answer"
+              ],
+              "properties": {
+                "answer": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        }
+      },
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"answer\": \"HELLO\"\n}",
+              "reasoning_content": "Okay, the user wants me to repeat the word \"HELLO\". Let me make sure I understand the request correctly. They specified not to output JSON, so I need to avoid that. The task is straightforward: just write out \"HELLO\" again. I should check if there's any hidden instruction or if I need to format it in a particular way. Since they mentioned not to use JSON, I'll just output the word as is. No need for any additional information or explanations. Let me confirm once more that I'm not missing anything. Yep, looks simple enough. Just output \"HELLO\" without any extra characters or formatting.\n"
+            }
+          }
+        ],
+        "created": 1794005514,
+        "model": "qwen3-1.7b",
+        "system_fingerprint": "b12024-ddf48f85c",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 151,
+          "prompt_tokens": 20,
+          "total_tokens": 171,
+          "prompt_tokens_details": {
+            "cached_tokens": 7
+          }
+        },
+        "id": "chatcmpl-zp1I0HYaAXRyyi973HFg40fFYo7sBNrk",
+        "timings": {
+          "cache_n": 7,
+          "prompt_n": 13,
+          "prompt_ms": 37.484,
+          "prompt_per_token_ms": 2.8833846153846157,
+          "prompt_per_second": 346.8146409134564,
+          "predicted_n": 151,
+          "predicted_ms": 3308.322,
+          "predicted_per_token_ms": 22.05548,
+          "predicted_per_second": 45.340205699445214
+        }
+      },
+      "failure": null
+    },
+    {
+      "prompt": "Reply with the number 7 only.",
+      "valid": true,
+      "errors": [],
+      "content": "{\"answer\": \"7\"}",
+      "request": {
+        "model": "qwen3-1.7b",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Reply with the number 7 only."
+          }
+        ],
+        "max_tokens": 256,
+        "temperature": 0,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "sentinel",
+            "schema": {
+              "type": "object",
+              "required": [
+                "answer"
+              ],
+              "properties": {
+                "answer": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        }
+      },
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"answer\": \"7\"}",
+              "reasoning_content": "Okay, the user wants me to reply with the number 7 only. Let me make sure I understand the request correctly. They specified that I should only provide the number 7 in my response. So, I need to check that my answer doesn't include any other numbers or text. \n\nFirst, I'll confirm that the number 7 is the only required response. The user might be testing if I follow instructions strictly or perhaps they want a specific answer for a particular reason. I should respond in a way that's clear and direct, ensuring that only the number 7 is given. \n\nI need to avoid any distractions or additional information. The response should be concise. Let me just type out the number 7 and make sure there's no mistake. Also, I should check if there's any possible way the user might have meant something else, but based on the given instructions, the answer is straightforward. \n\nAlright, I'll go with 7 as the response.\n"
+            }
+          }
+        ],
+        "created": 1794005519,
+        "model": "qwen3-1.7b",
+        "system_fingerprint": "b12024-ddf48f85c",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 215,
+          "prompt_tokens": 16,
+          "total_tokens": 231,
+          "prompt_tokens_details": {
+            "cached_tokens": 3
+          }
+        },
+        "id": "chatcmpl-ZPjVi7ZlH7JjV4VeKSerxzTxMEiihHnF",
+        "timings": {
+          "cache_n": 3,
+          "prompt_n": 13,
+          "prompt_ms": 37.034,
+          "prompt_per_token_ms": 2.8487692307692307,
+          "prompt_per_second": 351.02878436031756,
+          "predicted_n": 215,
+          "predicted_ms": 4680.998,
+          "predicted_per_token_ms": 21.87382242990654,
+          "predicted_per_second": 45.716746727941356
+        }
+      },
+      "failure": null
+    }
+  ]
+}

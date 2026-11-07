@@ -1,0 +1,242 @@
+{
+  "results": {
+    "mechanism": {
+      "name": "mechanism",
+      "alias": "mechanism",
+      "sample_len": 3,
+      "valid_rate,none": 0.3333,
+      "valid_rate_stderr,none": 0.272166,
+      "latency_p50_ms": 2766.637,
+      "latency_p95_ms": 3165.132,
+      "latency_n": 3
+    }
+  },
+  "cases": [
+    {
+      "prompt": "Repeat exactly the word WORLD. Do not output JSON.",
+      "valid": true,
+      "errors": [],
+      "content": "{\"answer\": \"WORLD\"}",
+      "request": {
+        "model": "qwen3-1.7b",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Repeat exactly the word WORLD. Do not output JSON."
+          }
+        ],
+        "max_tokens": 128,
+        "temperature": 0,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "sentinel",
+            "schema": {
+              "type": "object",
+              "required": [
+                "answer"
+              ],
+              "properties": {
+                "answer": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        }
+      },
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"answer\": \"WORLD\"}",
+              "reasoning_content": "Okay, the user wants me to repeat the word \"WORLD\" exactly. Let me make sure I understand the request correctly. They specified not to output JSON, so I need to avoid any formatting. Just the word \"WORLD\" repeated. Let me check if there's any hidden instruction or if I need to add anything else. No, the user is straightforward. Just repeat \"WORLD\" as is. I'll make sure it's exactly that word, no typos. Alright, that's simple enough.\n"
+            }
+          }
+        ],
+        "created": 1794005098,
+        "model": "qwen3-1.7b",
+        "system_fingerprint": "b12024-ddf48f85c",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 125,
+          "prompt_tokens": 19,
+          "total_tokens": 144,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-31G0sNfabS3hFj9kM4Ywvp0FCxuFu2TP",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 19,
+          "prompt_ms": 362.93,
+          "prompt_per_token_ms": 19.10157894736842,
+          "prompt_per_second": 52.351693163971014,
+          "predicted_n": 125,
+          "predicted_ms": 2838.869,
+          "predicted_per_token_ms": 22.89410483870968,
+          "predicted_per_second": 43.67936667736341
+        }
+      },
+      "failure": null
+    },
+    {
+      "prompt": "Repeat exactly the word HELLO. Do not output JSON.",
+      "valid": false,
+      "errors": [
+        "invalid JSON: Expecting value: line 1 column 1 (char 0)"
+      ],
+      "content": "",
+      "request": {
+        "model": "qwen3-1.7b",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Repeat exactly the word HELLO. Do not output JSON."
+          }
+        ],
+        "max_tokens": 128,
+        "temperature": 0,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "sentinel",
+            "schema": {
+              "type": "object",
+              "required": [
+                "answer"
+              ],
+              "properties": {
+                "answer": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        }
+      },
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "Okay, the user wants me to repeat the word \"HELLO\". Let me make sure I understand the request correctly. They specified not to output JSON, so I need to avoid that. The task is straightforward: just write out \"HELLO\" again. I should check if there's any hidden instruction or if I need to format it in a particular way. Since they mentioned not to use JSON, I'll just output the word as is. No need for any additional information or explanations. Let me confirm once more that I'm not missing anything. Yep, looks simple enough. Just output \"HELLO\" without any extra"
+            }
+          }
+        ],
+        "created": 1794005101,
+        "model": "qwen3-1.7b",
+        "system_fingerprint": "b12024-ddf48f85c",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 128,
+          "prompt_tokens": 20,
+          "total_tokens": 148,
+          "prompt_tokens_details": {
+            "cached_tokens": 7
+          }
+        },
+        "id": "chatcmpl-WlsN7C1GyCc8XHgpE3DF0f9nkQXTWJ31",
+        "timings": {
+          "cache_n": 7,
+          "prompt_n": 13,
+          "prompt_ms": 42.316,
+          "prompt_per_token_ms": 3.255076923076923,
+          "prompt_per_second": 307.2124019283486,
+          "predicted_n": 128,
+          "predicted_ms": 2722.573,
+          "predicted_per_token_ms": 21.437582677165352,
+          "predicted_per_second": 46.647050418850114
+        }
+      },
+      "failure": "empty"
+    },
+    {
+      "prompt": "Reply with the number 7 only.",
+      "valid": false,
+      "errors": [
+        "invalid JSON: Expecting value: line 1 column 1 (char 0)"
+      ],
+      "content": "",
+      "request": {
+        "model": "qwen3-1.7b",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Reply with the number 7 only."
+          }
+        ],
+        "max_tokens": 128,
+        "temperature": 0,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "sentinel",
+            "schema": {
+              "type": "object",
+              "required": [
+                "answer"
+              ],
+              "properties": {
+                "answer": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        }
+      },
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "Okay, the user wants me to reply with the number 7 only. Let me make sure I understand the request correctly. They specified that I should only provide the number 7 in my response. So, I need to check that my answer doesn't include any other numbers or text. \n\nFirst, I'll confirm that the number 7 is the only required response. The user might be testing if I follow instructions strictly or perhaps they want a specific answer for a particular reason. I should respond in a way that's clear and direct, ensuring that only the number 7 is given. \n\nI need to avoid any distractions"
+            }
+          }
+        ],
+        "created": 1794005103,
+        "model": "qwen3-1.7b",
+        "system_fingerprint": "b12024-ddf48f85c",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 128,
+          "prompt_tokens": 16,
+          "total_tokens": 144,
+          "prompt_tokens_details": {
+            "cached_tokens": 3
+          }
+        },
+        "id": "chatcmpl-d5luxDcw4gFAtXfjmPbVmD1dfro3eLYe",
+        "timings": {
+          "cache_n": 3,
+          "prompt_n": 13,
+          "prompt_ms": 37.166,
+          "prompt_per_token_ms": 2.8589230769230767,
+          "prompt_per_second": 349.78205887101115,
+          "predicted_n": 128,
+          "predicted_ms": 2726.162,
+          "predicted_per_token_ms": 21.465842519685037,
+          "predicted_per_second": 46.585639444757874
+        }
+      },
+      "failure": "empty"
+    }
+  ]
+}

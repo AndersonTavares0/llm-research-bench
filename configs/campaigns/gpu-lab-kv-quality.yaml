@@ -1,0 +1,48 @@
+# q8_0 vs f16 KV quality check at n=100 (knowledge MCQ only, ctx 4096).
+# Sweep with --kv f16,q8_0 so the two cells share every other setting.
+campaign: gpu-lab-kv-quality
+description: >-
+  Does quantising the KV cache change knowledge-task scores? 100 ARC + 100
+  HellaSwag items, ctx 4096, f16 vs q8_0 KV.
+status: measured
+hardware_profile: gpu-lab-ct108-gtx1050ti-4gib
+
+server:
+  port: 8090
+  ctx_size: 4096
+  gpu_layers: 99
+  threads: 2
+  parallel: 1
+  startup_timeout_s: 300
+  cache_ram: 0
+  chat_template_kwargs:
+    enable_thinking: false
+
+bench:
+  prompt_tokens: 512
+  gen_tokens: 128
+  repetitions: 3
+
+evaluation:
+  limit: 100
+  seed: 42
+  num_fewshot: 0
+  batch_size: 1
+  max_length: 2048
+  max_gen_toks: 256
+  timeout_s: 3600
+
+models:
+  - name: qwen3-1.7b-q4km
+    alias: qwen3-1.7b
+    file: Qwen3-1.7B-Q4_K_M.gguf
+    quantization: Q4_K_M
+    hf_repo: ggml-org/Qwen3-1.7B-GGUF
+    hf_revision: daeb8e2d528a760970442092f6bf1e55c3b659eb
+    license: apache-2.0
+    sha256: d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5
+
+task_groups:
+  - name: knowledge-mcq
+    backend: gguf
+    tasks: [arc_challenge, hellaswag]

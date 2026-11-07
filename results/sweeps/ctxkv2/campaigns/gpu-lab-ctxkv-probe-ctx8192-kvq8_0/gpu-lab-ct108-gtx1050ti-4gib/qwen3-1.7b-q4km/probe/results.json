@@ -1,0 +1,31 @@
+{
+  "results": {
+    "structured_output": {
+      "name": "structured_output",
+      "alias": "structured_output",
+      "sample_len": 3,
+      "valid_rate,none": 1.0,
+      "valid_rate_stderr,none": 0.0,
+      "latency_p50_ms": 603.239,
+      "latency_p95_ms": 626.615,
+      "latency_n": 3
+    }
+  },
+  "cases": [
+    {
+      "prompt": "Extract: Grace Hopper, 85, New York.",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "prompt": "Extract: Ada Lovelace, 36, London.",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "prompt": "Extract: Alan Turing, 41, Manchester.",
+      "valid": true,
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "results": {
+    "mechanism": {
+      "name": "mechanism",
+      "alias": "mechanism",
+      "sample_len": 3,
+      "valid_rate,none": 0.0,
+      "valid_rate_stderr,none": 0.0,
+      "latency_p50_ms": 2762.538,
+      "latency_p95_ms": 2766.019,
+      "latency_n": 3
+    }
+  },
+  "cases": [
+    {
+      "prompt": "Repeat exactly the word WORLD. Do not output JSON.",
+      "valid": false,
+      "errors": [
+        "invalid JSON: Expecting value: line 1 column 1 (char 0)"
+      ],
+      "content": "WORLD WORLD WORLD WORLD WORLD",
+      "request": {
+        "model": "qwen3-1.7b",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Repeat exactly the word WORLD. Do not output JSON."
+          }
+        ],
+        "max_tokens": 128,
+        "temperature": 0
+      },
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "WORLD WORLD WORLD WORLD WORLD",
+              "reasoning_content": "Okay, the user wants me to repeat the word \"WORLD\" exactly. Let me make sure I understand the request correctly. They specified not to output JSON, so I need to avoid any formatting. Just the word \"WORLD\" repeated. Let me check if there's any hidden instruction or if I need to add anything else. No, the user is straightforward. Just repeat \"WORLD\" as is. I'll make sure it's exactly that word, no typos. Alright, that's simple enough.\n"
+            }
+          }
+        ],
+        "created": 1794005239,
+        "model": "qwen3-1.7b",
+        "system_fingerprint": "b12024-ddf48f85c",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 116,
+          "prompt_tokens": 19,
+          "total_tokens": 135,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-lKBYFFMTn91tew47clKHUgHJRvO6FvHj",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 19,
+          "prompt_ms": 117.179,
+          "prompt_per_token_ms": 6.167315789473684,
+          "prompt_per_second": 162.14509425750347,
+          "predicted_n": 116,
+          "predicted_ms": 2488.296,
+          "predicted_per_token_ms": 21.63735652173913,
+          "predicted_per_second": 46.21636654160117
+        }
+      },
+      "failure": "invalid-json"
+    },
+    {
+      "prompt": "Repeat exactly the word HELLO. Do not output JSON.",
+      "valid": false,
+      "errors": [
+        "invalid JSON: Expecting value: line 1 column 1 (char 0)"
+      ],
+      "content": "",
+      "request": {
+        "model": "qwen3-1.7b",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Repeat exactly the word HELLO. Do not output JSON."
+          }
+        ],
+        "max_tokens": 128,
+        "temperature": 0
+      },
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "Okay, the user wants me to repeat the word \"HELLO\". Let me make sure I understand the request correctly. They specified not to output JSON, so I need to avoid that. The task is straightforward: just write out \"HELLO\" again. I should check if there's any hidden instruction or if I need to format it in a particular way. Since they mentioned not to use JSON, I'll just output the word as is. No need for any additional information or explanations. Let me confirm once more that I'm not missing anything. Yep, looks simple enough. Just output \"HELLO\" without any extra"
+            }
+          }
+        ],
+        "created": 1794005241,
+        "model": "qwen3-1.7b",
+        "system_fingerprint": "b12024-ddf48f85c",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 128,
+          "prompt_tokens": 20,
+          "total_tokens": 148,
+          "prompt_tokens_details": {
+            "cached_tokens": 7
+          }
+        },
+        "id": "chatcmpl-k9fRL0mEfFsmxVPgRNk8br0LI4HZuAqs",
+        "timings": {
+          "cache_n": 7,
+          "prompt_n": 13,
+          "prompt_ms": 42.635,
+          "prompt_per_token_ms": 3.2796153846153846,
+          "prompt_per_second": 304.9138032133224,
+          "predicted_n": 128,
+          "predicted_ms": 2722.237,
+          "predicted_per_token_ms": 21.434937007874016,
+          "predicted_per_second": 46.65280796638941
+        }
+      },
+      "failure": "empty"
+    },
+    {
+      "prompt": "Reply with the number 7 only.",
+      "valid": false,
+      "errors": [
+        "invalid JSON: Expecting value: line 1 column 1 (char 0)"
+      ],
+      "content": "",
+      "request": {
+        "model": "qwen3-1.7b",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Reply with the number 7 only."
+          }
+        ],
+        "max_tokens": 128,
+        "temperature": 0
+      },
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "Okay, the user wants me to reply with the number 7 only. Let me make sure I understand the request correctly. They specified that I should only provide the number 7 in my response. So, I need to check that my answer doesn't include any other numbers or text. \n\nFirst, I'll confirm that the number 7 is the only required response. The user might be testing if I follow instructions strictly or perhaps they want a specific answer for a particular reason. I should respond in a way that's clear and direct, ensuring that only the number 7 is given. \n\nI need to avoid any distractions"
+            }
+          }
+        ],
+        "created": 1794005244,
+        "model": "qwen3-1.7b",
+        "system_fingerprint": "b12024-ddf48f85c",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 128,
+          "prompt_tokens": 16,
+          "total_tokens": 144,
+          "prompt_tokens_details": {
+            "cached_tokens": 3
+          }
+        },
+        "id": "chatcmpl-fvd9N6lusyukEzrJARJLXnKAgunuhkpO",
+        "timings": {
+          "cache_n": 3,
+          "prompt_n": 13,
+          "prompt_ms": 37.151,
+          "prompt_per_token_ms": 2.857769230769231,
+          "prompt_per_second": 349.9232860488277,
+          "predicted_n": 128,
+          "predicted_ms": 2723.813,
+          "predicted_per_token_ms": 21.447346456692916,
+          "predicted_per_second": 46.62581462090092
+        }
+      },
+      "failure": "empty"
+    }
+  ]
+}

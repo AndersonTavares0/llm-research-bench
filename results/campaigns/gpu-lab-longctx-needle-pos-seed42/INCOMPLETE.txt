@@ -1,0 +1,9 @@
+Incomplete calibration run; exclude from outcome analysis.
+
+The 30-case needle-retrieval campaign used max_gen_toks=64 and exceeded the
+existing 400-second gpu-lab hard deadline before capability/results.json or
+campaign meta were written. The controller logged cleanup and restore; its
+terminal state classified this as hard_deadline with result=restored. The
+partial llama-server log and job-supervisor log are retained here as evidence.
+No prompt/response-level raw results were produced. A separate, complete 10-case
+50%-depth cap-64 run is stored in `../gpu-lab-longctx-needle-depth50-seed42/`.
