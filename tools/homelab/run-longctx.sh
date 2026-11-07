@@ -8,9 +8,9 @@ TAG=${TAG:-longctx}
 SPEC="/workspace/.tmp/longctx-$TAG.yaml"
 mkdir -p /workspace/.tmp
 sed -e "s|^campaign: .*|campaign: gpu-lab-longctx-$TAG|" \
-    -e "s|^  context_fill: .*|  context_fill: ${FILL:-3800}\n  vram_csv: /workspace/results/conc/$TAG-vram.csv\n  needle_depth: ${NEEDLE_DEPTH:-}\n  needle_batch: ${NEEDLE_BATCH:-}\n  think: ${THINK:-true}|" \
+    -e "s|^  context_fill: .*|  context_fill: ${FILL:-3800}\n  vram_csv: /workspace/results/conc/$TAG-vram.csv\n  needle_depth: ${NEEDLE_DEPTH:-}\n  needle_batch: ${NEEDLE_BATCH:-}\n  batch_index: ${RAG_BATCH_INDEX:-0}\n  batch_size: ${RAG_BATCH_SIZE:-5}\n  think: ${THINK:-true}|" \
     -e "s|^  limit: .*|  limit: ${LIMIT:-3}|" \
-    -e "s|tasks: \[structured_output\]|tasks: [${SUITE:-structured_output}]|" \
+    -e "s|tasks: \[.*\]|tasks: [${SUITE:-hotpotqa_rag}]|" \
     -e "s|^  cache_type_k: .*|  cache_type_k: ${CACHE:-q8_0}|" \
     -e "s|^  cache_type_v: .*|  cache_type_v: ${CACHE:-q8_0}|" \
     -e "s|^  max_gen_toks: .*|  max_gen_toks: ${GEN:-64}\n  instruction: ${INSTR:-schema}\n  constrain: ${CONSTRAIN:-false}\n  constraint_format: ${CONSTRAINT_FORMAT:-json_schema}|" \

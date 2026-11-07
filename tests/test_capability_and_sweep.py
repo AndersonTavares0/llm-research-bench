@@ -100,6 +100,28 @@ def test_campaign_accepts_capability_backend_and_builds_command(tmp_path):
     )
     assert cmd[cmd.index("--needle-depth") + 1] == "50"
 
+    rag_group = campaign.TaskGroup("rag", "capability", ["hotpotqa_rag"])
+    rag_cmd = campaign.build_capability_cmd(
+        rag_group, "m", 8090,
+        {"dataset_path": "/data/hotpotqa.jsonl", "batch_index": 3,
+         "batch_size": 5, "max_gen_toks": 128}, tmp_path / "rag.json"
+    )
+    assert rag_cmd[1:3] == ["-m", "llm_research_bench.rag_evaluator"]
+    assert rag_cmd[rag_cmd.index("--dataset") + 1] == "/data/hotpotqa.jsonl"
+    assert rag_cmd[rag_cmd.index("--batch-index") + 1] == "3"
+    assert rag_cmd[rag_cmd.index("--batch-size") + 1] == "5"
+
+    rag_group = campaign.TaskGroup("rag", "capability", ["hotpotqa_rag"])
+    rag_cmd = campaign.build_capability_cmd(
+        rag_group, "m", 8090,
+        {"dataset_path": "/data/hotpotqa.jsonl", "batch_index": 3,
+         "batch_size": 5, "max_gen_toks": 128}, tmp_path / "rag.json"
+    )
+    assert rag_cmd[1:3] == ["-m", "llm_research_bench.rag_evaluator"]
+    assert rag_cmd[rag_cmd.index("--dataset") + 1] == "/data/hotpotqa.jsonl"
+    assert rag_cmd[rag_cmd.index("--batch-index") + 1] == "3"
+    assert rag_cmd[rag_cmd.index("--batch-size") + 1] == "5"
+
 
 def test_analyze_joins_bench_throughput(tmp_path):
     import json as _json

@@ -101,13 +101,23 @@ flowchart TD
 
 ## 3. Empirical Findings & Benchmarks
 
+> [!CAUTION]
+> The comparison table and quantization/MTP figures below are **historical
+> exploratory results**, not current model recommendations or directly
+> comparable to the later Qwen3-1.7B campaigns. They came from separate model,
+> runtime and evaluator protocols on one GPU; see the [evidence index](docs/benchmarks/evidence-index.md)
+> for current, bounded conclusions and raw artifacts. Current official-tool
+> runs are documented separately in [official campaigns](docs/benchmarks/official-campaigns.md).
+
 ### Reference Edge Testbed
 
-All empirical measurements were collected on a dedicated, physical testbed:
+The historical comparison below used this physical testbed. Later campaigns
+also used the GTX 1050 Ti, but different models, runtime builds and protocols;
+they are not all represented by the historical table:
 - **GPU:** NVIDIA GeForce GTX 1050 Ti (4096 MiB GDDR5, 128-bit bus, 112.0 GB/s bandwidth, 768 CUDA cores, Pascal GP107).
 - **CPU & Host RAM:** AMD Ryzen 5 3600 (6C/12T @ 3.6 GHz base), 16 GiB DDR4 3200 MT/s.
 - **Sandbox Environment:** Debian 12 minimal container with direct PCI passthrough (headless, no X11/desktop VRAM contention).
-- **Inference Engine:** `llama-server` (commit b4120+) with cuBLAS offload and GGUF quantization.
+- **Historical inference engine:** `llama-server` (commit b4120+) with cuBLAS offload and GGUF quantization. Later Qwen3-1.7B campaigns use llama.cpp build 12024; see their manifests.
 
 ### Master Comparison Table (Evaluated Configurations)
 
@@ -186,8 +196,8 @@ pip install -e .
 The repository includes a comprehensive unit test suite covering statistical engines, telemetry parsing, Clopper-Pearson calculations, and guardrails:
 
 ```bash
-# Run all 64 automated unit tests (execution verified: passes in ~0.2s out-of-the-box)
-python -m unittest discover -s tests -p "test_*.py"
+# Run the repository test suite
+python -m pytest
 ```
 
 ### Running an End-to-End Benchmark Pass
@@ -262,7 +272,7 @@ llm-research-bench/
 │   ├── generate_readme_figures.py       # Web PNG figure generator
 │   ├── statistical_engine.py            # CI and statistical formulas
 │   └── telemetry_collector.py           # Native NVML ctypes sampler
-├── tests/                               # 64 unit tests (100% passing)
+├── tests/                               # pytest unit and regression tests
 ├── CONTRIBUTING.md                      # Contribution guidelines
 ├── LICENSE                              # MIT License
 ├── pyproject.toml                       # Build metadata and dependencies
@@ -296,6 +306,7 @@ In accordance with open scientific practice, this project explicitly documents i
 Alongside the historical series described in this README, the repository now includes a light orchestration layer for **llama.cpp/llama-bench** and the **EleutherAI lm-evaluation-harness**. Official-tool results are stored separately and do not replace or relabel historical data.
 
 - [Official campaign methodology, smoke results, and reproduction](docs/benchmarks/official-campaigns.md)
+- [Evidence index: conclusions, sample sizes, limitations, and artifacts](docs/benchmarks/evidence-index.md)
 - [Metodologia e resultados da campanha (PT-BR)](docs/benchmarks/official-campaigns.pt-BR.md)
 - [Raw campaign artifacts and manifests](results/campaigns/smoke-qwen3-1.7b-v1/)
 

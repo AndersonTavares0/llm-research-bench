@@ -542,6 +542,22 @@ def build_capability_cmd(
     output_path: Path,
 ) -> list[str]:
     """In-tree probes (JSON-schema adherence, tool-call validity) on the same server."""
+    if task_group.tasks[0] == "hotpotqa_rag":
+        return [
+            sys.executable,
+            "-m",
+            "llm_research_bench.rag_evaluator",
+            "--base-url", f"http://127.0.0.1:{port}",
+            "--model", model_alias,
+            "--dataset", str(evaluation["dataset_path"]),
+            "--batch-index", str(evaluation.get("batch_index", 0)),
+            "--batch-size", str(evaluation.get("batch_size", 5)),
+            "--max-gen-toks", str(evaluation.get("max_gen_toks", 128)),
+            "--timeout", str(evaluation.get("timeout_s", 120)),
+            *( ["--think"] if evaluation.get("think") else [] ),
+            *( ["--vram-csv", str(evaluation["vram_csv"])] if evaluation.get("vram_csv") else [] ),
+            "--output", str(output_path),
+        ]
     return [
         sys.executable,
         "-m",

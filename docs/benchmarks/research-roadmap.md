@@ -16,31 +16,39 @@ not replace the campaign records; every claim below points at an artifact.
 - **Operational ceiling.** The lease controller preempts production, restores it,
   and survives supervisor death during acquisition (7/7 self-tests).
 
-## Gaps worth research effort
+## What remains worth researching
 
-1. **Context scaling is unmeasured.** The card has ~2.4 GiB free at run time, so
-   long context is KV-cache limited, not capability limited. The analytical
-   profiler predicts 448 MiB of f16 KV at 4096 tokens for Qwen3-1.7B
-   (28 layers × 8 KV heads × 128 × 2 × 2 B) and 224 MiB with q8_0 KV.
-2. **KV quantization is unmeasured.** `--cache-type-k/v q8_0` is the obvious lever
-   on a 4 GiB card, but quality impact at long context is unknown here.
-3. **Offloading is unmeasured.** With the model already ~1.2 GiB, a partial-offload
-   sweep (`--n-gpu-layers`) would quantify the CPU/GPU boundary, which matters for
-   larger small models (Llama-3.2-3B, SmolLM2-1.7B are present on the lab).
-4. **Prompt caching trade-off is unknown.** Host prompt cache improves repeated
-   prompts but caused the only OOM incident. A controlled measurement of
-   `--cache-ram 0 / 256 / 1024 MiB` would settle the policy.
-5. **Concurrency is unmeasured on this card.** The framework has a
-   `ConcurrencyProfiler`, but no lease-measured artifact backs it.
-6. **Capability probes are not wired into the campaign pipeline.** The repo has
-   agent/code/long-context/safety evaluators; only lm-eval tasks are campaignized.
+1. **Natural-document RAG groundedness is the largest evidence gap.** The
+    existing needle suites use ten fixed IDs and synthetic repeated filler. They
+    establish prompt-family failure modes, not field reliability. The
+    source-pinned 100-item HotpotQA study completed only 15 paired cases across
+    batches 0–2 of 20 before it was halted. This is an incomplete descriptive
+    pilot, not a confirmatory result. The dataset supplies candidate passages:
+    it tests closed-context multi-hop QA, not live retrieval or version-history
+    conflicts. See the [partial report](hotpotqa-support-order-partial.md).
+    Do not resume GPU work until an operator repairs the missing production model
+    and the authoritative real-completion verifier passes.
+2. **Generalization across models and retrieval systems is unknown.** Current
+   conflict findings use Qwen3-1.7B Q4_K_M, one runtime, one GPU and hand-built
+   candidate orderings. Replicate only after the natural-document protocol is
+   validated, and distinguish model, prompt, retrieval order and context length.
+3. **Concurrency and host-cache policies are only partially characterized.**
+   H4 has repeated 1-vs-4-slot results, not the complete 1/2/4 grid at equal
+   per-request context. The host-cache OOM led to `--cache-ram 0`, but no
+   randomized cache-size trade-off study was completed.
+4. **Offload results are model-specific.** See [`h2-h4-kv-results.md`](h2-h4-kv-results.md);
+   do not infer a general CPU/GPU boundary from one model or one lease per cell.
+5. **Historical quality, safety and tokenizer claims need current provenance.**
+   Keep their original reports, but treat them as exploratory unless the linked
+   protocol, exact sample and raw outputs support the particular claim.
 
 ## Hypotheses and designs
 
-Each row is one campaign spec per configuration; every design is repeated-measures
-across leases (random order, fixed cool-down) so day-to-day drift is a random
-effect rather than a confounder. All of them require an operator-authorized lease
-because they preempt production inference.
+Each row is one campaign spec per configuration. Preserve paired/order-randomized
+designs where meaningful and report run-level variation separately from item
+variation. All GPU inference must run through the gpu-lab lease controller because
+it preempts production; keep its watchdog, deadline, isolation, cleanup and
+verified recovery gates intact.
 
 ### H1 — KV cache dominates the usable context window (highest value)
 
@@ -80,17 +88,25 @@ because they preempt production inference.
   throughput/latency knee.
 - Analysis: paired within-lease ordering, because concurrency changes queueing.
 
-### H5 — Capability probes (structured output, tool calling, RAG)
+### H5 — Capability probes (structured output, tool calling, closed-context QA)
 
 - Wire the existing evaluators into the campaign output schema (no new engine).
   `llm_research_bench.capability` now ships deterministic `structured_output`
   and `tool_call` probes and is reachable as a `backend: capability` task group.
-- Tasks: JSON-schema adherence rate, tool-call argument validity, RAG answer
-  groundedness on a small fixed corpus.
+- Tasks: JSON-schema adherence, tool-call argument validity, and the new paired
+  HotpotQA closed-context answer/evidence-order probe. The latter uses supplied
+  candidate passages; it does not measure a retriever or version conflicts.
 - Decision rule: report per-task pass rates with Wilson intervals; no composite
   score.
-- Status: **executed on Qwen3-1.7B** — structured 10/10 (95% CI 0.722–1.0),
-  tool calls 5/5 (95% CI 0.566–1.0). RAG groundedness is not implemented yet.
+- Status: structured output and tool calls have exploratory smoke results on
+  Qwen3-1.7B (10/10 and 5/5, respectively); HotpotQA evaluator and fixture are
+  implemented. Only 15/100 paired HotpotQA items (batches 0–2/20) ran; treat
+  these as an incomplete descriptive pilot, halted after the production recovery
+  verifier returned HTTP 500 because `/models/Qwen3.5-4B-Q4_K_M-MTP.gguf` was
+  missing. The source supplies candidates, so this is closed-context QA, not
+  retrieval or version-conflict evidence. See the
+  [partial report](hotpotqa-support-order-partial.md). No more GPU leases until
+  production is repaired and the authoritative verifier passes.
 - Campaign spec: `configs/campaigns/gpu-lab-capability-probe.yaml` runs both
   probes as `backend: capability` groups under one lease; each response is timed
   client-side and reported as p50/p95 end-to-end latency.
@@ -104,8 +120,11 @@ because they preempt production inference.
   campaign; state the MDE (~20 pp at n=100 for proportions near 0.5).
 - Publish raw JSON, the spec, hashes, runtime versions and the analysis script.
 - Never merge hardware profiles; the local RTX 3060 Ti artifacts remain separate.
-- Any GPU work needs explicit approval in advance, including the number and
-  duration of leases.
+- Every GPU experiment must use the approved gpu-lab job path, current per-lease
+  deadline, controller watchdog and production recovery verification. Do not
+  bypass the gateway or weaken safety checks. Preserve raw requests/responses,
+  model/runtime/data hashes and terminal lease state. Do not push, merge or deploy
+  without explicit authorization.
 
 ## Candidate models (already present in the lab model store)
 

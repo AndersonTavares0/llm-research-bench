@@ -1,7 +1,7 @@
-# Long-context capability probe: structured output with ~3.8k tokens of filler.
+# Paired HotpotQA evidence-order probe on Qwen3-1.7B, ctx 8192, q8_0 KV.
 campaign: gpu-lab-longctx-capability
 description: >-
-  JSON-schema adherence at ~4096-token prompts on Qwen3-1.7B, ctx 8192, q8_0 KV.
+  Closed-context HotpotQA multi-hop answering with support passages first vs last.
 status: measured
 hardware_profile: gpu-lab-ct108-gtx1050ti-4gib
 
@@ -25,8 +25,9 @@ evaluation:
   limit: 3
   seed: 42
   clients: 1
-  context_fill: 3800
-  max_gen_toks: 64
+  context_fill: 0
+  dataset_path: /workspace/repo/data/rag/hotpotqa-validation-100.jsonl
+  max_gen_toks: 128
   timeout_s: 600
 
 models:
@@ -40,6 +41,6 @@ models:
     sha256: d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5
 
 task_groups:
-  - name: structured
+  - name: hotpotqa-rag
     backend: capability
-    tasks: [structured_output]
+    tasks: [hotpotqa_rag]
