@@ -58,44 +58,23 @@ While frontier AI research primarily targets data-center accelerators (A100, H10
 
 ## 2. System Architecture & Workflow
 
-The benchmark suite coordinates configuration loading, runtime health checks, background telemetry, prompt dispatching, and statistical export in a structured four-stage lifecycle:
+The repository has separate experiment entry points; this diagram describes the checked-in local campaign runner, not the current production deployment. `campaign.py` validates a campaign specification, records provenance, invokes the official `lm-eval` and `llama.cpp` tools, and summarizes their artifacts. Other modules provide legacy/direct API evaluators and optional hardware telemetry; they are not one shared four-stage pipeline.
 
 ```mermaid
 flowchart TD
-    subgraph S1["1. Configuration & Runtime"]
-        direction TB
-        CFG["Configuration & Models<br/>(models.ini / CLI)"] --> RUN["Inference Server<br/>(llama.cpp runtime)"]
-    end
-
-    subgraph S2["2. Execution & Telemetry"]
-        direction TB
-        DISP["Prompt Dispatcher<br/>(Safety & Reasoning Prompts)"] --> EXEC["Inference Engine<br/>(Prefill & Decode Passes)"]
-        EXEC <-->|Concurrent 4 Hz Polling| NVML["Hardware Telemetry Daemon<br/>(NVML libnvidia-ml.so)"]
-    end
-
-    subgraph S3["3. Trace Persistence"]
-        direction TB
-        EXEC --> STORE["Microdata Storage<br/>(JSON & CSV Traces)"]
-        NVML --> STORE
-    end
-
-    subgraph S4["4. Analysis & Artifacts"]
-        direction TB
-        STORE --> STAT["Statistical Engine<br/>(CIs & Clopper-Pearson)"]
-        STAT --> OUT["Visual Artifacts<br/>(PNG Figures & LaTeX PDFs)"]
-    end
-
-    S1 ==> S2
-    S2 ==> S3
-    S3 ==> S4
+    SPEC["Campaign YAML"] --> RUN["campaign.py<br/>validate & record provenance"]
+    RUN --> TOOLS["Official evaluation tools<br/>lm-eval + llama.cpp"]
+    TOOLS --> ART["Campaign artifacts<br/>raw outputs + manifests"]
+    ART --> SUM["campaign summary / audit"]
+    OTHER["Direct API & legacy evaluators"] -. separate entry points .-> API["Local OpenAI-compatible endpoint"]
 ```
 
 ### Core Pipeline Components
 
-- [`benchmark_suite.py`](src/llm_research_bench/benchmark_suite.py): Central test orchestrator featuring a standardized 3-tier protocol (Level A Smoke Test, Level B Comparative, Level C Thermal Stress), monotonic timing profilers, and thermal guardrails.
-- [`telemetry_collector.py`](src/llm_research_bench/telemetry_collector.py): Dedicated background thread interacting directly with the NVIDIA Management Library (`libnvidia-ml.so.1`) to record peak VRAM, GPU core clocks, and junction temperature at 250 ms intervals (4 Hz).
-- [`statistical_engine.py`](src/llm_research_bench/statistical_engine.py): Mathematical module computing Student's $t$ confidence intervals and exact Clopper-Pearson binomial intervals.
-- [`generate_readme_figures.py`](src/llm_research_bench/generate_readme_figures.py): Automated chart generator producing high-clarity PNG figures directly from recorded results.
+- [`campaign.py`](src/llm_research_bench/campaign.py): Current repository campaign CLI; validates specs and provenance, drives official evaluation/runtime CLIs, and summarizes/audits artifacts. This does not establish the live production route.
+- [`benchmark_suite.py`](src/llm_research_bench/benchmark_suite.py) and [`capability.py`](src/llm_research_bench/capability.py): Separate direct Chat Completions evaluators; their datasets, metrics, and limits are documented with the corresponding results.
+- [`telemetry_collector.py`](src/llm_research_bench/telemetry_collector.py): Optional NVML sampler at 250 ms intervals, recording VRAM and temperature; it does not record GPU clocks.
+- [`generate_readme_figures.py`](src/llm_research_bench/generate_readme_figures.py): Generates figures from values transcribed in the script/README, not directly from raw experiment files; verify against canonical artifacts before treating them as updated measurements.
 
 ---
 
