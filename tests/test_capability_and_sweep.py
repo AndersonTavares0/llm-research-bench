@@ -94,6 +94,12 @@ def test_campaign_accepts_capability_backend_and_builds_command(tmp_path):
     assert cmd[cmd.index("--suite") + 1] == "structured_output"
     assert cmd[cmd.index("--output") + 1].endswith("results.json")
 
+    cmd = campaign.build_capability_cmd(
+        spec.task_groups[0], "m", 8090,
+        {"limit": 10, "seed": 42, "needle_depth": 50}, tmp_path / "needle.json"
+    )
+    assert cmd[cmd.index("--needle-depth") + 1] == "50"
+
 
 def test_analyze_joins_bench_throughput(tmp_path):
     import json as _json
@@ -518,3 +524,41 @@ def test_mechanism_uses_schema_and_preserves_full_response(monkeypatch):
     assert out["cases"][0]["response"] == response
     assert out["cases"][0]["request"] == seen[0]
     assert seen[0]["max_tokens"] == 17
+
+
+def test_needle_retrieval_prompts_are_paired_by_position():
+    cases = capability._needle_retrieval_cases()
+    assert len(cases) == 30
+    assert {c["depth_pct"] for c in cases} == {10, 50, 90}
+    for case_id, value in capability.NEEDLE_CASES:
+        pair = [c for c in cases if c["case_id"] == case_id]
+        assert {c["needle_value"] for c in pair} == {value}
+        assert len({c["prompt"] for c in pair}) == 3
+        positions = [c["prompt"].index(f"Record {case_id}") for c in pair]
+        assert positions == sorted(positions)
+
+
+def test_needle_retrieval_scores_and_reports_depth(monkeypatch):
+    def fake_post(base_url, model, payload, timeout):
+        code = next(value for _, value in capability.NEEDLE_CASES if value in payload["messages"][0]["content"])
+        return {"choices": [{"message": {"content": code}},], "usage": {"prompt_tokens": 7000}}
+
+    monkeypatch.setattr(capability, "_post", fake_post)
+    out = capability.run_suite("http://x", "m", "needle_retrieval", limit=30)
+    assert out["results"]["needle_retrieval"]["valid_rate,none"] == 1.0
+    assert out["results"]["needle_retrieval"]["retrieval_by_depth"] == {"10": 1.0, "50": 1.0, "90": 1.0}
+    assert all(c["response"]["usage"]["prompt_tokens"] == 7000 for c in out["cases"])
+
+
+def test_needle_retrieval_depth_filter_selects_one_paired_stratum(monkeypatch):
+    def fake_post(base_url, model, payload, timeout):
+        code = next(value for _, value in capability.NEEDLE_CASES if value in payload["messages"][0]["content"])
+        return {"choices": [{"message": {"content": code}}], "usage": {"prompt_tokens": 7000}}
+
+    monkeypatch.setattr(capability, "_post", fake_post)
+    out = capability.run_suite(
+        "http://x", "m", "needle_retrieval", limit=10, needle_depth=50
+    )
+    assert len(out["cases"]) == 10
+    assert {case["depth_pct"] for case in out["cases"]} == {50}
+    assert out["results"]["needle_retrieval"]["retrieval_by_depth"] == {"50": 1.0}

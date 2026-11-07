@@ -18,9 +18,19 @@ from pathlib import Path
 from typing import Any
 
 from llm_research_bench.latency import percentile, summarize_ms
+from llm_research_bench.evaluators.long_context_evaluator import LongContextEvaluator
 
 FILLER = ("The quick brown fox jumps over the lazy dog while the engineer "
           "records the measurement carefully and repeats the run. ")
+
+NEEDLE_CASES = [
+    ("K01", "Q7M4K2"), ("K02", "P9V3D6"), ("K03", "R2C8W5"),
+    ("K04", "H6N1X4"), ("K05", "B3T9L7"), ("K06", "M5F2Z8"),
+    ("K07", "C8J4A1"), ("K08", "W1G7P3"), ("K09", "D4Y6S2"),
+    ("K10", "X2L5N9"),
+]
+NEEDLE_DEPTHS = (10, 50, 90)
+NEEDLE_FILLERS = 340
 
 EXAMPLES: dict[str, dict[str, Any]] = {
     "person": {"name": "Ada Lovelace", "age": 36, "city": "London"},
@@ -105,6 +115,7 @@ CASES: dict[str, list[dict[str, Any]]] = {
     # Rounds are generated from --limit/--clients; the key only has to exist so
     # argparse can offer the suite name.
     "concurrency": [],
+    "needle_retrieval": [],
     "structured_output": [
         {"prompt": "Extract: Ada Lovelace, 36, London.", "schema": "person"},
         {"prompt": "Extract: Grace Hopper, 85, New York.", "schema": "person"},
@@ -186,6 +197,26 @@ CASES: dict[str, list[dict[str, Any]]] = {
          "expect": {"query": "grafana", "limit": 1}},
     ],
 }
+
+
+def _needle_retrieval_cases() -> list[dict[str, Any]]:
+    """Build paired prompts with one exact fact moved through identical filler."""
+    cases = []
+    for case_id, value in NEEDLE_CASES:
+        for depth in NEEDLE_DEPTHS:
+            rows = [FILLER] * NEEDLE_FILLERS
+            rows[round((NEEDLE_FILLERS - 1) * depth / 100)] = (
+                f"Record {case_id}: the exact field code is {value}. "
+            )
+            prompt = (
+                "Find the exact field code in the requested record. Use only the "
+                "context below; answer with the code and nothing else.\n\n"
+                "Context:\n" + "".join(rows) +
+                f"\nWhat is the code in record {case_id}?"
+            )
+            cases.append({"case_id": case_id, "depth_pct": depth,
+                          "needle_value": value, "prompt": prompt})
+    return cases
 
 TYPES = {
     "object": dict,
@@ -376,6 +407,7 @@ def run_suite(
     constraint_format: str = "json_schema",
     tool_format: str = "native",
     max_gen_toks: int = 256,
+    needle_depth: int | None = None,
 ) -> dict[str, Any]:
     if max_gen_toks <= 0:
         raise ValueError("max_gen_toks must be positive")
@@ -384,6 +416,9 @@ def run_suite(
     if suite == "concurrency":
         cases = [{"round": i} for i in range(max(1, limit))]
         clients = max(1, int(clients))
+    elif suite == "needle_retrieval":
+        cases = [case for case in _needle_retrieval_cases()
+                 if needle_depth is None or case["depth_pct"] == needle_depth][:limit]
     else:
         cases = CASES[suite][:limit]
     random.Random(seed).shuffle(cases)
@@ -469,7 +504,7 @@ def run_suite(
             details.append({"prompt": case["prompt"], "valid": not errors, "errors": errors,
                             "content": content, "request": payload, "response": response,
                             "failure": None if not errors else classify_failure(errors, content)})
-        else:
+        elif suite == "tool_call":
             started = time.perf_counter()
             if tool_format == "json":
                 payload = {
@@ -507,6 +542,25 @@ def run_suite(
             score = score_tool_case(case, name, args, error)
             details.append({"prompt": case["prompt"], "tool": name, "args": args,
                             "content": (message.get("content") or "")[:300], **score})
+        else:
+            payload = {
+                "model": model,
+                "messages": [{"role": "user", "content": case["prompt"]}],
+                "max_tokens": max_gen_toks,
+                "temperature": 0,
+            }
+            started = time.perf_counter()
+            response = _post(base_url, model, payload, timeout)
+            latency_ms = (time.perf_counter() - started) * 1000
+            latencies_ms.append(latency_ms)
+            content = _extract_content(response)
+            scored = LongContextEvaluator().evaluate(
+                {"needle_key": case["case_id"], "needle_value": case["needle_value"],
+                 "context_len": response.get("usage", {}).get("prompt_tokens"),
+                 "depth_pct": case["depth_pct"]}, content)
+            details.append({**case, **scored, "valid": scored["passed"],
+                            "content": content, "latency_ms": round(latency_ms, 1),
+                            "request": payload, "response": response})
     if sampler:
         sampler.stop()
     valid = sum(1 for d in details if d["valid"])
@@ -531,6 +585,12 @@ def run_suite(
                     "args_schema_rate": round(sum(1 for d in details if d.get("schema_ok")) / len(details), 3),
                     "semantic_rate": round(sum(1 for d in details if d.get("semantic")) / len(details), 3)}
                    if details and suite == "tool_call" else {}),
+                **({"retrieval_by_depth": {
+                    str(depth): round(sum(1 for d in details if d["depth_pct"] == depth and d["valid"])
+                                      / sum(1 for d in details if d["depth_pct"] == depth), 3)
+                    for depth in NEEDLE_DEPTHS
+                    if any(d["depth_pct"] == depth for d in details)}}
+                   if details and suite == "needle_retrieval" else {}),
                 **({
                     "round_p50_ms": percentile(round_ms, 50),
                     "slowest_ms": round(max(latencies_ms), 1) if latencies_ms else None,
@@ -554,6 +614,7 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--seed", type=int, default=42)
     run.add_argument("--clients", type=int, default=2)
     run.add_argument("--max-gen-toks", type=int, default=256)
+    run.add_argument("--needle-depth", type=int, choices=NEEDLE_DEPTHS)
     run.add_argument("--timeout", type=int, default=600)
     run.add_argument("--vram-csv", default=None)
     run.add_argument("--context-fill", type=int, default=0)
@@ -569,7 +630,8 @@ def main(argv: list[str] | None = None) -> int:
                         context_fill=args.context_fill, instruction=args.instruction,
                         constrain=args.constrain, constraint_format=args.constraint_format,
                         tool_format=args.tool_format,
-                        max_gen_toks=args.max_gen_toks, timeout=args.timeout)
+                        max_gen_toks=args.max_gen_toks, timeout=args.timeout,
+                        needle_depth=args.needle_depth)
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
