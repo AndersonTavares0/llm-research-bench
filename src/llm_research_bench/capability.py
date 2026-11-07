@@ -137,6 +137,7 @@ CASES: dict[str, list[dict[str, Any]]] = {
     "needle_rank_conflict": [],
     "needle_precedence_conflict": [],
     "needle_precedence_tail_conflict": [],
+    "needle_archived_rank_conflict": [],
     "structured_output": [
         {"prompt": "Extract: Ada Lovelace, 36, London.", "schema": "person"},
         {"prompt": "Extract: Grace Hopper, 85, New York.", "schema": "person"},
@@ -420,12 +421,42 @@ def _needle_precedence_tail_conflict_pair(case_id: str, value: str) -> dict[str,
                 query, f"{rule}\nWhat is the code in record {case_id}?", 1)}
 
 
+def _needle_archived_rank_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    """Same nine ACTIVE/ARCHIVED rows in both arms; only their order changes."""
+    target_index = round((NEEDLE_FILLERS - 1) * 50 / 100)
+    active = f"Record {case_id}: ACTIVE revision 2025; current field code is {value}. "
+    archived = [
+        f"Record {case_id}: ARCHIVED revision {revision}; superseded field code was {code}. "
+        for revision, (_, code) in zip(NEEDLE_ARCHIVE_REVISIONS, NEEDLE_DECOYS)
+    ]
+    instruction = (
+        "Find the current field code for the requested record. Use only the "
+        "context below; answer with the code and nothing else.\n\n"
+    )
+    query = f"\nWhat is the active field code in record {case_id}?"
+
+    def build(indices):
+        rows = [FILLER] * NEEDLE_FILLERS
+        rows[target_index] = active
+        for index, line in zip(indices, archived):
+            rows[index] = line
+        return instruction + "Context:\n" + "".join(rows) + query
+
+    # Baseline reproduces the earlier archived suite; challenge moves every
+    # ARCHIVED row ahead of the ACTIVE one.
+    early = tuple(range(20, 170, 19))
+    return {"case_id": case_id, "needle_value": value, "depth_pct": 50,
+            "baseline_prompt": build(NEEDLE_DISTRACTOR_ROWS),
+            "distractor_prompt": build(early)}
+
+
 PAIRED_NEEDLE_SUITES = {
     "needle_distractor": (_needle_distractor_pair, "distractor"),
     "needle_recency_conflict": (_needle_recency_conflict_pair, "recency_conflict"),
     "needle_rank_conflict": (_needle_rank_conflict_pair, "rank_conflict"),
     "needle_precedence_conflict": (_needle_precedence_conflict_pair, "precedence_conflict"),
     "needle_precedence_tail_conflict": (_needle_precedence_tail_conflict_pair, "precedence_tail_conflict"),
+    "needle_archived_rank_conflict": (_needle_archived_rank_conflict_pair, "archived_rank_conflict"),
     "needle_archived_conflict": (_needle_archived_conflict_pair, "archived_conflict"),
     "needle_unlabeled_conflict": (_needle_unlabeled_conflict_pair, "unlabeled_conflict"),
     "needle_position_conflict": (_needle_position_conflict_pair, "position_conflict"),
