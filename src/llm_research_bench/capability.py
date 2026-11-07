@@ -127,6 +127,7 @@ CASES: dict[str, list[dict[str, Any]]] = {
     "needle_distractor": [],
     "needle_archived_conflict": [],
     "needle_unlabeled_conflict": [],
+    "needle_position_conflict": [],
     "structured_output": [
         {"prompt": "Extract: Ada Lovelace, 36, London.", "schema": "person"},
         {"prompt": "Extract: Grace Hopper, 85, New York.", "schema": "person"},
@@ -299,10 +300,38 @@ def _needle_unlabeled_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
             "baseline_prompt": baseline, "distractor_prompt": conflict}
 
 
+def _needle_position_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    """Hold the nine same-ID codes fixed and move only where the designated code sits."""
+    line = "Record {}: the exact field code is {}. "
+    decoy_codes = [code for _, code in NEEDLE_DECOYS]
+    target_index = round((NEEDLE_FILLERS - 1) * 50 / 100)
+    instruction = (
+        "Find the exact field code in the requested record. Use only the "
+        "context below; answer with the code and nothing else.\n\n"
+    )
+    query = f"\nWhat is the code in record {case_id}?"
+
+    rows = [FILLER] * NEEDLE_FILLERS
+    rows[target_index] = line.format(case_id, value)
+    for index, code in zip(NEEDLE_DISTRACTOR_ROWS, decoy_codes):
+        rows[index] = line.format(case_id, code)
+    baseline = instruction + "Context:\n" + "".join(rows) + query
+
+    moved = [FILLER] * NEEDLE_FILLERS
+    moved[target_index] = line.format(case_id, decoy_codes[-1])
+    for index, code in zip(NEEDLE_DISTRACTOR_ROWS[:-1], decoy_codes[:-1]):
+        moved[index] = line.format(case_id, code)
+    moved[NEEDLE_DISTRACTOR_ROWS[-1]] = line.format(case_id, value)
+    challenge = instruction + "Context:\n" + "".join(moved) + query
+    return {"case_id": case_id, "needle_value": value, "depth_pct": 50,
+            "baseline_prompt": baseline, "distractor_prompt": challenge}
+
+
 PAIRED_NEEDLE_SUITES = {
     "needle_distractor": (_needle_distractor_pair, "distractor"),
     "needle_archived_conflict": (_needle_archived_conflict_pair, "archived_conflict"),
     "needle_unlabeled_conflict": (_needle_unlabeled_conflict_pair, "unlabeled_conflict"),
+    "needle_position_conflict": (_needle_position_conflict_pair, "position_conflict"),
 }
 
 
