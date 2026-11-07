@@ -142,6 +142,7 @@ CASES: dict[str, list[dict[str, Any]]] = {
     "needle_authoritative_flag_conflict": [],
     "needle_authoritative_query_conflict": [],
     "needle_authoritative_literal_conflict": [],
+    "needle_prose_conflict": [],
     "structured_output": [
         {"prompt": "Extract: Ada Lovelace, 36, London.", "schema": "person"},
         {"prompt": "Extract: Grace Hopper, 85, New York.", "schema": "person"},
@@ -528,6 +529,44 @@ def _needle_authoritative_literal_conflict_pair(case_id: str, value: str) -> dic
             "distractor_prompt": pair["distractor_prompt"].replace(plain, cued, 1)}
 
 
+def _needle_prose_chunk(case_id: str, date: str, code: str) -> str:
+    return (
+        f"## Record {case_id} — audit note ({date})\n\n"
+        f"The records team last updated this note on {date}. "
+        f"The field code for record {case_id} is {code}. "
+        "No further changes were recorded.\n\n"
+    )
+
+
+def _needle_prose_conflict_pair(case_id: str, value: str) -> dict[str, Any]:
+    """The recency suite's nine dated records, rendered as prose chunks with headings."""
+    instruction = (
+        "Find the exact field code in the requested record. Use only the "
+        "context below; answer with the code and nothing else.\n\n"
+    )
+    query = f"\nWhat is the code in record {case_id}?"
+    decoy_codes = [code for _, code in NEEDLE_DECOYS]
+    newest = _needle_prose_chunk(case_id, NEEDLE_CURRENT_DATE, value)
+    older = [_needle_prose_chunk(case_id, date, code)
+             for date, code in zip(NEEDLE_DECOY_DATES, decoy_codes)]
+
+    target_index = round((NEEDLE_FILLERS - 1) * 50 / 100)
+    rows = [FILLER] * NEEDLE_FILLERS
+    rows[target_index] = newest
+    for index, chunk in zip(NEEDLE_DISTRACTOR_ROWS, older):
+        rows[index] = chunk
+    baseline = instruction + "Context:\n" + "".join(rows) + query
+
+    moved = [FILLER] * NEEDLE_FILLERS
+    moved[target_index] = older[-1]
+    for index, chunk in zip(NEEDLE_DISTRACTOR_ROWS[:-1], older[:-1]):
+        moved[index] = chunk
+    moved[NEEDLE_DISTRACTOR_ROWS[-1]] = newest
+    challenge = instruction + "Context:\n" + "".join(moved) + query
+    return {"case_id": case_id, "needle_value": value, "depth_pct": 50,
+            "baseline_prompt": baseline, "distractor_prompt": challenge}
+
+
 PAIRED_NEEDLE_SUITES = {
     "needle_distractor": (_needle_distractor_pair, "distractor"),
     "needle_recency_conflict": (_needle_recency_conflict_pair, "recency_conflict"),
@@ -539,6 +578,7 @@ PAIRED_NEEDLE_SUITES = {
     "needle_authoritative_flag_conflict": (_needle_authoritative_flag_conflict_pair, "authoritative_flag_conflict"),
     "needle_authoritative_query_conflict": (_needle_authoritative_query_conflict_pair, "authoritative_query_conflict"),
     "needle_authoritative_literal_conflict": (_needle_authoritative_literal_conflict_pair, "authoritative_literal_conflict"),
+    "needle_prose_conflict": (_needle_prose_conflict_pair, "prose_conflict"),
     "needle_archived_conflict": (_needle_archived_conflict_pair, "archived_conflict"),
     "needle_unlabeled_conflict": (_needle_unlabeled_conflict_pair, "unlabeled_conflict"),
     "needle_position_conflict": (_needle_position_conflict_pair, "position_conflict"),
