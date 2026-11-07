@@ -128,6 +128,7 @@ class CodeEvaluator(BaseEvaluator):
                 proc = subprocess.Popen(
                     command, stdin=subprocess.PIPE, stdout=output, stderr=subprocess.STDOUT,
                     env={"PATH": "/usr/bin:/bin", "HOME": "/tmp", "TMPDIR": "/tmp",
+                         "LD_LIBRARY_PATH": "/opt/python/lib",
                          "LANG": "C", "LC_ALL": "C"}, start_new_session=True,
                 )
                 proc.communicate(payload.encode("utf-8"), timeout=self.timeout_sec)
