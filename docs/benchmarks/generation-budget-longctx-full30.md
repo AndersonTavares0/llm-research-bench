@@ -54,10 +54,9 @@ The 512 campaign metadata records exit code 0, limit 30, seed 42, context fill
 under the existing gpu-lab lease policy; controller terminal state was restored,
 and production health plus a real completion were verified afterward.
 
-The next planned contrast is `json_schema` versus generic `json_object` at the
-same settings. The harness now supports both, but two launch attempts were
-properly refused by the gpu-lab boundary due to transient foreign `bash` processes
-in its subtree. No bypass was attempted; no data were generated for that arm.
+The follow-up `json_schema` versus generic `json_object` comparison, including
+reversed-order repeats and a review of the transient boundary refusals, is
+documented in `constraint-format-7k.md`.
 
 Methodological design and claim calibration were informed by Kassis, T., Agarwal,
 V., He, Y., Patel, D., & Brueckner, A. M. (2026). *Scientific Agent Skills: A
