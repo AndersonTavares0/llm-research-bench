@@ -1,9 +1,11 @@
 # SLM-Limits research charter
 
 **Central question.** What are the practical limits of Small Language Models
-(≈0.5B–4B parameters) on legacy constrained hardware — concretely one
-GTX 1050 Ti with 4096 MiB VRAM — and how can their efficiency, capabilities,
-reliability, and security be improved within those limits?
+(≈0.5B–4B parameters) on legacy constrained hardware — primarily one
+GTX 1050 Ti with 4096 MiB VRAM, with a separate RTX 3060 Ti station used
+only for the offline exploratory routing replay — and how can their
+efficiency, capabilities, reliability, and security be improved within those
+limits?
 
 This charter consolidates the repository's scientific direction: what is
 known (with evidence labels), what is uncertain, the prioritized research
@@ -24,9 +26,13 @@ not studied here.
 
 ## Hardware and fixed context
 
-- One host: GTX 1050 Ti (4 GiB GDDR5, 112 GB/s theoretical), llama.cpp
-  (pinned b12024), Ollama-era historical artifacts kept separate from
-  gpu-lab campaigns. Local RTX 3060 Ti artifacts remain unmerged.
+- Primary host: GTX 1050 Ti (4 GiB GDDR5, 112 GB/s theoretical), llama.cpp
+  (pinned b12024); Ollama-era historical artifacts are kept separate from
+  gpu-lab campaigns.
+- A separate RTX 3060 Ti station contributes only the offline exploratory
+  routing replay (Q4_K_M vs Q8_0, `results/analysis/quant-cascade-oracle-v1.json`).
+  Its raw campaign files remain unmerged, and no hardware profile or
+  measurement is pooled with the GTX 1050 Ti program.
 - Repeated queries within one hardware run are descriptive observations,
   **not** independent replicates; hardware-level statistical inference is
   not supported by them. Welch/Mann-Whitney machinery exists but is
@@ -82,20 +88,19 @@ not studied here.
   unmeasured).** Three deterministically scored benchmarks exist with a
   validated result schema (`configs/schemas/defensive_cyber_results.v1.schema.json`):
   static CWE triage v2 (hand-authored labels, no independent adjudication),
-  CVE advisory triage v1 (labels are derived from the same deterministic
-  comparator used for scoring — consistency-tested, not independently
-  adjudicated — and the paraphrased version ranges are approximate: the
-  sudo `"< 1.9.5p2"` entry over-claims versions below 1.8.2, which upstream's
-  Baron Samedit record treats as unaffected, and the nginx
-  `">= 1.9.0 && < 1.9.11"` entry includes 1.9.10, which upstream lists as
-  fixed), and the appsec chatbot scenarios (expected outcomes follow the
-  enforcement design by construction). Plus historical exploratory probes
+  CVE advisory triage v1 (labels were independently verified against NVD
+  2.0/MITRE/upstream advisories on 2026-11-08 with per-case
+  `label_provenance`; the nonexistent nginx CVE-2016-0748 case was
+  redirected to the substantiated CVE-2016-0747, and boundary regressions
+  are test-locked — labels are no longer purely comparator-derived, though
+  no blinded second reviewer has relabeled them), and the appsec chatbot
+  scenarios (expected outcomes follow the enforcement design by
+  construction; per-call `call_reports` now distinguish authorized
+  execution from blocks, and weakened enforcement cannot fabricate a
+  clean authorized result). Plus historical exploratory probes
   (over-refusal 0/4, CI [0%, 60.2%]; injection ASR ≈50–100%; harness
   intercept 2/2), single-run. **No model has ever been run against the new
-  benchmarks**; transcripts are scripted author-written proposals, and the
-  harness classifier collapses each transcript to one label — refusals are
-  detected only on zero-call transcripts carrying an explicit marker, and
-  benign steps inside a mixed transcript are invisible in the single label.
+  benchmarks**; transcripts are scripted author-written proposals.
 
 ### Partially supported (started, incomplete, or blocked)
 
@@ -274,6 +279,18 @@ F (4). Evidence status: ①measured · ②partial · ③analytical ·
 
 Ranked by (scientific value × feasibility) ÷ cost. **Has model run gates
 (P0 first row) changes everything downstream.**
+
+**Active hypotheses (max two at a time).** (1) H5/RQ-B3+F1 — complete the
+HotpotQA 100-item paired support-order study (P0-2; protocol and artifact
+hashes exist; blocked only by P0-1). (2) F3 — as far as the recorded data
+permits, which is narrower than P2-5 assumed: only the same-host Qwen3-1.7B
+Q4_K_M-vs-Q8_0 quant pair exists, so the defensible analysis is a
+**descriptive oracle-cascade ceiling** (artifact
+`results/analysis/quant-cascade-oracle-v1.json`, exploratory: +1–6 pp over
+the best arm at n=100, no arm difference significant, all p≥0.29).
+**Cross-model cascade replay is data-blocked**: no per-item outputs for any
+second model are recorded, only llama-bench timings without correctness
+labels. Everything else queues behind P0-1 and these two.
 
 | # | Experiment | RQ | Value | Feasibility/cost | Gate |
 |---|---|---|---|---|---|
