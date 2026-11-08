@@ -7,6 +7,11 @@ from .math_evaluator import MathEvaluator
 from .agent_evaluator import AgentEvaluator
 from .long_context_evaluator import LongContextEvaluator
 from .knowledge_evaluator import KnowledgeEvaluator
+from .cybersecurity_evaluator import (
+    score_static_triage_case,
+    score_static_triage_run,
+    aggregate_static_triage_metrics,
+)
 
 __all__ = [
     "BaseEvaluator",
@@ -16,4 +21,7 @@ __all__ = [
     "AgentEvaluator",
     "LongContextEvaluator",
     "KnowledgeEvaluator",
+    "score_static_triage_case",
+    "score_static_triage_run",
+    "aggregate_static_triage_metrics",
 ]

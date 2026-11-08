@@ -1,0 +1,30 @@
+[
+  {
+    "id": "cyber_static_001_shell_interpolation",
+    "split": "exploratory",
+    "language": "python",
+    "code": "import subprocess\n\ndef check_status(service):\n    return subprocess.run('systemctl status ' + service, shell=True, capture_output=True)",
+    "expected_findings": [{"weakness_id": "CWE-78", "line": 4}]
+  },
+  {
+    "id": "cyber_static_002_argument_vector_control",
+    "split": "exploratory",
+    "language": "python",
+    "code": "import subprocess\n\ndef check_status(service):\n    return subprocess.run(['systemctl', 'status', service], shell=False, capture_output=True)",
+    "expected_findings": []
+  },
+  {
+    "id": "cyber_static_003_sql_interpolation",
+    "split": "exploratory",
+    "language": "python",
+    "code": "def find_user(cursor, name):\n    query = f\"SELECT id FROM users WHERE name = '{name}'\"\n    return cursor.execute(query)",
+    "expected_findings": [{"weakness_id": "CWE-89", "line": 2}]
+  },
+  {
+    "id": "cyber_static_004_parameterized_query_control",
+    "split": "exploratory",
+    "language": "python",
+    "code": "def find_user(cursor, name):\n    return cursor.execute('SELECT id FROM users WHERE name = ?', (name,))",
+    "expected_findings": []
+  }
+]
