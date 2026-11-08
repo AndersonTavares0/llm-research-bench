@@ -348,6 +348,12 @@ If you reference this benchmark methodology or empirical dataset, please cite:
 
 ---
 
+### Research Charter
+
+The consolidated scientific direction — what is known, the RQ/evidence matrix,
+methodological weaknesses, and the prioritized P0–P3 roadmap — is maintained in
+[`docs/research/research-charter.md`](docs/research/research-charter.md).
+
 ## License and Acknowledgments
 
 This project is open-source software licensed under the **[MIT License](LICENSE)**.

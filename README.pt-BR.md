@@ -351,6 +351,13 @@ Se você utilizar esta metodologia ou o conjunto de dados empíricos em sua pesq
 
 ---
 
+### Carta de Pesquisa
+
+A direção científica consolidada — o que já é conhecido, a matriz
+RQ/evidência, fragilidades metodológicas e o roteiro priorizado P0–P3 —
+mantém-se em
+[`docs/research/research-charter.md`](docs/research/research-charter.md).
+
 ## Licença e Agradecimentos
 
 Este projeto é software de código aberto licenciado sob a **[Licença MIT](LICENSE)**.
