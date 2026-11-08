@@ -1303,7 +1303,7 @@ def run_suite(
                  } if details and paired_needle_suite else {}),
                 **({
                     "round_p50_ms": percentile(round_ms, 50),
-                    "slowest_ms": round(max(latencies_ms), 1) if latencies_ms else None,
+                    "slowest_ms": round(max(latencies_ms), 3) if latencies_ms else None,
                     "aggregate_rps": round(clients * len(round_ms) / (sum(round_ms) / 1000), 3)
                     if round_ms else None,
                 } if suite == "concurrency" else {}),
