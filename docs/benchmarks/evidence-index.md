@@ -41,6 +41,27 @@ version-history conflict resolution. Source-title overlap is low but nonzero. Se
 [`data/rag/README.md`](../../data/rag/README.md), the fixture manifest, and
 [`rag_evaluator.py`](../../src/llm_research_bench/rag_evaluator.py).
 
+## Offline routing replay: what the recordings support
+
+A replay feasibility audit (2026-11-08) found **no per-item outputs for a
+second model** anywhere under `results/campaigns` — only llama-bench timings
+(no correctness labels). Cross-model routing/cascade replay is therefore
+**data-blocked**, not merely unevaluated.
+
+The only valid pair is the same host and template: Qwen3-1.7B Q4_K_M vs Q8_0
+on the RTX 3060 Ti station, `arc_challenge` and `hellaswag`, first 100 items,
+joined on identical documents and `prompt_hash`
+([`quant-cascade-oracle-v1.json`](../../results/analysis/quant-cascade-oracle-v1.json),
+regenerate with `python -m src.llm_research_bench.routing_replay`). It is a
+**descriptive oracle ceiling, not a router**: agreement is 84–97 %, so the
+disagreement pool is tiny; oracle gains +0.01 to +0.06 over the best arm with
+Clopper-Pearson 95 % intervals around ±9–10 pp at n=100, and no arm
+difference reaches significance (exact McNemar p ≥ 0.29). The arms also
+differ in packaging (unsloth vs Qwen repository) as well as precision, so
+quantization and packaging effects cannot be separated. No policy or
+deployment conclusion is supported; the artifact records this in
+`claims.not_supported` and `blocked.cross_model_cascade_replay`.
+
 ## Security-model research
 
 The initial, source-bounded review found no specialist model ready to designate

@@ -1,0 +1,217 @@
+{
+  "status": "exploratory_analysis",
+  "analysis": "quant_pair_cascade_oracle_ceiling",
+  "arms": {
+    "left": "q4_k_m",
+    "right": "q8_0",
+    "both": "Qwen3-1.7B"
+  },
+  "host": "local-rtx3060ti-8gib",
+  "models": {
+    "q4_k_m": {
+      "file": "Qwen3-1.7B-Q4_K_M.gguf",
+      "quantization": "Q4_K_M",
+      "hf_repo": "unsloth/Qwen3-1.7B-GGUF",
+      "hf_revision": "d7f544eead698dbd1f15126ef60b45a1e1933222",
+      "gguf_sha256": "b139949c5bd74937ad8ed8c8cf3d9ffb1e99c866c823204dc42c0d91fa181897",
+      "size_bytes": 1107409472
+    },
+    "q8_0": {
+      "file": "Qwen3-1.7B-Q8_0.gguf",
+      "quantization": "Q8_0",
+      "hf_repo": "Qwen/Qwen3-1.7B-GGUF",
+      "hf_revision": "90862c4b9d2787eaed51d12237eafdfe7c5f6077",
+      "gguf_sha256": "061b54daade076b5d3362dac252678d17da8c68f07560be70818cace6590cb1a",
+      "size_bytes": 1834426016
+    }
+  },
+  "inputs": {
+    "arc_challenge": {
+      "q4_k_m": {
+        "path": "results/campaigns/local-rtx3060ti-qwen3-1.7b-v1/local-rtx3060ti-8gib/qwen3-1.7b-q4km/knowledge-mcq/raw/wnnhj7xv/samples_arc_challenge_2026-11-05T01-35-44.213583.jsonl",
+        "sha256": "244dc6d4fa325b15a7e78dda041a24d8090fef861dd297a9287ee1f9f29410e0"
+      },
+      "q8_0": {
+        "path": "results/campaigns/local-rtx3060ti-qwen3-1.7b-v1/local-rtx3060ti-8gib/qwen3-1.7b-q8/knowledge-mcq/raw/wnnhj7xv/samples_arc_challenge_2026-11-05T01-54-28.627583.jsonl",
+        "sha256": "3c3fcc5324089f3e334489bc219eaf75c3b2993d66c86dc612e28d2f49edf0e0"
+      }
+    },
+    "hellaswag": {
+      "q4_k_m": {
+        "path": "results/campaigns/local-rtx3060ti-qwen3-1.7b-v1/local-rtx3060ti-8gib/qwen3-1.7b-q4km/knowledge-mcq/raw/wnnhj7xv/samples_hellaswag_2026-11-05T01-35-44.213583.jsonl",
+        "sha256": "b8ce0c0dc6252b260698916cf7584173bfd7b5331df746acdac1285d12b17dbe"
+      },
+      "q8_0": {
+        "path": "results/campaigns/local-rtx3060ti-qwen3-1.7b-v1/local-rtx3060ti-8gib/qwen3-1.7b-q8/knowledge-mcq/raw/wnnhj7xv/samples_hellaswag_2026-11-05T01-54-28.627583.jsonl",
+        "sha256": "5538b315d3e07552f61173c9e9cc80cada7ff1f761f4d3699d1a5fee5ce18394"
+      }
+    }
+  },
+  "results": {
+    "arc_challenge": {
+      "acc": {
+        "dataset": "arc_challenge",
+        "metric": "acc",
+        "n": 100,
+        "cells": {
+          "both_correct": 44,
+          "left_only": 2,
+          "right_only": 6,
+          "both_wrong": 48
+        },
+        "accuracy": {
+          "left": 0.46,
+          "right": 0.5,
+          "oracle": 0.52,
+          "oracle_gain_over_best_arm": 0.02
+        },
+        "ci95_clopper_pearson": {
+          "left": {
+            "lower": 36.0,
+            "upper": 56.3,
+            "one_sided_upper": 54.7
+          },
+          "right": {
+            "lower": 39.8,
+            "upper": 60.2,
+            "one_sided_upper": 58.6
+          },
+          "oracle": {
+            "lower": 41.8,
+            "upper": 62.1,
+            "one_sided_upper": 60.6
+          }
+        },
+        "agreement_pct": 92.0,
+        "mcnemar_exact_p": 0.2890625
+      },
+      "acc_norm": {
+        "dataset": "arc_challenge",
+        "metric": "acc_norm",
+        "n": 100,
+        "cells": {
+          "both_correct": 38,
+          "left_only": 10,
+          "right_only": 6,
+          "both_wrong": 46
+        },
+        "accuracy": {
+          "left": 0.48,
+          "right": 0.44,
+          "oracle": 0.54,
+          "oracle_gain_over_best_arm": 0.06
+        },
+        "ci95_clopper_pearson": {
+          "left": {
+            "lower": 37.9,
+            "upper": 58.2,
+            "one_sided_upper": 56.7
+          },
+          "right": {
+            "lower": 34.1,
+            "upper": 54.3,
+            "one_sided_upper": 52.7
+          },
+          "oracle": {
+            "lower": 43.7,
+            "upper": 64.0,
+            "one_sided_upper": 62.5
+          }
+        },
+        "agreement_pct": 84.0,
+        "mcnemar_exact_p": 0.454498291015625
+      }
+    },
+    "hellaswag": {
+      "acc": {
+        "dataset": "hellaswag",
+        "metric": "acc",
+        "n": 100,
+        "cells": {
+          "both_correct": 42,
+          "left_only": 2,
+          "right_only": 1,
+          "both_wrong": 55
+        },
+        "accuracy": {
+          "left": 0.44,
+          "right": 0.43,
+          "oracle": 0.45,
+          "oracle_gain_over_best_arm": 0.01
+        },
+        "ci95_clopper_pearson": {
+          "left": {
+            "lower": 34.1,
+            "upper": 54.3,
+            "one_sided_upper": 52.7
+          },
+          "right": {
+            "lower": 33.1,
+            "upper": 53.3,
+            "one_sided_upper": 51.7
+          },
+          "oracle": {
+            "lower": 35.0,
+            "upper": 55.3,
+            "one_sided_upper": 53.7
+          }
+        },
+        "agreement_pct": 97.0,
+        "mcnemar_exact_p": 1.0
+      },
+      "acc_norm": {
+        "dataset": "hellaswag",
+        "metric": "acc_norm",
+        "n": 100,
+        "cells": {
+          "both_correct": 43,
+          "left_only": 5,
+          "right_only": 4,
+          "both_wrong": 48
+        },
+        "accuracy": {
+          "left": 0.48,
+          "right": 0.47,
+          "oracle": 0.52,
+          "oracle_gain_over_best_arm": 0.04
+        },
+        "ci95_clopper_pearson": {
+          "left": {
+            "lower": 37.9,
+            "upper": 58.2,
+            "one_sided_upper": 56.7
+          },
+          "right": {
+            "lower": 36.9,
+            "upper": 57.2,
+            "one_sided_upper": 55.7
+          },
+          "oracle": {
+            "lower": 41.8,
+            "upper": 62.1,
+            "one_sided_upper": 60.6
+          }
+        },
+        "agreement_pct": 91.0,
+        "mcnemar_exact_p": 1.0
+      }
+    }
+  },
+  "claims": {
+    "supported": "On these fixed first-100 subsets, the optional-gain pool between Q4_K_M and Q8_0 is small; the oracle ceiling bounds any selector over these two arms.",
+    "not_supported": [
+      "That a deployable router achieves any part of the oracle gain.",
+      "That these two arms differ in capability (passing CI overlap, tiny discordant counts).",
+      "Any cross-model routing or cascade claim: no second-model per-item outputs are recorded in this repository."
+    ]
+  },
+  "limitations": [
+    "Fixed first-100 items per task, selected by run constraints, not a random sample of each benchmark.",
+    "Single host, single greedy decode (temperature 0.0), one run per arm: no technical replicates.",
+    "Arms differ in packaging as well as precision (Q4_K_M from unsloth/Qwen3-1.7B-GGUF, Q8_0 from Qwen/Qwen3-1.7B-GGUF), so a quant effect and a packaging effect cannot be separated.",
+    "Oracle framing is an upper bound computed with hindsight over both arms; it is not a leakage-free predictor."
+  ],
+  "blocked": {
+    "cross_model_cascade_replay": "No per-item outputs for any second model exist under results/campaigns; only llama-bench timing artifacts (no correctness labels) mention other models."
+  }
+}

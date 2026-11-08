@@ -276,9 +276,15 @@ Ranked by (scientific value × feasibility) ÷ cost. **Has model run gates
 
 **Active hypotheses (max two at a time).** (1) H5/RQ-B3+F1 — complete the
 HotpotQA 100-item paired support-order study (P0-2; protocol and artifact
-hashes exist; blocked only by P0-1); (2) F3 routing/cascade replay (P2-5) —
-offline simulation over recorded outputs, needs no gate. Everything else
-queues behind P0-1 and these two.
+hashes exist; blocked only by P0-1). (2) F3 — as far as the recorded data
+permits, which is narrower than P2-5 assumed: only the same-host Qwen3-1.7B
+Q4_K_M-vs-Q8_0 quant pair exists, so the defensible analysis is a
+**descriptive oracle-cascade ceiling** (artifact
+`results/analysis/quant-cascade-oracle-v1.json`, exploratory: +1–6 pp over
+the best arm at n=100, no arm difference significant, all p≥0.29).
+**Cross-model cascade replay is data-blocked**: no per-item outputs for any
+second model are recorded, only llama-bench timings without correctness
+labels. Everything else queues behind P0-1 and these two.
 
 | # | Experiment | RQ | Value | Feasibility/cost | Gate |
 |---|---|---|---|---|---|
