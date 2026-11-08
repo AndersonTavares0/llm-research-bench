@@ -63,7 +63,7 @@ def mcnemar_exact(b: int, c: int) -> float:
 def pair_rows(
     left: List[Dict[str, Any]], right: List[Dict[str, Any]], dataset: str
 ) -> List[tuple]:
-    """Zip two arms row-by-row, failing closed on any item or prompt mismatch."""
+    """Zip two arms row-by-row, failing closed on any item or label mismatch."""
     if len(left) != len(right):
         raise ValueError(f"{dataset}: row counts differ ({len(left)} vs {len(right)})")
     if not left:
@@ -74,8 +74,23 @@ def pair_rows(
             raise ValueError(f"{dataset} row {index}: item mismatch between arms")
         if a.get("prompt_hash") != b.get("prompt_hash"):
             raise ValueError(f"{dataset} row {index}: prompt_hash mismatch between arms")
+        for field in ("target", "doc_hash"):
+            if field not in a or field not in b:
+                raise ValueError(f"{dataset} row {index}: missing {field}")
+            if a[field] != b[field]:
+                raise ValueError(f"{dataset} row {index}: {field} mismatch between arms")
         pairs.append((a, b))
     return pairs
+
+
+def _single_sample_file(raw_dir: Path, dataset: str) -> Path:
+    """Return the one recorded samples file; refuse to guess between re-runs."""
+    matches = sorted(raw_dir.glob(f"samples_{dataset}_*.jsonl"))
+    if len(matches) != 1:
+        raise ValueError(
+            f"{dataset}: expected exactly one samples file in {raw_dir}, found {len(matches)}"
+        )
+    return matches[0]
 
 
 def summarize(pairs: List[tuple], dataset: str, key: str = "acc") -> Dict[str, Any]:
@@ -113,8 +128,8 @@ def summarize(pairs: List[tuple], dataset: str, key: str = "acc") -> Dict[str, A
     }
 
 
-def analyze() -> Dict[str, Any]:
-    arms = {label: REPO / STATION / name / RAW_SUBDIR for label, name in ARMS.items()}
+def analyze(root: Path = REPO) -> Dict[str, Any]:
+    arms = {label: root / STATION / name / RAW_SUBDIR for label, name in ARMS.items()}
     inputs: Dict[str, Any] = {}
     models: Dict[str, Any] = {}
     for label, raw_dir in arms.items():
@@ -130,9 +145,12 @@ def analyze() -> Dict[str, Any]:
 
     results: Dict[str, Any] = {}
     for dataset in DATASETS:
-        paths = {label: next(raw_dir.glob(f"samples_{dataset}_*.jsonl")) for label, raw_dir in arms.items()}
+        paths = {
+            label: _single_sample_file(raw_dir, dataset)
+            for label, raw_dir in arms.items()
+        }
         inputs[dataset] = {
-            label: {"path": str(path.relative_to(REPO)), "sha256": sha256_file(path)}
+            label: {"path": str(path.relative_to(root)), "sha256": sha256_file(path)}
             for label, path in paths.items()
         }
         pairs = pair_rows(
@@ -159,7 +177,7 @@ def analyze() -> Dict[str, Any]:
             ),
             "not_supported": [
                 "That a deployable router achieves any part of the oracle gain.",
-                "That these two arms differ in capability (passing CI overlap, tiny discordant counts).",
+                "That these two arms differ in capability: the paired exact McNemar tests are non-significant at n=100 (p >= 0.29) with few discordant pairs, so the comparison is underpowered and establishes neither a difference nor equivalence.",
                 "Any cross-model routing or cascade claim: no second-model per-item outputs are recorded in this repository.",
             ],
         },

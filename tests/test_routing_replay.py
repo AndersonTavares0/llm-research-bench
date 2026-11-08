@@ -1,4 +1,7 @@
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from src.llm_research_bench.routing_replay import (
     ARMS,
@@ -11,9 +14,16 @@ from src.llm_research_bench.routing_replay import (
 )
 
 
-def row(doc_id, prompt_hash, acc, acc_norm=0):
+def row(doc_id, prompt_hash, acc, acc_norm=0, target="t", doc_hash="d"):
     doc = {"id": doc_id} if doc_id is not None else {"question": "q"}
-    return {"doc": doc, "prompt_hash": prompt_hash, "acc": acc, "acc_norm": acc_norm}
+    return {
+        "doc": doc,
+        "prompt_hash": prompt_hash,
+        "target": target,
+        "doc_hash": doc_hash,
+        "acc": acc,
+        "acc_norm": acc_norm,
+    }
 
 
 class TestPairing(unittest.TestCase):
@@ -29,6 +39,24 @@ class TestPairing(unittest.TestCase):
         with self.assertRaises(ValueError):
             pair_rows(left, right, "synthetic")
 
+    def test_mismatched_target_fails_closed(self):
+        left = [row("a", "p", 1, target="1")]
+        right = [row("a", "p", 1, target="2")]
+        with self.assertRaises(ValueError):
+            pair_rows(left, right, "synthetic")
+
+    def test_mismatched_doc_hash_fails_closed(self):
+        left = [row("a", "p", 1, doc_hash="d1")]
+        right = [row("a", "p", 1, doc_hash="d2")]
+        with self.assertRaises(ValueError):
+            pair_rows(left, right, "synthetic")
+
+    def test_missing_label_fields_fail_closed(self):
+        left = [row("a", "p", 1)]
+        del left[0]["target"]
+        with self.assertRaises(ValueError):
+            pair_rows(left, [row("a", "p", 1)], "synthetic")
+
     def test_unequal_row_counts_fail_closed(self):
         with self.assertRaises(ValueError):
             pair_rows([row("a", "p", 1)], [], "synthetic")
@@ -38,7 +66,8 @@ class TestPairing(unittest.TestCase):
         right = [row(None, "p", 0)]
         self.assertEqual(len(pair_rows(left, right, "synthetic")), 1)
 
-        drifted = [{"doc": {"question": "other"}, "prompt_hash": "p", "acc": 0, "acc_norm": 0}]
+        drifted = [row(None, "p", 1)]
+        drifted[0]["doc"] = {"question": "other"}
         with self.assertRaises(ValueError):
             pair_rows([row(None, "p", 1)], drifted, "synthetic")
 
@@ -71,6 +100,107 @@ class TestSummary(unittest.TestCase):
         self.assertEqual(mcnemar_exact(0, 0), 1.0)
         self.assertGreater(mcnemar_exact(1, 1), 0.9)
         self.assertLess(mcnemar_exact(1, 20), 0.01)
+
+
+class TestAnalyzeFixture(unittest.TestCase):
+    """End-to-end analyze() run on a synthetic station tree (runs in CI)."""
+
+    def _write_fixture(self, root):
+        accs = {"q4_k_m": [1, 1, 0, 0], "q8_0": [1, 0, 1, 0]}
+        for label, name in ARMS.items():
+            arm = root / STATION / name / "knowledge-mcq"
+            raw = arm / "raw" / "wnnhj7xv"
+            raw.mkdir(parents=True)
+            (arm / "meta.json").write_text(json.dumps({"model": {
+                "file": f"{name}.gguf",
+                "quantization": "Q4_K_M" if label == "q4_k_m" else "Q8_0",
+                "hf_repo": f"org/{name}",
+                "hf_revision": "rev",
+                "sha256": "a" * 64,
+                "size_bytes": 123,
+            }}), encoding="utf-8")
+            for dataset in DATASETS:
+                lines = [
+                    json.dumps({
+                        "doc": {"id": f"doc-{index}"},
+                        "prompt_hash": f"prompt-{index}",
+                        "target": "t",
+                        "doc_hash": f"hash-{index}",
+                        "acc": acc,
+                        "acc_norm": 0,
+                    })
+                    for index, acc in enumerate(accs[label])
+                ]
+                (raw / f"samples_{dataset}_fixture.jsonl").write_text(
+                    "\n".join(lines) + "\n", encoding="utf-8"
+                )
+
+    def test_fixture_tree_is_analyzed_end_to_end(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write_fixture(root)
+            artifact = analyze(root=root)
+            self.assertEqual(artifact["status"], "exploratory_analysis")
+            self.assertEqual(artifact["models"]["q8_0"]["quantization"], "Q8_0")
+            for dataset in DATASETS:
+                result = artifact["results"][dataset]["acc"]
+                self.assertEqual(result["n"], 4)
+                self.assertEqual(result["cells"], {
+                    "both_correct": 1, "left_only": 1,
+                    "right_only": 1, "both_wrong": 1,
+                })
+                self.assertEqual(result["accuracy"], {
+                    "left": 0.5, "right": 0.5, "oracle": 0.75,
+                    "oracle_gain_over_best_arm": 0.25,
+                })
+                self.assertEqual(result["agreement_pct"], 50.0)
+                self.assertEqual(result["mcnemar_exact_p"], 1.0)
+                self.assertTrue(
+                    artifact["inputs"][dataset]["q4_k_m"]["path"].endswith(
+                        f"samples_{dataset}_fixture.jsonl"
+                    )
+                )
+
+    def test_ambiguous_samples_files_fail_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write_fixture(root)
+            raw = root / STATION / ARMS["q4_k_m"] / "knowledge-mcq" / "raw" / "wnnhj7xv"
+            original = raw / "samples_arc_challenge_fixture.jsonl"
+            (raw / "samples_arc_challenge_stale.jsonl").write_text(
+                original.read_text(encoding="utf-8"), encoding="utf-8"
+            )
+            with self.assertRaises(ValueError):
+                analyze(root=root)
+
+
+class TestCommittedArtifact(unittest.TestCase):
+    def test_committed_artifact_arithmetic_is_internally_consistent(self):
+        # The raw campaign is gitignored, so this guards the tracked artifact
+        # against silent drift even on a fresh clone.
+        path = Path(__file__).resolve().parents[1] / "results/analysis/quant-cascade-oracle-v1.json"
+        artifact = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(artifact["status"], "exploratory_analysis")
+        for dataset in DATASETS:
+            for metric in ("acc", "acc_norm"):
+                result = artifact["results"][dataset][metric]
+                cells = result["cells"]
+                n = result["n"]
+                self.assertEqual(sum(cells.values()), n)
+                expected = {
+                    "left": round((cells["both_correct"] + cells["left_only"]) / n, 6),
+                    "right": round((cells["both_correct"] + cells["right_only"]) / n, 6),
+                    "oracle": round(
+                        (cells["both_correct"] + cells["left_only"] + cells["right_only"]) / n,
+                        6,
+                    ),
+                }
+                for arm, value in expected.items():
+                    self.assertEqual(result["accuracy"][arm], value)
+                self.assertEqual(
+                    result["mcnemar_exact_p"],
+                    mcnemar_exact(cells["left_only"], cells["right_only"]),
+                )
 
 
 class TestRecordedPair(unittest.TestCase):

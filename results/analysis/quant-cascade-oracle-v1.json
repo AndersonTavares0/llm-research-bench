@@ -201,7 +201,7 @@
     "supported": "On these fixed first-100 subsets, the optional-gain pool between Q4_K_M and Q8_0 is small; the oracle ceiling bounds any selector over these two arms.",
     "not_supported": [
       "That a deployable router achieves any part of the oracle gain.",
-      "That these two arms differ in capability (passing CI overlap, tiny discordant counts).",
+      "That these two arms differ in capability: the paired exact McNemar tests are non-significant at n=100 (p >= 0.29) with few discordant pairs, so the comparison is underpowered and establishes neither a difference nor equivalence.",
       "Any cross-model routing or cascade claim: no second-model per-item outputs are recorded in this repository."
     ]
   },
