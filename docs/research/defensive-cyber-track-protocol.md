@@ -111,6 +111,10 @@ boolean so effectiveness can be measured one at a time once model runs are
 authorized: `system_instructions`, `authorization_enforcement`,
 `strict_tool_schemas`, `trusted_untrusted_separation`,
 `sandboxing_timeouts_quotas` (`quota_limit`), `credential_tool_enabled`.
+Implementation status: only `authorization_enforcement` and the session
+quota are enforced in code and covered by tests; the other fields are
+declared but unimplemented (`wrap_untrusted` is a standalone helper, not
+wired into a tool flow).
 Alongside security outcomes, future model-based runs must also record
 legitimate-task success, false refusals, latency, memory, and throughput so
 mitigation cost is visible.
