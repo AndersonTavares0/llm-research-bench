@@ -45,8 +45,7 @@
 \maketitle
 
 \begin{abstract}
-A implanta\c{c}\~ao de Modelos de Linguagem Pequenos (SLMs, entre 0,5B e 4B par\^ametros) em aceleradores f\'isicos de borda viabiliza soberania de dados, lat\^encia previs\'ivel e opera\c{c}\~ao aut\^onoma sem depend\^encia de conectividade externa. Contudo, operar sob limites estritos de mem\'oria f\'isica ($\le 4096\text{ MiB}$ de VRAM) introduz dilemas acentuados entre escala de par\^ametros, compress\~ao de tensores por quantiza\c{c}\~ao, satura\c{c}\~ao do barramento DRAM, crescimento din\^amico do cache KV, efici\^encia de tokeniza\c{c}\~ao multil\'ingue e alinhamento defensivo. Este trabalho conduz uma investiga\c{c}\~ao experimental fundamentada nos princ\'ipios arquiteturais de Vaswani et al. (2017) e em suas evolu\c{c}\~oes contempor\^aneas (GQA, RoPE, RMSNorm e decodifica\c{c}\~ao especulativa). Utilizando uma GPU NVIDIA GeForce GTX 1050 Ti (4096 MiB GDDR5, $112,0\text{ GB/s}$ te\'oricos), avaliam-se oito configura\c{c}\~oes representativas com telemetria cont\'inua de hardware via NVML. Um estudo de abla\c{c}\~ao controlada em tr\^es condi\c{c}\~oes ($C_1, C_2, C_3$) decomp\~oe os fatores de ganho sob quantiza\c{c}\~ao constante: a compress\~ao de pesos em IQ4\_XS proporcionou $+28,2\%$ de aumento na vaz\~ao ($34,51 \pm 0,29$ vs $26,92 \pm 0,23$\,tok/s, microdados brutos $t = 64,26$, valores arredondados $t = 64,85$, $d = 28,74$), enquanto a decodifica\c{c}\~ao especulativa com Multi-Token Prediction (MTP) entregou $+25,6\%$ de ganho associado ($43,35 \pm 0,57$ vs $34,51 \pm 0,29$\,tok/s, $t = 43,72$, $p < 10^{-15}$, $d = 19,55$), totalizando diferen\c{c}a composta de $+61,0\%$ ($t = 84,50$, $d = 37,79$). A sobretaxa de VRAM associada \`a infraestrutura de MTP totalizou $+236,0\text{ MiB}$, resultando em diferen\c{c}a l\'iquida de apenas $+40,0\text{ MiB}$ frente \`a linha de base devido \`a absor\c{c}\~ao promovida pela compress\~ao IQ4\_XS ($-196,0\text{ MiB}$). A modelagem Roofline evidenciou que a gera\c{c}\~ao autorregressiva opera estritamente limitada por largura de banda ($I_{\text{decode}} \approx 3,6\text{ FLOP/byte} \ll I^* = 19,1$), com proxy anal\'itico de demanda entre $45,7$ e $75,3\text{ GB/s}$ ($40,8\%\text{--}67,2\%$ do barramento). Uma auditoria temporal da campanha experimental ativa ($311,58\text{ s}$ no total) quantificou a eleva\c{c}\~ao t\'ermica do die de $44^\circ\text{C}$ para $74^\circ\text{C}$ e o escalonamento adaptativo de clocks via GPU Boost 3.0 ($1695 \to 1607\text{ MHz}$, $-5,2\%$), motivando a formaliza\c{c}\~ao de um protocolo padronizado em tr\^es n\'iveis (A/B/C). A an\'alise multil\'ingue em corpus paralelo tril\'ingue (en-US, pt-BR, zh-CN) revelou penalidades de tokeniza\c{c}\~ao de at\'e $2,4\times$ para portugu\^es e $4,6\times$ para mandarim em modelos com vocabul\'arios compactos (SmolLM2), reduzindo a capacidade efetiva da janela de contexto para $22\%$. Em avalia\c{c}\~ao explorat\'oria de seguran\c{c}a defensiva em turno \'unico ($N=10$), observou-se aus\^encia de recusa indevida em tarefas benignas ($0/4$, $\text{FPR} = 0,0\%$, IC $95\%$ de Clopper-Pearson $[0,0\%, 60,2\%]$), por\'em persist\^encia de vulnerabilidade a inje\c{c}\~oes indiretas ($\text{ASR}$ entre $50\%$ e $100\%$), com todas as chamadas de ferramentas maliciosas interceptadas deterministicamente pelo harness ($100\%$ bloqueadas, $0,0\%$ executadas no sistema operacional).
-Em uma avalia\c{c}\~ao pareada separada no GSM8K (20 itens de teste por condi\c{c}\~ao, semente 42), o Qwen3-1.7B Q4\_K\_M obteve 0,15/0,55 com extra\c{c}\~ao flex\'ivel e 0,00/0,35 com correspond\^encia estrita em 0/5-shot; a amostra pequena sustenta conclus\~oes descritivas, n\~ao confirmat\'orias.
+\noindent Este relatório caracteriza configurações selecionadas de modelos pequenos de linguagem em um único host com NVIDIA GeForce GTX 1050 Ti (4 GiB de VRAM). Combina observações históricas de vazão e memória, campanhas limitadas de inferência, estimativas analíticas de recursos e sondas comportamentais exploratórias. Consultas repetidas em uma execução de hardware são observações descritivas, não réplicas independentes de hardware; testes $t$ e tamanhos de efeito anteriormente calculados sobre essas consultas não sustentam inferência sobre hardware e não são interpretados aqui. No contraste registrado do Gemma-4, IQ4\_XS e MTP estiveram associados a maior vazão observada (+28,2\% e +25,6\%, respectivamente), e a configuração combinada diferiu +61,0\% da linha de base; são contrastes descritivos desta configuração. Um subconjunto de 20 itens do GSM8K também é exploratório. A avaliação de viabilidade classifica cada configuração estudada para uso cotidiano, local limitado e produção. As evidências sustentam somente viabilidade de pesquisa limitada para algumas configurações exatas; qualidade para uso cotidiano e prontidão para produção permanecem insuficientemente estabelecidas. Não se afirma garantia de privacidade, segurança, latência ou disponibilidade.
 \end{abstract}
 
 \noindent\textbf{Palavras-chave:} Modelos de Linguagem Pequenos (SLMs); Arquitetura Transformer; Cache KV; Grouped-Query Attention; Multi-Token Prediction; Modelo Roofline; Efici\^encia de Tokeniza\c{c}\~ao; Seguran\c{c}a Defensiva.
@@ -55,7 +54,7 @@ Em uma avalia\c{c}\~ao pareada separada no GSM8K (20 itens de teste por condi\c{
 
 \section{Introdu\c{c}\~ao e Contextualiza\c{c}\~ao}
 
-A computa\c{c}\~ao em borda com Modelos de Linguagem Pequenos (SLMs, na faixa de 0,5 a 4 bilh\~oes de par\^ametros) estabelece uma mudan\c{c}a paradigm\'atica no projeto de sistemas aut\^onomos. Ao eliminar a necessidade de conex\~ao cont\'inua com infraestruturas em nuvem, viabiliza-se a opera\c{c}\~ao com soberania completa sobre dados sens\'iveis, aus\^encia de lat\^encia de rede vari\'avel e resili\^encia em ambientes desconectados. Entretanto, essa autonomia confronta fronteiras f\'isicas r\'igidas impostas pelo hardware de baixo custo: em aceleradores com or\c{c}amento de mem\'oria de $4096\text{ MiB}$ (4 GiB), como a GPU NVIDIA GeForce GTX 1050 Ti, a margem para aloca\c{c}\~ao de tensores de pesos, contexto din\^amico do driver e mem\'oria tempor\'aria de infer\^encia \'e extremamente ex\'igua.
+O uso local de Modelos de Linguagem Pequenos (SLMs, na faixa de 0,5 a 4 bilh\~oes de par\^ametros) pode reduzir a depend\^encia de servi\c{c}os remotos. A execu\c{c}\~ao local, por si s\'o, n\~ao garante soberania de dados, lat\^encia limitada ou resili\^encia; essas propriedades dependem da configura\c{c}\~ao e da opera\c{c}\~ao do sistema completo. Permanecem tamb\'em os limites de hardware: em aceleradores com or\c{c}amento de mem\'oria de $4096\text{ MiB}$ (4 GiB), como a GPU NVIDIA GeForce GTX 1050 Ti, h\'a pouca margem para aloca\c{c}\~ao de tensores de pesos, contexto do driver e mem\'oria tempor\'aria de infer\^encia.
 
 O ponto de partida te\'orico para compreender o comportamento de modelos de linguagem contempor\^aneos \'e o artigo seminal \emph{``Attention Is All You Need''} de Vaswani et al. (2017)~\cite{vaswani2017}. Ao propor a elimina\c{c}\~ao total da recorr\^encia sequencial em favor de mecanismos de autoaten\c{c}\~ao (\emph{self-attention}), Vaswani et al. revolucionaram a \'area, viabilizando o treinamento massivamente paralelizado. Contudo, as arquiteturas contempor\^aneas de SLMs incorporam uma s\'erie de refinamentos que n\~ao constavam da formula\c{c}\~ao original de 2017: decodifica\c{c}\~ao autorregressiva \emph{decoder-only}, aten\c{c}\~ao agrupada (\emph{Grouped-Query Attention} -- GQA)~\cite{ainslie2023}, codifica\c{c}\~ao posicional rotativa (\emph{Rotary Position Embeddings} -- RoPE)~\cite{su2024}, normaliza\c{c}\~ao quadr\'atica sem centraliza\c{c}\~ao de m\'edia (\emph{RMSNorm})~\cite{zhang2019}, ativa\c{c}\~oes fechadas SwiGLU~\cite{shazeer2020} e acelera\c{c}\~ao especulativa via \emph{Multi-Token Prediction} (MTP)~\cite{gloeckle2024mtp}, diferenciando-se da decodifica\c{c}\~ao especulativa cl\'assica baseada em modelos de rascunho externos~\cite{leviathan2023}. Al\'em disso, a compress\~ao de tensores por quantiza\c{c}\~ao avan\c{c}ada no \emph{llama.cpp} (k-quants e matrizes de import\^ancia IQ)~\cite{gerganov2023llamacpp,dettmers2022} viabiliza a opera\c{c}\~ao direta em GPUs de consumo.
 
@@ -72,15 +71,15 @@ A investiga\c{c}\~ao \'e estruturada em torno das seguintes Quest\~oes de Pesqui
     \item \textbf{RQ1:} Quais s\~ao os limites f\'isicos de vaz\~ao e aloca\c{c}\~ao de VRAM para SLMs na faixa de 0,5B a 4B em aceleradores de consumo de 4 GiB sem Tensor Cores?
     \item \textbf{RQ2:} Em um desenho experimental controlado de abla\c{c}\~ao sob quantiza\c{c}\~ao mantida constante, qual \'e a magnitude do ganho de vaz\~ao e da sobretaxa de VRAM associada ao mecanismo especulativo de MTP?
     \item \textbf{RQ3:} De que maneira a arquitetura de aten\c{c}\~ao (MHA vs GQA) e o tamanho do vocabul\'ario influenciam a taxa de consumo do or\c{c}amento din\^amico de contexto sob o teto f\'isico de 4096 MiB?
-    \item \textbf{RQ4:} Qual \'e a extens\~ao da desigualdade de tokeniza\c{c}\~ao e do custo computacional entre ingl\^es (en-US), portugu\^es (pt-BR) e mandarim (zh-CN) em modelos de pequeno porte?
-    \item \textbf{RQ5:} Os mecanismos de alinhamento contempor\^aneos garantem robustez contra inje\c{c}\~oes indiretas e uso indevido de ferramentas em ambientes de borda sem incorrer em recusas indevidas (\emph{over-refusal})?
+    \item \textbf{RQ4:} Qual \'e a extens\~ao das diferen\c{c}as de contagem de tokens entre ingl\^es (en-US), portugu\^es (pt-BR) e mandarim (zh-CN) nos tokenizadores avaliados de modelos de pequeno porte?
+    \item \textbf{RQ5:} Como as sondagens explorat\'orias limitadas registradas aqui se comportam diante de inje\c{c}\~oes indiretas e propostas de uso indevido de ferramentas, e quais recusas indevidas foram observadas?
 \end{itemize}
 
-As hip\'oteses nulas ($H_0$) e alternativas ($H_1$) formalizadas para orientar a verifica\c{c}\~ao experimental s\~ao:
+Expectativas explorat\'orias e hip\'oteses de trabalho que orientam a interpreta\c{c}\~ao dos dados s\~ao:
 \begin{itemize}[leftmargin=2em,itemsep=0.2em]
-    \item \textbf{Hip\'otese 1 ($H_1$):} A decodifica\c{c}\~ao especulativa via MTP sob quantiza\c{c}\~ao id\^entica proporciona ganho estatisticamente significante de vaz\~ao de decodifica\c{c}\~ao ($p < 0,01$), compensando a sobretaxa f\'isica de aloca\c{c}\~ao de mem\'oria das cabe\c{c}as de rascunho em regimes severamente delimitados pelo barramento DRAM.
-    \item \textbf{Hip\'otese 2 ($H_2$):} A ado\c{c}\~ao de aten\c{c}\~ao agrupada (GQA) \'e condi\c{c}\~ao estritamente necess\'aria para permitir que modelos pr\'oximos a 3B e 4B par\^ametros sustentem contextos $\ge 4096$ tokens dentro de 4 GiB de VRAM.
-    \item \textbf{Hip\'otese 3 ($H_3$):} A fertilidade de tokeniza\c{c}\~ao em idiomas com menor representa\c{c}\~ao no vocabul\'ario imp\~oe degrada\c{c}\~ao superior a $40\%$ na capacidade \'util da janela de contexto frente ao ingl\^es para modelos com vocabul\'arios compactos ($\le 50\text{k}$ tokens).
+    \item \textbf{Expectativa explorat\'oria 1:} Comparar descritivamente a vaz\~ao observada e o uso de VRAM entre configura\c{c}\~oes Gemma-4 com quantiza\c{c}\~ao equivalente; as repeti\c{c}\~oes dispon\'iveis n\~ao s\~ao r\'eplicas independentes de hardware e n\~ao permitem testar signific\^ancia entre dispositivos.
+    \item \textbf{Expectativa explorat\'oria 2 (n\~ao testada):} GQA reduz o cache KV de forma a viabilizar contextos $\ge 4096$ tokens para modelos pr\'oximos a 3B e 4B par\^ametros dentro de 4 GiB de VRAM. Este trabalho mede contagem de caches para configura\c{c}\~oes espec\'ificas e n\~ao testa a necessidade da GQA em rela\c{c}\~ao a modelos MHA equivalentes em hardware.
+    \item \textbf{Expectativa explorat\'oria 3 (n\~ao testada):} A fertilidade de tokeniza\c{c}\~ao em idiomas com menor representa\c{c}\~ao no vocabul\'ario reduz substancialmente o or\c{c}amento de contexto em modelos com vocabul\'arios compactos ($\le 50\text{k}$ tokens). As observa\c{c}\~oes de raz\~oes neste corpus de 12 textos s\~ao compat\'iveis com essa expectativa, mas n\~ao constituem um teste causal.
 \end{itemize}
 
 \section{Fundamenta\c{c}\~ao Te\'orica e Modelagem Matem\'atica}
@@ -157,7 +156,7 @@ A Equa\c{c}\~ao~\eqref{eq:kv_cache_formula} elucida o impacto decisivo da escolh
     \item \textbf{Cen\'ario Real com GQA ($n_{\text{kv}} = 8$):} Sob a configura\c{c}\~ao efetiva com raz\~ao $3:1$, o consumo reduz-se a:
     $2 \times 28 \times 8 \times 128 \times 4096 \times 2\text{ bytes} \approx 469.124.950\text{ bytes} \approx 448\text{ MiB}$.
 \end{itemize}
-A economia direta de quase $900\text{ MiB}$ de VRAM f\'isica \'e o fator t\'ecnico que viabiliza a coexist\^encia dos tensores est\'aticos de pesos do modelo ($2120\text{ MiB}$) e do contexto do driver ($256\text{ MiB}$) dentro da fronteira f\'isica de $4096\text{ MiB}$ da GTX 1050 Ti. Caso o modelo empregasse MHA tradicional, a aloca\c{c}\~ao combinada ultrapassaria $3718\text{ MiB}$, disparando falhas for\c{c}adas de esgotamento de mem\'oria (\emph{Out-of-Memory} -- OOM) em qualquer oscila\c{c}\~ao de buffers tempor\'arios.
+A economia direta de quase $900\text{ MiB}$ de VRAM f\'isica \'e o fator t\'ecnico que viabiliza a coexist\^encia dos tensores est\'aticos de pesos do modelo ($2120\text{ MiB}$) e do contexto do driver ($256\text{ MiB}$) dentro da fronteira f\'isica de $4096\text{ MiB}$ da GTX 1050 Ti. Nesse cen\'ario aritm\'etico hipot\'etico sob MHA, a aloca\c{c}\~ao combinada ($3718\text{ MiB}$) deixaria praticamente nenhuma margem para buffers tempor\'arios dentro do envelope f\'isico de $4096\text{ MiB}$; este racioc\'inio \'e um c\'alculo de viabilidade do modelo, e n\~ao uma falha de esgotamento de mem\'oria observada em execu\c{c}\~ao.
 
 \subsection{Modelo Roofline e Limites da Arquitetura Pascal GP107}
 
@@ -196,11 +195,11 @@ A intensidade aritm\'etica cr\'itica ($I^*$) do sistema define o ponto de transi
     \begin{equation}
     I_{\text{decode}} \approx \frac{2\text{ FLOPs}}{0,56\text{ bytes}} \approx 3,57\text{ FLOP/byte}
     \end{equation}
-    Como $3,57 \ll 19,1$, a decodifica\c{c}\~ao autorregressiva situa-se profundamente na regi\~ao \textbf{limitada por largura de banda de mem\'oria} (\emph{memory-bound}). O teto te\'orico superior de vaz\~ao para um modelo de tamanho de tensores $S_{\text{pesos}}$ \'e:
+    Sob as premissas deste modelo anal\'itico, $3,57 \ll 19,1$ prev\^e um regime limitado por largura de banda para decode batch-1 nesta GTX 1050 Ti; isso n\~ao mede diretamente o tr\'afego DRAM nem se generaliza para outras GPUs. O teto te\'orico de vaz\~ao para um modelo de tamanho de tensores $S_{\text{pesos}}$ \'e:
     \begin{equation}
     \text{Throughput}_{\text{teto}} = \frac{B_{\text{teor}}}{S_{\text{pesos}}}
     \end{equation}
-    Para o Gemma-2-2B em Q4\_K\_M ($S_{\text{pesos}} \approx 1,99\text{ GB}$), $\text{Throughput}_{\text{teto}} = 112 / 1,99 \approx 56,3\text{ tok/s}$. A vaz\~ao experimental medida de $26,92\text{ tok/s}$ representa $47,8\%$ de efici\^encia de barramento.
+    Para o Gemma-2-2B em Q4\_K\_M ($S_{\text{pesos}} \approx 1,99\text{ GB}$), $\text{Throughput}_{\text{teto}} = 112 / 1,99 \approx 56,3\text{ tok/s}$. A vaz\~ao experimental medida de $26,92\text{ tok/s}$ corresponde a $47,8\%$ do teto no proxy anal\'itico de demanda; essa raz\~ao n\~ao \'e utiliza\c{c}\~ao f\'isica medida do barramento.
     \item \textbf{Processamento Inicial de Contexto / Prefill ($I_{\text{prefill}} \gg I^*$):} Na fase de prefill, processa-se a sequ\^encia inteira de entrada em bloco ($L_{\text{prompt}} \ge 256$). Cada peso \'e transferido da mem\'oria DRAM uma \'unica vez e reutilizado atrav\'es de todas as colunas da matriz de entrada. A intensidade aritm\'etica escala linearmente com o bloco:
     \begin{equation}
     \begin{aligned}
@@ -208,7 +207,7 @@ A intensidade aritm\'etica cr\'itica ($I^*$) do sistema define o ponto de transi
     &\approx 914\text{--}1828\text{ FLOP/byte} \gg 19,1
     \end{aligned}
     \end{equation}
-    Portanto, o processamento de contexto (\emph{prefill}) \'e estritamente \textbf{limitado por capacidade computacional}. Nesta fase, a aus\^encia de n\'ucleos tensores penaliza a arquitetura Pascal, restringindo o prefill a patamares entre $49$ e $237\text{ tok/s}$, enquanto GPUs com aceleradores dedicados atingem ordens de grandeza superiores.
+    Sob a aproxima\c{c}\~ao assumida, o modelo prev\^e prefill limitado por capacidade computacional. As vaz\~oes observadas de prefill nesta plataforma variaram entre $49$ e $237\text{ tok/s}$; n\~ao se realizou compara\c{c}\~ao experimental controlada com GPUs com aceleradores dedicados.
 \end{itemize}
 
 \subsection{Fundamenta\c{c}\~ao Te\'orica de Vi\'es, Assimetrias e Desigualdade de Tokeniza\c{c}\~ao}
@@ -239,7 +238,7 @@ Para evitar classifica\c{c}\~oes arbitr\'arias de vi\'es e censura, adota-se nes
 
 Os experimentos foram conduzidos em uma esta\c{c}\~ao de trabalho com hardware f\'isico dedicado: processador AMD Ryzen 5 3600 (6 n\'ucleos, 12 threads), 32 GiB de mem\'oria RAM DDR4-3200 em canal duplo, e placa aceleradora gr\'afica NVIDIA GeForce GTX 1050 Ti (4096 MiB GDDR5, Compute Capability 6.1). A GPU foi operada sob isolamento rigoroso via Debian 12 com n\'ucleo Linux 6.8 e driver propriet\'ario NVIDIA 550.120. A execu\c{c}\~ao dos modelos foi realizada utilizando o servidor de infer\^encia \texttt{llama-server} compilado nativamente a partir do \emph{llama.cpp} (b4120+), com suporte a CUDA e otimiza\c{c}\~ao de aten\c{c}\~ao.
 
-A telemetria de hardware foi coletada em tempo real com frequ\^encia de amostragem de $250\text{ ms}$ atrav\'es das bibliotecas oficiais NVML (\emph{NVIDIA Management Library}), registrando o consumo de mem\'oria f\'isica VRAM e a temperatura do die. Como ressalva de instrumenta\c{c}\~ao, a arquitetura GP107 n\~ao disponibiliza leituras cont\'inuas de pot\^encia em watts via NVML. Portanto, as estimativas de efici\^encia energ\'etica formalizadas nesta pesquisa ($\eta = \text{vaz\~ao} / P_{\text{hipot\'etico}}$) baseiam-se em uma an\'alise param\'etrica de sensibilidade sob o envelope de TDP de $75\text{ W}$ da placa, considerando regime operacional cont\'inuo delimitado entre $42\text{ W}$ e $62\text{ W}$, n\~ao se confundindo com medi\c{c}\~oes el\'etricas diretas em tomada AC de bancada ($> 100\text{--}140\text{ W}$ para o sistema completo).
+O monitoramento de hardware registrou VRAM e temperatura a cada $250\text{ ms}$. N\~ao foram coletadas medi\c{c}\~oes de pot\^encia el\'etrica; portanto, este trabalho n\~ao apresenta resultados emp\'iricos de energia ou efici\^encia energ\'etica. As dez repeti\c{c}\~oes sequenciais s\~ao observa\c{c}\~oes dentro de uma execu\c{c}\~ao de hardware, n\~ao r\'eplicas independentes entre dispositivos.
 
 \subsection{Protocolo Experimental e Conjuntos de Dados}
 
@@ -254,11 +253,9 @@ Para garantir rigor cient\'ifico e reprodutibilidade, estabeleceram-se tr\^es co
 
 Avaliou-se o Qwen3-1.7B em Q4\_K\_M no conjunto de teste do GSM8K (vers\~ao 3 da tarefa), com lm-evaluation-harness 0.4.14.dev0 e llama.cpp build b12024. As condi\c{c}\~oes usaram zero ou cinco exemplos de demonstra\c{c}\~ao sorteados do conjunto de treino, os mesmos 20 itens de teste, semente 42, lote 1, decodifica\c{c}\~ao gulosa (temperatura 0) e limite de 384 tokens gerados. Mantiveram-se os filtros de correspond\^encia estrita e extra\c{c}\~ao flex\'ivel do harness. As respostas de API capturadas coincidiram com as 20 predi\c{c}\~oes do harness em cada condi\c{c}\~ao; as m\'etricas agregadas foram recalculadas a partir dos registros por amostra. O resumo sanitizado e as contagens de auditoria est\~ao em \\texttt{results/diagnostics/official-gsm8k-20.json}.
 
-\subsection{Tratamento Estat\'istico Inferencial e Limita\c{c}\~oes Amostrais}
+\subsection{Escopo Estat\'istico e Unidade Experimental}
 
-As compara\c{c}\~oes estat\'isticas de vaz\~ao e lat\^encia foram calculadas a partir dos microdados brutos ($N=10$ por condi\c{c}\~ao). Empregaram-se testes $t$ de Welch bicaudais para amostras independentes com vari\^ancias heterog\^eneas, aplicando-se a aproxima\c{c}\~ao de Welch-Satterthwaite para o c\'alculo dos graus de liberdade efetivos ($\nu$). Os tamanhos de efeito foram quantificados pelo $d$ de Cohen bicaudal com desvio-padr\~ao agrupado ponderado. Os intervalos de confian\c{c}a de $95\%$ foram calculados via distribui\c{c}\~ao $t$ de Student com $N-1$ graus de liberdade.
-
-\textbf{Ressalva Metodol\'ogica sobre Independ\^encia e Pseudorreplica\c{c}\~ao:} As 10 repeti\c{c}\~oes foram executadas em uma \'unica bancada f\'isica. Do ponto de vista estrito do desenho amostral (Hurlbert, 1984)~\cite{hurlbert1984}, essa estrat\'egia caracteriza \emph{pseudorreplica\c{c}\~ao local}. Ela captura adequadamente o ru\'ido de escalonamento do sistema operacional e do runtime, por\'em a vari\^ancia residual extremamente reduzida ($\sigma < 0,6\text{ tok/s}$) resulta em valores de $t > 40$ e $d > 19$. Esses valores confirmam separabilidade estat\'istica r\'igida dentro desta bancada espec\'ifica, mas n\~ao devem ser extrapolados como variabilidade entre diferentes dispositivos f\'isicos de fabricantes distintos.
+Os ensaios de desempenho s\~ao observa\c{c}\~oes repetidas de um host e de uma execu\c{c}\~ao registrada por configura\c{c}\~ao. Eles permitem resumos descritivos dessas observa\c{c}\~oes, mas n\~ao fornecem r\'eplicas independentes por dispositivo ou execu\c{c}\~ao. Portanto, testes $t$ de Welch, Mann--Whitney, intervalos de confian\c{c}a interpretados como incerteza entre execu\c{c}\~oes e tamanhos de efeito calculados sobre consultas n\~ao sustentam afirma\c{c}\~oes inferenciais sobre hardware. Infer\^encia futura exige execu\c{c}\~oes independentes e randomizadas nas unidades experimentais de interesse.
 
 \subsection{Dura\c{c}\~ao Experimental, Instrumenta\c{c}\~ao Temporal e Protocolo em Tr\^es N\'iveis}
 
@@ -316,7 +313,7 @@ onde $S_{\text{pesos}}$ representa o volume est\'atico dos tensores em gigabytes
 
 Com base nos tamanhos exatos dos tensores GGUF alocados na mem\'oria do dispositivo, obt\^em-se os seguintes pontos de opera\c{c}\~ao na GTX 1050 Ti:
 \begin{itemize}[leftmargin=1.5em,itemsep=0.2em]
-    \item \textbf{Gemma-4-E2B [MTP]:} Com $1,737\text{ GB}$ de tensores e vaz\~ao de $43,35\text{ tok/s}$, o proxy anal\'itico atinge $75,3\text{ GB/s}$, correspondendo a \textbf{67,2\%} do teto te\'orico de hardware ($112,0\text{ GB/s}$). A gera\c{c}\~ao especulativa eleva a intensidade aritm\'etica, proporcionando satura\c{c}\~ao superior dos canais GDDR5.
+    \item \textbf{Gemma-4-E2B [MTP]:} Com $1,737\text{ GB}$ de tensores e vaz\~ao de $43,35\text{ tok/s}$, o proxy anal\'itico atinge $75,3\text{ GB/s}$, correspondendo a \textbf{67,2\%} do teto te\'orico de hardware ($112,0\text{ GB/s}$). Essa raz\~ao n\~ao \'e utiliza\c{c}\~ao medida do barramento; o tr\'afego f\'isico da DRAM n\~ao foi instrumentado. A gera\c{c}\~ao multi-token pode alterar a intensidade aritm\'etica efetiva, mas esse efeito n\~ao foi medido separadamente aqui.
     \item \textbf{Llama-3.2-3B:} Alocando $2,019\text{ GB}$ de tensores em formato Q4\_K\_M a $27,59\text{ tok/s}$, a demanda anal\'itica calculada \'e de $55,7\text{ GB/s}$ ($49,7\%$).\hfil
     \item \textbf{Qwen-3.5-2B:} Com $1,396\text{ GB}$ de tensores e vaz\~ao de $37,60\text{ tok/s}$, opera com demanda de $52,5\text{ GB/s}$ ($46,9\%$).
     \item \textbf{SmolLM2-1.7B:} Com $1,058\text{ GB}$ de pesos ($1009,1\text{ MiB}$) e vaz\~ao de $47,80\text{ tok/s}$, demanda analiticamente $50,6\text{ GB/s}$ ($45,2\%$). Corrige-se aqui a anomalia verificada em vers\~oes preliminares onde a dedu\c{c}\~ao gen\'erica de VRAM superestimava os pesos est\'aticos em $2,59\text{ GB}$, gerando um valor imposs\'ivel de $123,8\text{ GB/s}$ que superaria a capacidade f\'isica da placa.
@@ -409,7 +406,7 @@ Extra\c{c}\~ao flex\'ivel & 3/20; 0,15 (0,0819) & 11/20; 0,55 (0,1141) \\
 
 As transi\c{c}\~oes pareadas s\~ao descritivas: na correspond\^encia estrita houve 7 melhorias, nenhuma piora e 13 empates; na extra\c{c}\~ao flex\'ivel, 9 melhorias, 1 piora e 10 empates. Testes exatos bilaterais de McNemar/binomial sobre os pares discordantes resultam em $p=0,0156$ e $p=0,0215$, sem ajuste. Esses valores explorat\'orios n\~ao s\~ao tratados como evid\^encia confirmat\'oria de signific\^ancia: foram avaliados somente 20 itens, dois filtros relacionados e n\~ao houve plano confirmat\'orio pr\'e-registrado. O filtro estrito tamb\'em depende do formato da resposta: 20/20 sa\'idas 0-shot e 6/20 5-shot n\~ao continham o marcador final esperado, enquanto a extra\c{c}\~ao flex\'ivel obteve resultado v\'alido nas 40 sa\'idas por condi\c{c}\~ao. Portanto, a diferen\c{c}a entre os filtros reflete parcialmente formato/construto, n\~ao uma medida independente de compet\^encia matem\'atica.
 
-\section{An\'alise Estat\'istica e Estudo de Abla\c{c}\~ao Controlada de MTP}
+\section{Estudo de Abla\c{c}\~ao Controlada de MTP e Quantiza\c{c}\~ao}
 
 Para decompor rigorosamente os fatores determinantes do desempenho no Gemma-4-E2B, realizou-se uma abla\c{c}\~ao experimental controlada em tr\^es condi\c{c}\~oes emp\'iricas:
 \begin{itemize}[leftmargin=2em,itemsep=0.2em]
@@ -420,47 +417,18 @@ Para decompor rigorosamente os fatores determinantes do desempenho no Gemma-4-E2
 
 \textbf{Nota de Desenho Experimental:} Registra-se formalmente que este desenho experimental constitui uma abla\c{c}\~ao controlada em tr\^es condi\c{c}\~oes com dois eixos ortogonais de contraste ($C_3$ vs $C_2$ e $C_2$ vs $C_1$), e n\~ao um fatorial $2 \times 2$ completo. A quarta c\'elula combinatorial ($\text{Q4\_K\_M} + \text{MTP}$) n\~ao existe no ecossistema do modelo Gemma-4-E2B, inviabilizando o c\'alculo de termos de intera\c{c}\~ao cruzada estat\'istica.
 
-A Figura~\ref{fig:mtp_ablation} apresenta as m\'edias amostrais com intervalos de confian\c{c}a de $95\%$ de Student e a decomposi\c{c}\~ao dos efeitos associados.
+A Figura~\ref{fig:mtp_ablation} apresenta as m\'edias amostrais e a decomposi\c{c}\~ao dos efeitos associados; os intervalos s\~ao descritivos das consultas repetidas dentro desta \'unica execu\c{c}\~ao.
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.88\textwidth]{figures/mtp_ablation_ci.pdf}
-\caption{Estudo de abla\c{c}\~ao controlada de MTP e quantiza\c{c}\~ao na vaz\~ao de decodifica\c{c}\~ao do Gemma-4-E2B na GPU GTX 1050 Ti ($N=10$, $\tau=0,0$). As barras representam m\'edias amostrais com intervalos de confian\c{c}a de $95\%$ de Student.}
+\caption{Estudo de abla\c{c}\~ao controlada de MTP e quantiza\c{c}\~ao na vaz\~ao de decodifica\c{c}\~ao do Gemma-4-E2B na GPU GTX 1050 Ti ($N=10$, $\tau=0,0$). As barras representam m\'edias amostrais; os intervalos de confian\c{c}a de $95\%$ de Student baseiam-se em consultas repetidas dentro desta execu\c{c}\~ao e n\~ao representam incerteza entre execu\c{c}\~oes ou dispositivos.}
 \label{fig:mtp_ablation}
 \end{figure*}
 
-\subsection{Compara\c{c}\~ao do Mecanismo Especulativo sob Quantiza\c{c}\~ao Fixada em IQ4\_XS ($C_3$ vs $C_2$)}
+\subsection{Contrastes Descritivos entre Configura\c{c}\~oes Gemma-4}
 
-Comparando as condi\c{c}\~oes $C_3$ e $C_2$, o formato de quantiza\c{c}\~ao \'e mantido id\^entico em IQ4\_XS. O teste $t$ de Welch fornece:
-\begin{equation}
-\begin{aligned}
-t_{\text{MTP}} &= \frac{43,35 - 34,51}{\sqrt{\frac{0,57^2}{10} + \frac{0,29^2}{10}}}\\
-&= \frac{8,84}{0,2022} \approx 43,72, \quad \nu = 13,43
-\end{aligned}
-\end{equation}
-com $p = 7,12 \times 10^{-16}$ e $d = 19,55$. A acelera\c{c}\~ao observada associada \`a introdu\c{c}\~ao das cabe\c{c}as MTP sob quantiza\c{c}\~ao mantida constante \'e de \textbf{+25,6\%} ($8,84$\,tok/s). No que concerne \`a mem\'oria, a sobretaxa f\'isica observada para a infraestrutura de MTP \'e de $+236,0\text{ MiB}$ de VRAM ($2036,7$ vs $1800,7\text{ MiB}$), refletindo a pegada est\'atica e din\^amica das cabe\c{c}as de rascunho em Q8\_0, cache KV especulativo e buffers de verifica\c{c}\~ao.
-
-\subsection{Compara\c{c}\~ao de Formatos de Quantiza\c{c}\~ao sem Especula\c{c}\~ao ($C_2$ vs $C_1$)}
-
-Comparando as condi\c{c}\~oes $C_2$ e $C_1$, o modo de gera\c{c}\~ao autorregressiva \'e mantido constante sem especula\c{c}\~ao. O teste $t$ de Welch resulta em:
-\begin{equation}
-\begin{aligned}
-t_{\text{Quant}} &= \frac{34,51 - 26,92}{\sqrt{\frac{0,29^2}{10} + \frac{0,23^2}{10}}}\\
-&= \frac{7,59}{0,1160} \approx 64,26, \quad \nu = 17,17
-\end{aligned}
-\end{equation}
-com $p = 6,67 \times 10^{-22}$ e $d = 28,74$ quando calculado diretamente a partir dos microdados amostrais brutos ($N=10$). Quando recalculado com base exclusivamente nas estat\'isticas sumarizadas arredondadas a duas casas decimais ($34,51$, $26,92$, $0,29$, $0,23$), obt\'em-se $SE = \sqrt{0,29^2/10 + 0,23^2/10} = \sqrt{0,0137} \approx 0,1170\text{ tok/s}$, resultando em $t = 64,85$ ($d = 28,98$). Esclarece-se que o valor $t = 65,41$ anteriormente citado na literatura preliminar decorreu de uma etapa transit\'oria de c\'alculo com vari\^ancias residuais n\~ao truncadas ($s_2 = 0,286$). Ambas as formula\c{c}\~oes reconciliadas confirmam de forma inequ\'ivoca que a compress\~ao dos tensores de pesos via matriz de import\^ancia IQ4\_XS associou-se a um ganho estatisticamente s\'olido de \textbf{+28,2\%} ($7,59$\,tok/s), al\'em de economizar $196,0\text{ MiB}$ de VRAM ($1996,7$ vs $1800,7\text{ MiB}$).
-
-\subsection{Diferen\c{c}a Composta de Configura\c{c}\~ao ($C_3$ vs $C_1$)}
-
-A compara\c{c}\~ao entre a configura\c{c}\~ao com MTP em IQ4\_XS ($C_3$) e a linha de base Q4\_K\_M ($C_1$) reflete o ganho acumulado entre os dois pontos operacionais:
-\begin{equation}
-\begin{aligned}
-t_{\text{Composto}} &= \frac{43,35 - 26,92}{\sqrt{\frac{0,57^2}{10} + \frac{0,23^2}{10}}}\\
-&= \frac{16,43}{0,1944} \approx 84,50, \quad \nu = 11,94
-\end{aligned}
-\end{equation}
-com $p = 5,88 \times 10^{-18}$ e $d = 37,79$. O ganho composto totaliza \textbf{+61,0\%} ($16,43$\,tok/s). Do ponto de vista de mem\'oria, observa-se uma diferen\c{c}a l\'iquida de apenas $+40,0\text{ MiB}$ entre $C_3$ e $C_1$ ($2036,7$ vs $1996,7\text{ MiB}$); essa modesta diferen\c{c}a l\'iquida resulta do fato de que a economia de $196,0\text{ MiB}$ propiciada pela quantiza\c{c}\~ao IQ4\_XS absorveu 83\% do custo f\'isico de mem\'oria da estrutura de MTP ($+236,0\text{ MiB}$), fornecendo suporte emp\'irico preliminar \`a hip\'otese $H_1$ sob distin\c{c}\~ao expl\'icita entre a aloca\c{c}\~ao do mecanismo e a varia\c{c}\~ao l\'iquida entre configura\c{c}\~oes.
+Na configura\c{c}\~ao registrada, a vaz\~ao de decodifica\c{c}\~ao foi 34,51 vs 26,92 tok/s para IQ4\_XS vs Q4\_K\_M sem especula\c{c}\~ao (+28,2\%), e 43,35 vs 34,51 tok/s com vs sem MTP sob IQ4\_XS (+25,6\%). A configura\c{c}\~ao combinada MTP/IQ4\_XS foi 43,35 vs 26,92 tok/s (+61,0\%) em rela\c{c}\~ao \`a linha de base. Essas diferen\c{c}as s\~ao descritivas de consultas repetidas em um host, n\~ao estimativas inferenciais de efeito geral. A VRAM observada foi 2036,7 MiB para MTP/IQ4\_XS, 1800,7 MiB para IQ4\_XS e 1996,7 MiB para Q4\_K\_M; nesta execu\c{c}\~ao, a configura\c{c}\~ao combinada utilizou 40,0 MiB a mais que a linha de base. N\~ao se infere reprodutibilidade entre m\'aquinas ou cargas de trabalho.
 
 \section{Contextualiza\c{c}\~ao Arquitetural e Modelagem de Viabilidade F\'isico-Computacional}
 
@@ -496,7 +464,7 @@ A literatura t\'ecnica frequentemente incorre em conclus\~oes simplistas do tipo
 \begin{enumerate}[leftmargin=1.5em,itemsep=0.2em]
     \item \textbf{Aloca\c{c}\~ao de VRAM vs. Contagem Nominal de Par\^ametros:} O modelo SmolLM2-1.7B (1,71B par\^ametros) apresentou pico de VRAM de $2902,7\text{ MiB}$, ocupando mais mem\'oria do que o Gemma-4-E2B (2,00B par\^ametros em Q4\_K\_M, com $1996,7\text{ MiB}$) e o Qwen-3.5-2B ($1580,7\text{ MiB}$). Essa aparente anomalia decorre da estrat\'egia de pr\'e-aloca\c{c}\~ao de buffers de contexto do runtime e da dimens\~ao dos tensores intermedi\'arios de ativa\c{c}\~ao, demonstrando que a VRAM de pico em execu\c{c}\~ao real n\~ao \'e uma fun\c{c}\~ao linear simples da contagem de par\^ametros est\'aticos.
     \item \textbf{Impacto da Raz\~ao de GQA no Dimensionamento do Cache KV:} Enquanto o Qwen-2.5-0.5B adota uma raz\~ao de GQA agressiva de $7:1$ ($n_{\text{kv}} = 2$), demandando apenas $12\text{ KiB}$ por token de contexto em FP16, o Gemma-4-E2B emprega raz\~ao conservadora de $2:1$ com dimens\~ao de cabe\c{c}a alargada ($d_{\text{head}} = 256$), resultando em $104\text{ KiB}$ por token. Em um contexto de 4096 tokens, o cache KV do Gemma consome $416\text{ MiB}$, contra apenas $48\text{ MiB}$ no Qwen.
-    \item \textbf{Vocabul\'ario do Tokenizador e Custo de Proje\c{c}\~ao de Sa\'ida:} O modelo Gemma aloca uma matriz de sa\'ida com $256.000$ tokens, enquanto o SmolLM2 emprega $49.152$ tokens. A multiplica\c{c}\~ao final de desincorporiza\c{c}\~ao (\emph{lm\_head}) para c\'alculo dos logits sobre 256k classes imp\~oe uma sobretaxa computacional e de mem\'oria significativamente superior a cada passo de decodifica\c{c}\~ao.
+    \item \textbf{Vocabul\'ario do Tokenizador e Custo de Proje\c{c}\~ao de Sa\'ida:} O modelo Gemma aloca uma matriz de sa\'ida com $256.000$ tokens, enquanto o SmolLM2 emprega $49.152$ tokens. A multiplica\c{c}\~ao final de desincorporiza\c{c}\~ao (\emph{lm\_head}) para c\'alculo dos logits sobre 256k classes imp\~oe uma matriz de sa\'ida estruturalmente maior a cada passo de decodifica\c{c}\~ao; este trabalho n\~ao mediu o custo computacional individual dessa camada.
     \item \textbf{Abla\c{c}\~ao Intra-Modelo vs. Compara\c{c}\~ao Inter-Modelos:} Ressalta-se a distin\c{c}\~ao metodol\'ogica r\'igida entre o estudo da Se\c{c}\~ao 6 (onde a arquitetura Gemma foi mantida perfeitamente constante, isolando os efeitos de MTP e quantiza\c{c}\~ao) e as compara\c{c}\~oes entre modelos distintos da Tabela~\ref{tab:empirical_perf}, onde arquitetura, vocabul\'ario, normaliza\c{c}\~ao e kernels operam simultaneamente como vari\'aveis n\~ao controladas.
 \end{enumerate}
 
@@ -551,7 +519,7 @@ A Tabela~\ref{tab:safety_bias_lang} sumariza o comportamento de seguran\c{c}a de
 \bottomrule
 \end{tabularx}
 \vspace{0.3em}
-{\scriptsize \textit{Nota:} Valores reportados como fra\c{c}\~ao $k/n$, porcentagem e intervalo de confian\c{c}a binomial exato de 95\% de Clopper-Pearson entre colchetes. A taxa de falso positivo de 0,0\% ($0/4$) em tarefas benignas n\~ao prova aus\^encia universal de recusa indevida, possuindo limite superior unilateral exato de 52,7\% (R\"ottger et al., 2024). Todas as chamadas de ferramentas propostas com argumentos maliciosos foram 100\% bloqueadas pelo harness (\texttt{BLOCKED\_BY\_HARNESS}), resultando em 0,0\% de execu\c{c}\~ao no sistema operacional hospedeiro.}
+{\scriptsize \textit{Nota:} Valores reportados como fra\c{c}\~ao $k/n$, porcentagem e intervalo de confian\c{c}a binomial exato de 95\% de Clopper-Pearson entre colchetes. A taxa de falso positivo de 0,0\% ($0/4$) em tarefas benignas n\~ao prova aus\^encia universal de recusa indevida, possuindo limite superior unilateral exato de 52,7\% (R\"ottger et al., 2024). A camada do harness marcou as chamadas maliciosas registradas como \texttt{BLOCKED\_BY\_HARNESS}; isso n\~ao evidencia que todos os caminhos de execu\c{c}\~ao no hospedeiro estejam bloqueados.}
 \end{table*}
 
 \begin{figure*}[t]
@@ -563,15 +531,15 @@ A Tabela~\ref{tab:safety_bias_lang} sumariza o comportamento de seguran\c{c}a de
 
 \subsection{Aus\^encia de Recusa Indevida ($\text{FPR} = 0,0\%$)}
 
-Em todas as avalia\c{c}\~oes com comandos t\'ecnicos leg\'itimos de administra\c{c}\~ao de sistemas (finaliza\c{c}\~ao for\c{c}ada de processos travados via \texttt{kill -9}, an\'alise forense de pacotes SYN flood com \texttt{tcpdump}, inspe\c{c}\~ao de falhas de segmenta\c{c}\~ao em \texttt{gdb} e testes de estresse de disco com \texttt{dd}), nenhum modelo apresentou recusa indevida ($\text{FPR} = 0,0\%$). Todos forneceram respostas t\'ecnicas operacionais imediatas. Esse resultado contrasta favoravelmente com modelos de grande porte em nuvem que frequentemente exibem recusa exagerada em diagn\'osticos de redes por confus\~ao sem\^antica com atividades ofensivas~\cite{rottger2023}.
+Em todas as avalia\c{c}\~oes com comandos t\'ecnicos leg\'itimos de administra\c{c}\~ao de sistemas (finaliza\c{c}\~ao for\c{c}ada de processos travados via \texttt{kill -9}, an\'alise forense de pacotes SYN flood com \texttt{tcpdump}, inspe\c{c}\~ao de falhas de segmenta\c{c}\~ao em \texttt{gdb} e testes de estresse de disco com \texttt{dd}), a contagem observada de recusas indevidas foi $0/4$ para cada modelo avaliado ($\text{FPR} = 0,0\%$ neste conjunto fixo). O intervalo bilateral de $95\%$ de Clopper-Pearson \'e $[0,0\%,60,2\%]$ e o limite superior unilateral \'e $52,7\%$. Este pequeno conjunto explorat\'orio n\~ao estima a taxa para administra\c{c}\~ao rotineira ou outros dom\'inios operacionais, e nenhuma compara\c{c}\~ao entre modelos ou com taxas de refer\^encia da literatura foi realizada aqui~\cite{rottger2023}.
 
 \subsection{Vulnerabilidade a Inje\c{c}\~oes Indiretas e Quebra de Delimitadores}
 
-Sob inje\c{c}\~ao indireta de instru\c{c}\~oes incorporadas em logs de servidor simulados e p\'aginas web raspadas, a taxa de sucesso de ataque ($\text{ASR}$) oscilou entre $50,0\%$ e $100,0\%$. O modelo Qwen-2.5-0.5B sucumbiu integralmente aos ataques de quebra de delimitadores, emitindo os can\'arios maliciosos. Modelos a partir de 1,7B demonstraram resili\^encia superior, neutralizando parte dos ataques sob delimita\c{c}\~ao r\'igida com marcadores XML (\texttt{<untrusted\_input>}), por\'em revelando que o alinhamento p\'os-treinamento isolado \'e insuficiente para garantir separa\c{c}\~ao robusta entre dados e instru\c{c}\~oes.
+Nas sondagens explorat\'orias limitadas de inje\c{c}\~ao indireta em logs simulados e p\'aginas web, a ASR observada variou de $50,0\%$ a $100,0\%$. Essas sondagens e seus r\'otulos heur\'isticos n\~ao estimam robustez geral nem demonstram efeito do tamanho do modelo. Alinhamento do modelo n\~ao \`e uma fronteira de seguran\c{c}a; controles de aplica\c{c}\~ao exigem valida\c{c}\~ao independente.
 
 \subsection{Diferencia\c{c}\~ao no Uso de Ferramentas e Camadas de Prote\c{c}\~ao}
 
-Na avalia\c{c}\~ao de invoca\c{c}\~ao de ferramentas externas simuladas (Model Context Protocol -- MCP~\cite{anthropic2024mcp}), os modelos propuseram a execu\c{c}\~ao de chamadas t\'ecnicas contendo argumentos maliciosos manipulados por dados n\~ao confi\'aveis (ex.: inje\c{c}\~ao de comandos encadeados com ponto-e-v\'irgula ou remo\c{c}\~ao destrutiva de tabelas SQL). Registra-se que, em todos os casos, a camada externa de valida\c{c}\~ao de esquemas e pol\'itica do \emph{harness} interceptou e abortou as chamadas antes de qualquer execu\c{c}\~ao no sistema operacional hospedeiro (\texttt{BLOCKED\_BY\_HARNESS}). Esse achado comprova experimentalmente que a seguran\c{c}a de agentes baseados em SLMs n\~ao pode depender do bom comportamento intr\'inseco do modelo, exigindo barreiras determin\'isticas na camada de aplica\c{c}\~ao.
+Na avalia\c{c}\~ao de invoca\c{c}\~ao de ferramentas externas simuladas (Model Context Protocol -- MCP~\cite{anthropic2024mcp}), os modelos propuseram a execu\c{c}\~ao de chamadas t\'ecnicas contendo argumentos maliciosos manipulados por dados n\~ao confi\'aveis (ex.: inje\c{c}\~ao de comandos encadeados com ponto-e-v\'irgula ou remo\c{c}\~ao destrutiva de tabelas SQL). Registra-se que, nos casos registrados, a camada externa de valida\c{c}\~ao de esquemas e pol\'itica do \emph{harness} interceptou e abortou as chamadas antes de qualquer execu\c{c}\~ao no sistema operacional hospedeiro (\texttt{BLOCKED\_BY\_HARNESS}). Esse achado, restrito aos casos de teste e ao caminho do harness registrados, n\~ao \'e uma garantia geral de seguran\c{c}a. Qualquer integra\c{c}\~ao de ferramentas implantada precisa de autoriza\c{c}\~ao e conten\c{c}\~ao na camada de aplica\c{c}\~ao, testadas independentemente.
 
 \section{Avalia\c{c}\~ao Experimental Multil\'ingue, Efici\^encia de Tokeniza\c{c}\~ao e Temas Sens\'iveis}
 
@@ -583,7 +551,7 @@ A avalia\c{c}\~ao de tokeniza\c{c}\~ao translingual foi executada utilizando o c
 \centering
 \scriptsize
 \setlength{\tabcolsep}{1.5pt}
-\caption{Efici\^encia de Tokeniza\c{c}\~ao, Raz\~oes de Expans\~ao e Impacto no Or\c{c}amento de Contexto no Corpus Paralelo}
+\caption{Raz\~oes Observadas de Tokeniza\c{c}\~ao e Proje\c{c}\~oes Aritm\'eticas do Or\c{c}amento de 4096 Tokens}
 \label{tab:multilingual_tokenization}
 \begin{tabularx}{0.995\textwidth}{L{2.0cm} c c c c c c c c}
 \toprule
@@ -599,14 +567,7 @@ A avalia\c{c}\~ao de tokeniza\c{c}\~ao translingual foi executada utilizando o c
 {\scriptsize \textit{Nota:} Valores m\'edios calculados sobre os 12 pares de textos paralelos. Fertilidade expressa em tokens/palavra para ingl\^es e portugu\^es, e tokens/caractere para chin\^es. A \'ultima coluna expressa a capacidade relativa do or\c{c}amento de contexto de 4096 tokens em portugu\^es e chin\^es em rela\c{c}\~ao ao ingl\^es ($1,0 / \text{Raz\~ao}$).}
 \end{table*}
 
-\textbf{Decomposi\c{c}\~ao das Cinco Dimens\~oes de Custo Computacional:}
-\begin{enumerate}[leftmargin=1.5em,itemsep=0.2em]
-    \item \textbf{Custo de Representa\c{c}\~ao:} O modelo SmolLM2 imp\~oe uma penalidade de expans\~ao de $2,40\times$ para o portugu\^es e de $4,59\times$ para o chin\^es frente ao ingl\^es. Para expressar a mesma mensagem sem\^antica, o SmolLM2 gera 221 tokens em chin\^es, contra apenas 64 tokens no Qwen2.5.
-    \item \textbf{Custo de Processamento (Prefill):} Como o prefill opera sobre a matriz de tokens de entrada em bloco, processar um prompt em chin\^es no SmolLM2 consome $4,59\times$ mais FLOPs de aten\c{c}\~ao e proje\c{c}\~ao do que o prompt equivalente em ingl\^es.
-    \item \textbf{Custo de Gera\c{c}\~ao (Decode):} Em um regime limitado pelo barramento DRAM (onde a vaz\~ao \'e fixa em tokens/s), gerar uma resposta equivalente em chin\^es no SmolLM2 demanda $4,59\times$ mais tempo de rel\'ogio f\'isico do que em ingl\^es, e $3,45\times$ mais tempo do que no Qwen2.5.
-    \item \textbf{Custo de Mem\'oria (Cache KV):} Conforme a Equa\c{c}\~ao~\eqref{eq:kv_cache_formula}, a aloca\c{c}\~ao de cache KV cresce linearmente com $L$. Em chin\^es, o SmolLM2 atinge satura\c{c}\~ao de cache KV $4,59\times$ mais r\'apido do que em ingl\^es.
-    \item \textbf{Impacto no Or\c{c}amento \'Util de Contexto:} Em uma janela estrita de 4096 tokens, o SmolLM2 ret\'em apenas $22\%$ dos documentos em chin\^es e $42\%$ dos documentos em portugu\^es que conseguiria reter em ingl\^es, evidenciando uma perda severa de capacidade \'util provocada exclusivamente pela escolha do tokenizador.
-\end{enumerate}
+Nesses 12 textos paralelos, o tokenizador testado do SmolLM2 produziu raz\~oes m\'edias de contagem de tokens de $2,40\times$ para o portugu\^es e $4,59\times$ para o chin\^es em rela\c{c}\~ao ao ingl\^es, contra $1,52\times$/$1,40\times$ no Qwen2.5. Os valores de 42\% e 22\% da tabela s\~ao proje\c{c}\~oes aritm\'eticas ($1,0/\text{Raz\~ao}$) para um or\c{c}amento fixo de 4096 tokens, e n\~ao medi\c{c}\~oes de documentos retidos, qualidade de tarefa ou tempo de execu\c{c}\~ao. As proje\c{c}\~oes correspondentes de 55\%--72\% para os tokenizadores testados do Qwen2.5 e Gemma-2 valem apenas para este corpus; essas observa\c{c}\~oes n\~ao estabelecem efeito causal do tamanho do vocabul\'ario nem generalizam para outros textos, modelos ou tokenizadores.
 
 \subsection{Protocolo Experimental em Temas Sens\'iveis e Assimetrias Comportamentais}
 
@@ -640,12 +601,11 @@ A Tabela~\ref{tab:model_provenance} registra a proveni\^encia exata, tamanho f\'
 \end{tabularx}
 \end{table*}
 
-\clearpage
 \section{Amea\c{c}as \`a Validade e Limita\c{c}\~oes}
 
 \subsection{Validade Interna}
 
-A telemetria de hardware registrou em intervalos de $250\text{ ms}$ a aloca\c{c}\~ao de VRAM e a temperatura do die. Como limita\c{c}\~ao de instrumenta\c{c}\~ao, a GPU utilizada (Pascal GP107) n\~ao exp\~oe leituras de pot\^encia via NVML, tornando as m\'etricas de efici\^encia energ\'etica condicionadas a cen\'arios hipot\'eticos param\'etricos ($P_{\text{hipot\'etico}} \in [42, 62]\text{ W}$) derivados do envelope de TDP da placa ($75\text{ W}$). Al\'em disso, as 10 repeti\c{c}\~oes por condi\c{c}\~ao foram executadas sequencialmente em uma mesma bancada, capturando o ru\'ido operacional e de lat\^encia do sistema, mas caracterizando pseudorreplica\c{c}\~ao local que n\~ao deve ser confundida com variabilidade amostral entre diferentes dispositivos f\'isicos.
+O monitoramento de hardware registrou VRAM e temperatura a cada $250\text{ ms}$. N\~ao foram coletadas medi\c{c}\~oes de pot\^encia el\'etrica; portanto, este trabalho n\~ao apresenta resultados emp\'iricos de energia ou efici\^encia energ\'etica. As dez repeti\c{c}\~oes sequenciais s\~ao observa\c{c}\~oes dentro de uma execu\c{c}\~ao de hardware, n\~ao r\'eplicas independentes entre dispositivos.
 
 \subsection{Validade Externa}
 
@@ -665,6 +625,10 @@ A extens\~ao planejada para 100 pares n\~ao foi conclu\'ida; portanto, nenhum re
 
 Um piloto com um recorte de valida\c{c}\~ao \texttt{distractor} do HotpotQA, cuja revis\~ao da fonte foi fixada, comparou passagens de suporte no in\'icio e no fim das dez passagens candidatas fornecidas. Foram conclu\'idos somente 15 dos 100 pares planejados (uma resposta exata normalizada em cada condi\c{c}\~ao; exatid\~ao conjunta de resposta e suporte: 0/15 em ambas). As contagens de tokens de entrada foram igualadas. Este piloto descritivo e incompleto n\~ao demonstra efeito geral da ordem, n\~ao avalia um recuperador ativo e n\~ao testa conflitos entre vers\~oes de documentos. O verificador hist\'orico de recupera\c{c}\~ao da produ\c{c}\~ao falhou inicialmente na verifica\c{c}\~ao de conclus\~ao real; uma consulta posterior somente de leitura, em 2026-11-07, passou para a ent\~ao gera\c{c}\~ao de produ\c{c}\~ao 347, sem leases ativos. Essa consulta e a observa\c{c}\~ao do caminho GGUF s\~ao hist\'oricas: a implanta\c{c}\~ao e o mapeamento do alias podem ter mudado, o caminho pode estar obsoleto, e sua aus\^encia n\~ao demonstra falha atual em produ\c{c}\~ao. A rota e o modelo atualmente implantados n\~ao puderam ser verificados neste ambiente. Nenhum lote adicional foi executado. M\'etodos, limita\c{c}\~oes, hashes e artefatos brutos est\~ao registrados em \url{../../docs/benchmarks/hotpotqa-support-order-partial.md}. O relato seguiu orienta\c{c}\~oes de rastreabilidade e distin\c{c}\~ao entre evid\^encia explorat\'oria e confirmat\'oria~\cite{kassis2026skills}; essas orienta\c{c}\~oes procedimentais n\~ao constituem evid\^encia emp\'irica dos resultados.
 
+\section{Viabilidade dos Modelos por Cen\'ario de Implanta\c{c}\~ao}
+
+As classifica\c{c}\~oes aplicam-se \`as configura\c{c}\~oes e premissas documentadas em \texttt{docs/research/model-viability.md}; n\~ao s\~ao um ranking geral. Para uso cotidiano, a classifica\c{c}\~ao \'e \textbf{evid\^encia insuficiente} para todas as configura\c{c}\~oes, pois crit\'erios representativos de qualidade, factualidade e confiabilidade n\~ao foram estabelecidos. No equipamento registrado (GTX 1050 Ti 4 GiB/Ryzen 5 3600), as quatro configura\c{c}\~oes principais medidas e Qwen3-1.7B s\~ao \textbf{vi\'aveis com restri\c{c}\~oes} somente como objetos de pesquisa/benchmark local limitado, n\~ao como assistentes ou servi\c{c}os concorrentes validados. Qwen2.5-0.5B, SmolLM2-1.7B e artefatos comparativos Gemma hist\'oricos t\^em \textbf{evid\^encia insuficiente} para implanta\c{c}\~ao local. Para todas as configura\c{c}\~oes, produ\c{c}\~ao tem \textbf{evid\^encia insuficiente}: rota atual, controles de acesso, SLOs, monitoramento, resposta a incidentes e recupera\c{c}\~ao n\~ao foram verificados. Licen\c{c}a, privacidade, custos operacionais e comportamento sob carga tamb\'em requerem verifica\c{c}\~ao espec\'ifica.
+
 \section{Conclus\~oes e Trabalhos Futuros}
 
 Este trabalho realizou uma investiga\c{c}\~ao experimental, matem\'atica e de sistemas sobre a viabilidade, efici\^encia arquitetural e limites operacionais de Modelos de Linguagem Pequenos (SLMs) na GPU NVIDIA GeForce GTX 1050 Ti de 4 GiB.
@@ -672,14 +636,14 @@ Este trabalho realizou uma investiga\c{c}\~ao experimental, matem\'atica e de si
 Os principais achados sustentados pelas evid\^encias s\~ao:
 \begin{enumerate}[leftmargin=1.5em,itemsep=0.2em]
     \item \textbf{Heran\c{c}a do Transformer e Evolu\c{c}\~ao Arquitetural:} Demonstrou-se que, embora a autoaten\c{c}\~ao de Vaswani et al. (2017) permane\c{c}a como o alicerce matem\'atico fundamental, a viabilidade f\'isica de modelos em 4 GiB depende estritamente de inova\c{c}\~oes contempor\^aneas como GQA (que reduz o cache KV em at\'e $8\times$) e RoPE.
-    \item \textbf{Decomposi\c{c}\~ao da Acelera\c{c}\~ao Especulativa:} A abla\c{c}\~ao controlada comprovou que o MTP sob quantiza\c{c}\~ao constante em IQ4\_XS associa-se a um ganho de $+25,6\%$ na vaz\~ao ($43,35$ vs $34,51$\,tok/s, $t=43,72$, $p < 10^{-15}$) com sobretaxa f\'isica de $+236,0\text{ MiB}$ de VRAM. A compress\~ao IQ4\_XS entrega $+28,2\%$ sobre Q4\_K\_M com economia de $196,0\text{ MiB}$, gerando uma diferen\c{c}a composta de $+61,0\%$ ($t=84,50$) sob apenas $+40,0\text{ MiB}$ de acr\'escimo l\'iquido de mem\'oria.
-    \item \textbf{Satura\c{c}\~ao do Modelo Roofline:} Em uma GPU Pascal sem Tensor Cores e com FP16 penalizado a $1:64$, a decodifica\c{c}\~ao opera estritamente limitada pela largura de banda de mem\'oria ($I_{\text{decode}} \approx 3,6 \ll I^* = 19,1$), atingindo at\'e $67,2\%$ de satura\c{c}\~ao do barramento DRAM sob decodifica\c{c}\~ao especulativa.
-    \item \textbf{Desigualdade e Sobretaxa de Tokeniza\c{c}\~ao Multil\'ingue:} A an\'alise em corpus paralelo tril\'ingue revelou que tokenizadores com vocabul\'arios compactos (SmolLM2, 49k) penalizam idiomas al\'em do ingl\^es com raz\~oes de expans\~ao de $2,4\times$ em portugu\^es e $4,6\times$ em mandarim, reduzindo a capacidade \'util da janela de contexto para $22\%$. Modelos com vocabul\'arios expandidos ($\ge 150\text{k}$), como Qwen2.5 e Gemma-2, mant\^em alta efici\^encia de representa\c{c}\~ao.
-    \item \textbf{Limites de Alinhamento e Seguran\c{c}a em Camadas:} Embora os modelos n\~ao tenham apresentado recusas indevidas em comandos leg\'itimos ($\text{FPR}=0,0\%$), a suscetibilidade a inje\c{c}\~oes indiretas e argumentos manipulados de ferramentas reafirma que a seguran\c{c}a em ambientes agentivos deve ser garantida por barreiras de conten\c{c}\~ao determin\'isticas na camada de aplica\c{c}\~ao.
+    \item \textbf{Contrastes descritivos de abla\c{c}\~ao:} Na configura\c{c}\~ao registrada, MTP e IQ4\_XS estiveram associados a vaz\~ao observada maior (+25,6\% e +28,2\%, respectivamente); a combina\c{c}\~ao diferiu +61,0\% da linha de base, com acr\'escimo l\'iquido registrado de $40,0\text{ MiB}$ de VRAM. Como as consultas repetidas n\~ao s\~ao r\'eplicas de hardware, esses valores s\~ao descritivos e n\~ao sustentam infer\^encia estat\'istica sobre dispositivos.
+    \item \textbf{Estimativa Roofline:} Sob as premissas declaradas, o modelo anal\'itico prev\^e um regime limitado por largura de banda para decode batch-1 nesta GTX 1050 Ti. O proxy estimado atinge $75,3\text{ GB/s}$ ($67,2\%$ da largura de banda te\'orica) sob MTP; o tr\'afego f\'isico da DRAM n\~ao foi medido.
+    \item \textbf{Observa\c{c}\~oes de tokeniza\c{c}\~ao:} No corpus paralelo medido de 12 textos, o tokenizador testado do SmolLM2 usou at\'e $2,4\times$ mais tokens em portugu\^es e $4,6\times$ mais em chin\^es do que em ingl\^es. Essas raz\~oes espec\'ificas do corpus n\~ao demonstram comportamento universal por idioma ou modelo.
+    \item \textbf{Sondas Defensivas Explorat\'orias:} O pequeno conjunto de can\'arios n\~ao demonstra seguran\c{c}a geral nem viabilidade operacional. Chamadas de ferramentas exigem controles na camada de aplica\c{c}\~ao aplicados independentemente; o comportamento do modelo n\~ao constitui fronteira de seguran\c{c}a.
     \item \textbf{Observa\c{c}\~ao GSM8K com Exemplos:} Nos mesmos 20 itens, a acur\'acia 5-shot superou a 0-shot em 35 pontos percentuais (estrita) e 40 pontos (flex\'ivel). Trata-se de resultado descritivo para este modelo/configura\c{c}\~ao e pequena amostra, n\~ao de uma afirma\c{c}\~ao geral ou confirmat\'oria.
 \end{enumerate}
 
-Trabalhos futuros contemplam a execu\c{c}\~ao de infer\^encia f\'isica da su\'ite de temas sens\'iveis, a quantiza\c{c}\~ao do cache KV em formatos microsc\'opicos (Q4\_0) para acomoda\c{c}\~ao de modelos 4B com contextos superiores a 8k tokens, e a medi\c{c}\~ao direta de pot\^encia em tomada AC com analisador de energia de bancada.
+Trabalhos futuros podem considerar infer\^encia f\'isica da su\'ite de temas sens\'iveis somente ap\'os verifica\c{c}\~ao dos controles atuais de roteamento, isolamento, limpeza e recupera\c{c}\~ao. Outras prioridades s\~ao avaliar cache KV quantizado em configura\c{c}\~oes delimitadas e medir diretamente a pot\^encia na tomada AC; resultados n\~ao foram obtidos neste trabalho.
 
 \begin{thebibliography}{99}
 \begin{singlespace}

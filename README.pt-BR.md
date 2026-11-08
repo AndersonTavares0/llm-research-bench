@@ -148,8 +148,8 @@ Para observar separadamente os efeitos da quantização e da decodificação esp
 
 - **Recusa Indevida em Prompts Benignos:** Em 4 prompts técnicos com termos de segurança da informação, todos os modelos testados obtiveram 0% de recusa indevida ($0/4$, $\text{FPR} = 0,0\%$, intervalo de confiança exato de Clopper-Pearson a 95% $[0,0\%, 60,2\%]$).
 - **Injeções Indiretas de Prompt:** Modelos abaixo de 2B parâmetros exibiram vulnerabilidade acentuada a escapes de delimitadores embutidos no contexto ($\text{ASR} \approx 50\%\text{--}100\%$).
-- **Interceptação de Chamadas de Ferramentas:** Quando prompts maliciosos tentaram invocar funções externas indevidas, o interceptor do harness bloqueou 100% das chamadas ($2/2$, $[15,8\%, 100,0\%]$), garantindo 0% de execução no sistema operacional.
-- **Sobretaxa em Idiomas Não Ingleses:** O tamanho do vocabulário afeta drasticamente a eficiência útil. No SmolLM2 (vocabulário reduzido de 49k), o português exigiu $2,4\times$ mais tokens e o chinês exigiu $4,6\times$ mais tokens para expressar o mesmo conteúdo frente ao inglês, reduzindo a capacidade efetiva da janela de contexto de 4k para apenas $22\%$. Modelos com vocabulários mais amplos (Qwen2.5 com 152k, Gemma com 256k) retiveram entre 55% e 71% da capacidade útil.
+- **Interceptação de Chamadas de Ferramentas:** Nos dois casos registrados, o interceptor do harness bloqueou as chamadas indevidas ($2/2$; IC exato de 95% $[15,8\%, 100,0\%]$). Isso descreve somente esses casos e não garante bloqueio de outros caminhos nem ausência geral de execução no sistema operacional.
+- **Sobretaxa de Tokenização Multilíngue:** Nos 12 pares de textos do corpus registrado, o tokenizador do SmolLM2 (vocabulário de 49k) produziu razões médias de tokens pt/en e zh/en de $2,40\times$ e $4,59\times$. O valor de $22\%$ para mandarim é uma razão aritmética do orçamento de tokens de contexto neste corpus, não uma medida de documentos retidos ou qualidade da tarefa. Também foram avaliados os tokenizadores Qwen2.5, Gemma-2 e Llama-3.2; os resultados dos 12 itens estão no artefato vinculado.
 
 ---
 
@@ -278,7 +278,7 @@ Para permitir auditoria rigorosa, cada execução experimental armazena:
 
 Em conformidade com a prática científica aberta, o projeto documenta explicitamente suas limitações metodológicas:
 
-- **GPU Física Única (Pseudorreplicação):** Todas as repetições empíricas foram realizadas no mesmo nó físico com a GTX 1050 Ti. Os altos valores de significância estatística ($t$-test) refletem consistência interna estrita entre ensaios na mesma máquina, mas não capturam a variabilidade entre diferentes placas físicas (*Hurlbert, 1984*).
+- **GPU Física Única:** Todas as medições foram coletadas em um único host com GTX 1050 Ti. Consultas repetidas dentro de uma execução não são réplicas independentes de hardware; testes t e tamanhos de efeito anteriormente calculados sobre essas observações por consulta não estabelecem inferência sobre hardware. Trate os resultados como descritivos para o host registrado.
 - **Amostras Canárias de Segurança Reduzidas ($N=10$):** Os testes de segurança defensiva e interceptação de ferramentas são sondas exploratórias de turno único para diagnosticar modos de falha. Não representam uma avaliação psicométrica exaustiva.
 - **Demanda Analítica vs. Contadores Físicos de Banda:** A utilização da largura de banda é modelada de forma analítica ($B_{\text{demanda}} = S_{\text{pesos}} \times \text{Vazão}$), expressando a demanda teórica do modelo Roofline e não a medição direta por contadores de hardware da DRAM.
 - **Deriva Térmica em Execuções Contínuas:** Em baterias ininterruptas, a temperatura da GPU subiu de $44^\circ\text{C}$ para $74^\circ\text{C}$, ativando o escalonamento dinâmico do NVIDIA GPU Boost 3.0 ($1695 \to 1607\text{ MHz}$, variação de $-5,2\%$). O protocolo de 3 níveis foi concebido para mitigar esse efeito em rodadas futuras.
@@ -294,6 +294,22 @@ Além da série histórica descrita neste README, o repositório agora inclui um
 - [Artefatos brutos e manifestos da campanha](results/campaigns/smoke-qwen3-1.7b-v1/)
 
 A campanha Qwen3-1.7B usa limite de 20 exemplos por tarefa e serve apenas como validação da integração; **não autoriza rankings**. Seus desvios e limites estão documentados na metodologia vinculada acima.
+
+### Viabilidade dos modelos e limites de implantação
+
+O projeto não certifica qualidade para uso cotidiano nem prontidão para produção.
+A [avaliação de viabilidade](docs/research/model-viability.md) classifica cada
+configuração estudada separadamente para uso cotidiano, pesquisa local limitada e
+produção, distinguindo medições, evidência publicada, viabilidade teórica e lacunas.
+“Viável com restrições” para uso local significa apenas experimentação offline e
+limitada no equipamento GTX 1050 Ti/Ryzen 5 3600 medido; não garante qualidade,
+privacidade, segurança ou disponibilidade. Para todas as configurações, a produção
+permanece **com evidência insuficiente**.
+
+Consulte a [avaliação de adequação dos benchmarks](docs/research/benchmark-methodology-review.md)
+para limitações de protocolo, licenciamento e contaminação. A trilha de
+cibersegurança continua exploratória; não foi medido benefício de modelos
+especializados contra modelos generalistas comparáveis.
 
 ### Relatórios Técnicos Completos e Citação
 

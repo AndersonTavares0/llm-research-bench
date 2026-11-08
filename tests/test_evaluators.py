@@ -1,7 +1,8 @@
 import sys
 import unittest
 from unittest.mock import patch
-import shutil
+import json
+import subprocess
 from pathlib import Path
 
 # Dynamically ensure repo root is on sys.path
@@ -17,6 +18,41 @@ from src.llm_research_bench.evaluators import (
     LongContextEvaluator,
     KnowledgeEvaluator,
 )
+
+
+def _sandbox_unavailable_reason():
+    """Probe the exact OS sandbox with a fixed, trusted worker request."""
+    command = CodeEvaluator._sandbox_command()
+    if command is None:
+        return "bwrap/prlimit command is unavailable"
+    request = json.dumps({
+        "code": "def _preflight(): return True",
+        "test": "assert _preflight() is True",
+        "entry_point": "_preflight",
+    })
+    try:
+        result = subprocess.run(
+            command, input=request, text=True, capture_output=True, timeout=3,
+            env={"PATH": "/usr/bin:/bin", "HOME": "/tmp", "TMPDIR": "/tmp",
+                 "LD_LIBRARY_PATH": "/opt/python/lib", "LANG": "C", "LC_ALL": "C"},
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return f"sandbox preflight failed: {exc}"
+    try:
+        worker_result = json.loads(result.stdout.splitlines()[-1])
+    except (json.JSONDecodeError, IndexError):
+        worker_result = None
+    if result.returncode != 0 or not isinstance(worker_result, dict) \
+            or worker_result.get("passed") is not True \
+            or worker_result.get("syntax_valid") is not True:
+        diagnostic = (result.stderr or result.stdout).strip()[-300:]
+        if not diagnostic:
+            diagnostic = f"exit {result.returncode}"
+        return f"OS sandbox unavailable: {diagnostic}"
+    return None
+
+
+SANDBOX_SKIP_REASON = _sandbox_unavailable_reason()
 
 
 class TestSafetyEvaluator(unittest.TestCase):
@@ -65,8 +101,7 @@ class TestCodeEvaluator(unittest.TestCase):
     def setUp(self):
         self.evaluator = CodeEvaluator(timeout_sec=2.0)
 
-    @unittest.skipUnless(shutil.which("bwrap") and shutil.which("prlimit"),
-                         "requires bubblewrap and prlimit OS sandbox tools")
+    @unittest.skipIf(SANDBOX_SKIP_REASON is not None, SANDBOX_SKIP_REASON or "")
     def test_code_execution_pass(self):
         item = {
             "entry_point": "add",
@@ -79,16 +114,14 @@ class TestCodeEvaluator(unittest.TestCase):
         self.assertTrue(res["syntax_valid"])
         self.assertIsNone(res["error"])
 
-    @unittest.skipUnless(shutil.which("bwrap") and shutil.which("prlimit"),
-                         "requires bubblewrap and prlimit OS sandbox tools")
+    @unittest.skipIf(SANDBOX_SKIP_REASON is not None, SANDBOX_SKIP_REASON or "")
     def test_candidate_stdout_does_not_hide_result(self):
         item = {"entry_point": "answer", "test": "assert answer() == 42"}
         response = "```python\ndef answer():\n    print('candidate output')\n    return 42\n```"
         result = self.evaluator.evaluate(item, response)
         self.assertTrue(result["passed"], result)
 
-    @unittest.skipUnless(shutil.which("bwrap") and shutil.which("prlimit"),
-                         "requires bubblewrap and prlimit OS sandbox tools")
+    @unittest.skipIf(SANDBOX_SKIP_REASON is not None, SANDBOX_SKIP_REASON or "")
     def test_code_execution_assertion_fail(self):
         item = {
             "entry_point": "add",
@@ -100,8 +133,7 @@ class TestCodeEvaluator(unittest.TestCase):
         self.assertEqual(res["score"], 0.0)
         self.assertIn("AssertionError", res["error"], res)
 
-    @unittest.skipUnless(shutil.which("bwrap") and shutil.which("prlimit"),
-                         "requires bubblewrap and prlimit OS sandbox tools")
+    @unittest.skipIf(SANDBOX_SKIP_REASON is not None, SANDBOX_SKIP_REASON or "")
     def test_code_execution_syntax_error(self):
         item = {
             "entry_point": "broken",
@@ -113,8 +145,7 @@ class TestCodeEvaluator(unittest.TestCase):
         self.assertFalse(res["syntax_valid"], res)
         self.assertIn("SyntaxError", res["error"], res)
 
-    @unittest.skipUnless(shutil.which("bwrap") and shutil.which("prlimit"),
-                         "requires bubblewrap and prlimit OS sandbox tools")
+    @unittest.skipIf(SANDBOX_SKIP_REASON is not None, SANDBOX_SKIP_REASON or "")
     def test_code_execution_cannot_read_host_home(self):
         item = {"entry_point": "check_access", "test": "assert not check_access()"}
         response = "```python\nimport os\ndef check_access():\n    return os.path.exists('/home') or os.path.exists('/root')\n```"
@@ -162,8 +193,7 @@ class TestCodeEvaluator(unittest.TestCase):
         self.assertEqual(result["error"], "SandboxInputTooLarge")
         self.assertFalse(result["passed"])
 
-    @unittest.skipUnless(shutil.which("bwrap") and shutil.which("prlimit"),
-                         "requires bubblewrap and prlimit OS sandbox tools")
+    @unittest.skipIf(SANDBOX_SKIP_REASON is not None, SANDBOX_SKIP_REASON or "")
     def test_code_execution_timeout_is_bounded(self):
         evaluator = CodeEvaluator(timeout_sec=0.2)
         result = evaluator.evaluate(

@@ -6,7 +6,7 @@ Enforces strict empirical invariants across:
 2. Complete traceability of prompt, raw response, verdict, and tool execution status.
 3. Proper differentiation of tool proposal, schema validation, and harness guardrails.
 4. Non-negative physical bounds for latency and throughput confidence intervals.
-5. Exact SciPy statistical reproducibility (Welch's t = 84.50 on primary compound comparison).
+5. Descriptive integrity of historical repeated-query measurements.
 6. Parallel reference text tokenization fertility validity.
 7. Model provenance SHA-256 verification and file specification consistency.
 """
@@ -17,7 +17,6 @@ import os
 import re
 import unittest
 from pathlib import Path
-import scipy.stats as stats
 import numpy as np
 
 
@@ -91,8 +90,8 @@ class TestDataIntegrityAndProvenance(unittest.TestCase):
                         self.assertEqual(r["execution_status"], "BLOCKED_BY_HARNESS")
                         self.assertTrue("Tool Call Proposta" in r["raw_response"])
 
-    def test_welch_t_test_exact_statistical_reproducibility(self):
-        """Requirement 3: Verify Welch's t on compound comparison yields t = 84.50 +- 0.05."""
+    def test_historical_throughput_trials_are_descriptive_only(self):
+        """Preserve measurements without treating within-run queries as independent hardware replicates."""
         q4km = self.empirical_results["gemma4:Q4KM"]
         e2b = self.empirical_results["gemma4:E2B"]
         mtp_base = self.empirical_results["gemma4:MTP"]
@@ -105,15 +104,9 @@ class TestDataIntegrityAndProvenance(unittest.TestCase):
         self.assertEqual(len(e2b_samples), 10)
         self.assertEqual(len(mtp_base_samples), 10)
 
-        # Compound comparison: IQ4_XS+MTP vs Q4_K_M baseline
-        t_stat, p_val = stats.ttest_ind(e2b_samples, q4km_samples, equal_var=False)
-        self.assertAlmostEqual(t_stat, 84.50, delta=0.05, msg="Welch's t for primary comparison must equal ~84.50")
-        self.assertLess(p_val, 1e-15, "Welch's p-value must be highly significant (p < 1e-15)")
-
-        # Factorial MTP isolated ablation: IQ4_XS+MTP vs IQ4_XS baseline
-        t_mtp, p_mtp = stats.ttest_ind(e2b_samples, mtp_base_samples, equal_var=False)
-        self.assertAlmostEqual(t_mtp, 43.72, delta=0.10, msg="Welch's t for isolated MTP ablation must equal ~43.72")
-        self.assertLess(p_mtp, 1e-14)
+        self.assertTrue(all(math.isfinite(x) for x in q4km_samples + e2b_samples + mtp_base_samples))
+        self.assertAlmostEqual(sum(e2b_samples) / len(e2b_samples), 43.35, delta=0.1)
+        self.assertAlmostEqual(sum(q4km_samples) / len(q4km_samples), 26.92, delta=0.1)
 
     def test_confidence_interval_physical_non_negative_bounds(self):
         """Requirement 6: Verify confidence intervals have valid non-negative lower bounds for latency and throughput."""

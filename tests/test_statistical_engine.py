@@ -57,10 +57,12 @@ class TestStatisticalEngine(unittest.TestCase):
         self.assertIsNone(stats["min"])
         self.assertIsNone(stats["max"])
 
-    def test_full_analysis_rejects_undersized_groups_before_inference(self):
+    def test_full_analysis_fails_closed_without_independent_replicates(self):
         with tempfile.TemporaryDirectory() as tmp:
             controlled = Path(tmp) / "results" / "controlled_experiments"
             controlled.mkdir(parents=True)
+            historical = controlled / "statistical_summary.json"
+            historical.write_text('{"preserved": true}', encoding="utf-8")
             (controlled / "mtp_ablation_results.json").write_text(
                 json.dumps({"models": {
                     "gemma4:E2B": {"individual_runs_tok_s": []},
@@ -68,8 +70,9 @@ class TestStatisticalEngine(unittest.TestCase):
                 }}),
                 encoding="utf-8",
             )
-            with self.assertRaisesRegex(ValueError, "at least three finite"):
+            with self.assertRaisesRegex(RuntimeError, "repeated queries"):
                 run_full_statistical_analysis(Path(tmp))
+            self.assertEqual(historical.read_text(encoding="utf-8"), '{"preserved": true}')
 
     def test_analysis_rejects_nonfinite_observations(self):
         with self.assertRaisesRegex(ValueError, "at least three finite"):

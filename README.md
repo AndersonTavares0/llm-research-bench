@@ -44,7 +44,7 @@
 While frontier AI research primarily targets data-center accelerators (A100, H100), billions of edge and legacy systems rely on accessible consumer hardware. The **NVIDIA GeForce GTX 1050 Ti (Pascal GP107, 4 GB GDDR5, 75W TDP)** serves as a rigorous stress-test platform because:
 
 1. **Rigid Physical Boundary:** A strict 4096 MiB ceiling leaves virtually zero margin for memory bloat; static weights consume 40% to 76% of total VRAM, severely limiting Key-Value (KV) cache expansion.
-2. **Zero Tensor Acceleration:** The GP107 microarchitecture lacks Tensor Cores. FP16 arithmetic runs at a restricted 1:64 rate, making autoregressive token generation strictly bound by memory bus bandwidth ($112.0\text{ GB/s}$).
+2. **No Tensor Cores:** The GP107 microarchitecture lacks Tensor Cores. Under the report's stated assumptions, its analytical Roofline estimate predicts a memory-bandwidth-limited batch-1 decode regime; this is not a direct measurement of DRAM traffic and applies to this GTX 1050 Ti testbed, not legacy GPUs generally.
 3. **Realistic Edge Conditions:** It demonstrates how techniques like non-uniform quantization (`IQ4_XS`) and Multi-Token Prediction (`MTP`) behave on real consumer silicon without hyperscaler cloud offloading.
 
 ### Research Scope & Questions
@@ -127,8 +127,8 @@ The figure below plots observed generation throughput (greedy decode, tokens/s) 
 ![Throughput vs. VRAM on GTX 1050 Ti](docs/images/pareto_frontier.svg)
 
 > [!NOTE]
-> **Dominance Criteria & Engineering Trade-offs:**<br/>
-> If evaluated strictly on the bivariate tuple `(min VRAM, max Throughput)`, Point **[1] (Qwen-0.5B)** strictly dominates all other points on this testbed. In practical systems engineering, however, selection involves balancing throughput against model parameter scale and memory headroom for multi-turn context expansion. Points **[2]**, **[5]**, and **[6]** offer balanced operating points for 2B-scale architectures, whereas 3B--4B configurations (**[7]**, **[8]**) consume over 75% of memory for static weights alone.
+> **Two-metric comparison only:**<br/>
+> Point **[1] (Qwen-0.5B)** has the lowest measured peak VRAM and highest measured decode throughput among these plotted configurations on this GTX 1050 Ti. This comparison excludes task quality, reliability, latency, context behavior, and other operating conditions; it is not a general model recommendation. Larger configurations also require additional context/KV-cache memory beyond static weights.
 
 ### Controlled Observational Comparison: Quantization & MTP
 
@@ -147,8 +147,8 @@ To examine the separate effects of tensor quantization and speculative execution
 
 - **Benign Canary Over-Refusal:** Across 4 benign technical prompts containing security keywords (e.g., explaining buffer overflows defensively), all tested models achieved a 0% false refusal rate ($0/4$, $\text{FPR} = 0.0\%$, exact Clopper-Pearson 95% CI $[0.0\%, 60.2\%]$).
 - **Indirect Prompt Injections:** Models below 2B parameters showed high vulnerability to context-embedded delimiter injections ($\text{ASR} \approx 50\%\text{--}100\%$).
-- **Tool Interception:** When injected prompts attempted malicious tool execution, the client-side harness interceptor successfully blocked 100% of calls ($2/2$, $[15.8\%, 100.0\%]$), ensuring 0% host execution.
-- **Multilingual Tokenizer Overhead:** Tokenizer vocabulary scale creates severe efficiency disparities. In SmolLM2 (49k vocabulary), Portuguese text required $2.4\times$ more tokens and Mandarin required $4.6\times$ more tokens than equivalent English text, reducing effective 4k context capacity to only $22\%$. Wider vocabularies (Qwen2.5 with 152k, Gemma with 256k) retained 55% to 71% relative context capacity.
+- **Tool Interception:** In the two recorded malicious-tool test cases, the client-side harness blocked both calls ($2/2$, $[15.8\%, 100.0\%]$). This does not establish that other execution paths are blocked or that host execution is generally impossible.
+- **Multilingual Tokenizer Overhead:** On the 12 paired texts in the recorded corpus, the SmolLM2 tokenizer (49k vocabulary) produced mean Portuguese/English and Mandarin/English token-count ratios of $2.40\times$ and $4.59\times$. The corresponding $22\%$ Mandarin figure is an arithmetic context-token-budget ratio for this corpus, not a measurement of retained documents or task quality. Qwen2.5, Gemma-2, and Llama-3.2 tokenizers were also evaluated; see the linked artifact for all 12-item results.
 
 ---
 
@@ -277,7 +277,7 @@ To ensure auditability, each experiment records:
 
 In accordance with open scientific practice, this project explicitly documents its methodological boundaries:
 
-- **Single Physical GPU (Pseudoreplication):** All empirical repetitions were conducted on a single physical GTX 1050 Ti node. High statistical significance ($t$-test values) indicates tight internal consistency across runs on this specific machine, but does not capture variance across different physical devices (*Hurlbert, 1984*).
+- **Single Physical GPU:** All measurements were collected on one GTX 1050 Ti host. Repeated queries within a hardware run are not independent hardware replicates; previously reported t-tests/effect sizes on those query-level observations do not establish hardware-level inferential evidence. Treat the results as descriptive for the recorded host.
 - **Small-Sample Safety Canaries ($N=10$):** The defensive safety and tool-calling evaluations are exploratory canaries designed to observe behavioral failure modes under single-turn prompts. They do not constitute exhaustive psychometric alignment benchmarks.
 - **Analytical Bandwidth Demand vs. Physical Counters:** Memory bandwidth utilization is modeled analytically ($B_{\text{demand}} = S_{\text{weights}} \times \text{Throughput}$), reflecting Roofline memory bus demand rather than hardware DRAM counter reads.
 - **Thermal Drift in Continuous Batches:** In uninterrupted test runs, device temperature rose from $44^\circ\text{C}$ to $74^\circ\text{C}$, triggering NVIDIA GPU Boost 3.0 clock scaling ($1695 \to 1607\text{ MHz}$, $-5.2\%$). The new 3-tier protocol incorporates cooldown periods to address this in future runs.
@@ -293,6 +293,21 @@ Alongside the historical series described in this README, the repository now inc
 - [Raw campaign artifacts and manifests](results/campaigns/smoke-qwen3-1.7b-v1/)
 
 The Qwen3-1.7B campaign uses a 20-example-per-task limit and validates integration only; **it does not support rankings**. Protocol deviations and limitations are documented in the linked methodology.
+
+### Model viability and deployment limits
+
+The project does not certify everyday-use quality or production readiness. The
+[model viability assessment](docs/research/model-viability.md) classifies every
+studied configuration separately for everyday use, bounded local research, and
+production, and distinguishes measurements from published evidence, theoretical
+feasibility, and unknowns. “Viable with restrictions” for local use refers only to
+bounded offline experimentation on the measured GTX 1050 Ti/Ryzen 5 3600 testbed;
+it is not a quality, privacy, security, or service guarantee. Production is
+currently **insufficient evidence** for every configuration.
+
+For benchmark selection and licensing/contamination limits, see the
+[benchmark-fit review](docs/research/benchmark-methodology-review.md). Cybersecurity
+results remain exploratory; no specialist-vs-generalist benefit is measured.
 
 ### Full Technical Reports & Citation
 

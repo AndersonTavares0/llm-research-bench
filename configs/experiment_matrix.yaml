@@ -1,4 +1,7 @@
-# Experimental Matrix for Small Language Model Evaluation Under Severe VRAM Constraints
+# Experimental Matrix for Small Language Model Evaluation on a GTX 1050 Ti 4-GiB testbed
+# This single testbed is the primary reference, not a proxy for all legacy GPUs.
+# Candidate-section suitability and capability descriptions are hypotheses/catalog
+# metadata, not empirical findings; verify exact artifact, license, runtime and task evidence.
 suite_version: "v2.0"
 target_hardware:
   gpu: "NVIDIA GeForce GTX 1050 Ti"
@@ -88,7 +91,7 @@ candidate_slm_catalog:
     estimated_total_vram_4k_mib: 828 # 460 + 112 + 256
     vram_budget_fraction_pct: 20.2
     llama_cpp_support: "NATIVE (Qwen architecture)"
-    edge_suitability: "Ultra-high headroom; allows high concurrency or long context up to 64k tokens."
+    edge_suitability: "Candidate for bounded study; 64k context and high concurrency are not validated here."
 
   - id: "qwen3:1.7B"
     huggingface_repo: "Qwen/Qwen3-1.7B-Instruct"
