@@ -60,9 +60,36 @@ jobs:
           tectonic reports/en-US/report_en-US.tex --outdir reports/en-US
 
       - name: Upload PDF Artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: scientific-reports
           path: |
             reports/pt-BR/report_pt-BR.pdf
             reports/en-US/report_en-US.pdf
+
+  validate-website:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+          cache-dependency-path: website/pnpm-lock.yaml
+
+      - name: Verify build and accessibility
+        run: |
+          cd website
+          pnpm install --frozen-lockfile
+          pnpm build
+          node scripts/validate_accessibility.mjs

@@ -36,6 +36,15 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: website/pnpm-lock.yaml
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Auto-sync benchmark results to website
+        run: |
+          python3 tools/export_website_data.py
+
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
 
