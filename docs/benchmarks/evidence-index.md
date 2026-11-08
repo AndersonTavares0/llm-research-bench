@@ -2,10 +2,11 @@
 
 This index points to the strongest currently documented findings, not a
 leaderboard. The repo contains exploratory, fixed-item experiments on one
-GTX 1050 Ti; repeated deterministic outputs are consistency checks, not
-independent hardware or item samples. Read each linked report for full methods,
-uncertainty, caveats, and raw artifacts. For the consolidated charter and
-prioritized RQs, see [`../research/research-charter.md`](../research/research-charter.md).
+GTX 1050 Ti, plus one offline routing replay computed from a separate
+RTX 3060 Ti station; repeated deterministic outputs are consistency checks,
+not independent hardware or item samples. Read each linked report for full
+methods, uncertainty, caveats, and raw artifacts. For the consolidated charter
+and prioritized RQs, see [`../research/research-charter.md`](../research/research-charter.md).
 
 | Conclusion | Evidence / protocol | Sample and result | Main limit | Raw evidence |
 |---|---|---|---|---|
@@ -63,10 +64,14 @@ deployment conclusion is supported; the artifact records this in
 `claims.not_supported` and `blocked.cross_model_cascade_replay`.
 
 Provenance caveat: that campaign directory is gitignored, so the raw
-samples are **not in the repository**. The artifact embeds per-input
-SHA-256s and model metadata, which lets a holder of the same files verify
-them, but the analysis cannot be recomputed from a fresh clone — only from
-the recording host. This is a real reproducibility gap, not a cosmetic one.
+samples are **not in the repository**. The artifact embeds the four source
+SHA-256s, model metadata, and a minimal derived paired table
+(`paired_rows`: item hash, prompt hash, target, document hash, and each
+arm's binary `acc`/`acc_norm`). Every reported cell, accuracy, agreement
+rate, and McNemar value is recomputable from those rows on a fresh clone
+(`tests/test_routing_replay.py::TestCommittedArtifact`). Re-verifying that
+the rows were derived correctly from the raw model outputs still requires
+the original campaign files; the SHA-256s let their holder check that.
 
 ## Security-model research
 

@@ -1,9 +1,11 @@
 # SLM-Limits research charter
 
 **Central question.** What are the practical limits of Small Language Models
-(≈0.5B–4B parameters) on legacy constrained hardware — concretely one
-GTX 1050 Ti with 4096 MiB VRAM — and how can their efficiency, capabilities,
-reliability, and security be improved within those limits?
+(≈0.5B–4B parameters) on legacy constrained hardware — primarily one
+GTX 1050 Ti with 4096 MiB VRAM, with a separate RTX 3060 Ti station used
+only for the offline exploratory routing replay — and how can their
+efficiency, capabilities, reliability, and security be improved within those
+limits?
 
 This charter consolidates the repository's scientific direction: what is
 known (with evidence labels), what is uncertain, the prioritized research
@@ -24,9 +26,13 @@ not studied here.
 
 ## Hardware and fixed context
 
-- One host: GTX 1050 Ti (4 GiB GDDR5, 112 GB/s theoretical), llama.cpp
-  (pinned b12024), Ollama-era historical artifacts kept separate from
-  gpu-lab campaigns. Local RTX 3060 Ti artifacts remain unmerged.
+- Primary host: GTX 1050 Ti (4 GiB GDDR5, 112 GB/s theoretical), llama.cpp
+  (pinned b12024); Ollama-era historical artifacts are kept separate from
+  gpu-lab campaigns.
+- A separate RTX 3060 Ti station contributes only the offline exploratory
+  routing replay (Q4_K_M vs Q8_0, `results/analysis/quant-cascade-oracle-v1.json`).
+  Its raw campaign files remain unmerged, and no hardware profile or
+  measurement is pooled with the GTX 1050 Ti program.
 - Repeated queries within one hardware run are descriptive observations,
   **not** independent replicates; hardware-level statistical inference is
   not supported by them. Welch/Mann-Whitney machinery exists but is

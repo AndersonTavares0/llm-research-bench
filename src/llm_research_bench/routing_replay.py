@@ -93,7 +93,34 @@ def _single_sample_file(raw_dir: Path, dataset: str) -> Path:
     return matches[0]
 
 
+def _validate_binary_rows(pairs: List[tuple], dataset: str) -> None:
+    """Reject any observation that is not a literal binary 0/1.
+
+    Missing, null, boolean, string, NaN, and out-of-range values must fail
+    closed: treating them as "wrong" would silently bias the accuracy and the
+    paired discordant counts.
+    """
+    if not pairs:
+        raise ValueError(f"{dataset}: no pairs to summarize")
+    for index, pair in enumerate(pairs):
+        for arm, observation in zip(("left", "right"), pair):
+            for metric in ("acc", "acc_norm"):
+                if metric not in observation:
+                    raise ValueError(f"{dataset} row {index} {arm}: missing {metric}")
+                value = observation[metric]
+                if (
+                    isinstance(value, bool)
+                    or not isinstance(value, (int, float))
+                    or value not in (0, 1)
+                ):
+                    raise ValueError(
+                        f"{dataset} row {index} {arm}: {metric} must be 0 or 1, "
+                        f"got {value!r}"
+                    )
+
+
 def summarize(pairs: List[tuple], dataset: str, key: str = "acc") -> Dict[str, Any]:
+    _validate_binary_rows(pairs, dataset)
     n = len(pairs)
     both = sum(1 for a, b in pairs if a[key] == 1 and b[key] == 1)
     left_only = sum(1 for a, b in pairs if a[key] == 1 and b[key] == 0)
@@ -144,6 +171,7 @@ def analyze(root: Path = REPO) -> Dict[str, Any]:
         }
 
     results: Dict[str, Any] = {}
+    paired_rows: Dict[str, Any] = {}
     for dataset in DATASETS:
         paths = {
             label: _single_sample_file(raw_dir, dataset)
@@ -160,6 +188,19 @@ def analyze(root: Path = REPO) -> Dict[str, Any]:
             "acc": summarize(pairs, dataset, "acc"),
             "acc_norm": summarize(pairs, dataset, "acc_norm"),
         }
+        # Minimal derived rows: enough to recompute every reported cell from a
+        # fresh clone, without republishing benchmark prompts or model text.
+        paired_rows[dataset] = [
+            {
+                "item_sha256": hashlib.sha256(_doc_key(left).encode("utf-8")).hexdigest(),
+                "prompt_hash": left["prompt_hash"],
+                "target": left["target"],
+                "doc_hash": left["doc_hash"],
+                "left": {"acc": left["acc"], "acc_norm": left["acc_norm"]},
+                "right": {"acc": right["acc"], "acc_norm": right["acc_norm"]},
+            }
+            for left, right in pairs
+        ]
 
     return {
         "status": "exploratory_analysis",
@@ -169,6 +210,7 @@ def analyze(root: Path = REPO) -> Dict[str, Any]:
         "models": models,
         "inputs": inputs,
         "results": results,
+        "paired_rows": paired_rows,
         "claims": {
             "supported": (
                 "On these fixed first-100 subsets, the optional-gain pool between "
@@ -186,7 +228,7 @@ def analyze(root: Path = REPO) -> Dict[str, Any]:
             "Single host, single greedy decode (temperature 0.0), one run per arm: no technical replicates.",
             "Arms differ in packaging as well as precision (Q4_K_M from unsloth/Qwen3-1.7B-GGUF, Q8_0 from Qwen/Qwen3-1.7B-GGUF), so a quant effect and a packaging effect cannot be separated.",
             "Oracle framing is an upper bound computed with hindsight over both arms; it is not a leakage-free predictor.",
-            "The source campaign directory is gitignored, so these inputs are not in the repository: the recorded SHA-256s let a holder of the same files verify them, but the analysis cannot be recomputed from a fresh clone.",
+            "The source campaign directory is gitignored, so the raw model responses and benchmark prompts are not in the repository. The derived per-item binary rows embedded under `paired_rows` let a fresh clone recompute every reported cell; re-verifying that derivation from the raw outputs still requires the campaign files (input SHA-256s are recorded).",
         ],
         "blocked": {
             "cross_model_cascade_replay": "No per-item outputs for any second model exist under results/campaigns; only llama-bench timing artifacts (no correctness labels) mention other models.",

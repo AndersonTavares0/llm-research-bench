@@ -101,6 +101,44 @@ class TestSummary(unittest.TestCase):
         self.assertGreater(mcnemar_exact(1, 1), 0.9)
         self.assertLess(mcnemar_exact(1, 20), 0.01)
 
+    def test_missing_or_invalid_binary_observations_fail_closed(self):
+        # Regression: null/non-binary observations used to be silently counted
+        # as wrong, and missing keys only failed with a bare KeyError.
+        base = row("x", "p", 1, 1)
+        cases = {
+            "missing acc": {"doc": {"id": "x"}, "prompt_hash": "p", "target": "t",
+                            "doc_hash": "d", "acc_norm": 1},
+            "null acc": {**base, "acc": None},
+            "integer acc": {**base, "acc": 2},
+            "negative acc": {**base, "acc": -1},
+            "fractional acc": {**base, "acc": 0.5},
+            "string acc": {**base, "acc": "1"},
+            "boolean acc": {**base, "acc": True},
+            "null acc_norm": {**base, "acc_norm": None},
+            "integer acc_norm": {**base, "acc_norm": 2},
+            "string acc_norm": {**base, "acc_norm": "0"},
+        }
+        for label, bad in cases.items():
+            with self.subTest(label=label):
+                with self.assertRaises(ValueError):
+                    summarize([(base, bad)], "synthetic", "acc")
+
+    def test_one_invalid_observation_rejects_the_whole_summary(self):
+        good = (row("x", "p", 1, 1), row("x", "p", 1, 1))
+        bad = (row("x", "p", 0, 0), row("x", "p", None, 0))
+        with self.assertRaises(ValueError):
+            summarize([good, bad], "synthetic", "acc")
+
+    def test_empty_pairs_fail_closed(self):
+        with self.assertRaises(ValueError):
+            summarize([], "synthetic", "acc")
+
+    def test_integral_floats_are_accepted(self):
+        pairs = [(row("x", "p", 1.0, 1.0), row("x", "p", 0.0, 0.0))]
+        summary = summarize(pairs, "synthetic", "acc")
+        self.assertEqual(summary["n"], 1)
+        self.assertEqual(summary["cells"]["left_only"], 1)
+
 
 class TestAnalyzeFixture(unittest.TestCase):
     """End-to-end analyze() run on a synthetic station tree (runs in CI)."""
@@ -201,6 +239,25 @@ class TestCommittedArtifact(unittest.TestCase):
                     result["mcnemar_exact_p"],
                     mcnemar_exact(cells["left_only"], cells["right_only"]),
                 )
+
+    def test_committed_paired_rows_recompute_the_report(self):
+        # The embedded derived rows are the fresh-clone reproducibility unit:
+        # every reported statistic must follow from them alone.
+        path = Path(__file__).resolve().parents[1] / "results/analysis/quant-cascade-oracle-v1.json"
+        artifact = json.loads(path.read_text(encoding="utf-8"))
+        for dataset in DATASETS:
+            rows = artifact["paired_rows"][dataset]
+            self.assertEqual(len(rows), 100)
+            self.assertEqual(len({r["item_sha256"] for r in rows}), 100)
+            pairs = [
+                (r["left"], r["right"])
+                for r in rows
+            ]
+            for metric in ("acc", "acc_norm"):
+                recomputed = summarize(pairs, dataset, metric)
+                committed = artifact["results"][dataset][metric]
+                for key in ("n", "cells", "accuracy", "agreement_pct", "mcnemar_exact_p"):
+                    self.assertEqual(recomputed[key], committed[key], f"{dataset} {metric} {key}")
 
 
 class TestRecordedPair(unittest.TestCase):
