@@ -62,6 +62,12 @@ quantization and packaging effects cannot be separated. No policy or
 deployment conclusion is supported; the artifact records this in
 `claims.not_supported` and `blocked.cross_model_cascade_replay`.
 
+Provenance caveat: that campaign directory is gitignored, so the raw
+samples are **not in the repository**. The artifact embeds per-input
+SHA-256s and model metadata, which lets a holder of the same files verify
+them, but the analysis cannot be recomputed from a fresh clone — only from
+the recording host. This is a real reproducibility gap, not a cosmetic one.
+
 ## Security-model research
 
 The initial, source-bounded review found no specialist model ready to designate

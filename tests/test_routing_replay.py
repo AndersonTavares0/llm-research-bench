@@ -1,7 +1,9 @@
 import unittest
 
 from src.llm_research_bench.routing_replay import (
+    ARMS,
     DATASETS,
+    STATION,
     analyze,
     mcnemar_exact,
     pair_rows,
@@ -72,8 +74,12 @@ class TestSummary(unittest.TestCase):
 
 
 class TestRecordedPair(unittest.TestCase):
-    """The one recorded quant pair must still join cleanly."""
+    """The one recorded quant pair must still join cleanly (local checkpoint only)."""
 
+    @unittest.skipUnless(
+        STATION.joinpath(ARMS["q4_k_m"], "knowledge-mcq/meta.json").is_file(),
+        "local-rtx3060ti campaign is gitignored; raw pair only exists on the recording host",
+    )
     def test_recorded_arms_join_and_report(self):
         artifact = analyze()
         self.assertEqual(artifact["status"], "exploratory_analysis")

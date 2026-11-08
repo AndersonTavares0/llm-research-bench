@@ -209,7 +209,8 @@
     "Fixed first-100 items per task, selected by run constraints, not a random sample of each benchmark.",
     "Single host, single greedy decode (temperature 0.0), one run per arm: no technical replicates.",
     "Arms differ in packaging as well as precision (Q4_K_M from unsloth/Qwen3-1.7B-GGUF, Q8_0 from Qwen/Qwen3-1.7B-GGUF), so a quant effect and a packaging effect cannot be separated.",
-    "Oracle framing is an upper bound computed with hindsight over both arms; it is not a leakage-free predictor."
+    "Oracle framing is an upper bound computed with hindsight over both arms; it is not a leakage-free predictor.",
+    "The source campaign directory is gitignored, so these inputs are not in the repository: the recorded SHA-256s let a holder of the same files verify them, but the analysis cannot be recomputed from a fresh clone."
   ],
   "blocked": {
     "cross_model_cascade_replay": "No per-item outputs for any second model exist under results/campaigns; only llama-bench timing artifacts (no correctness labels) mention other models."
