@@ -4,7 +4,8 @@ This index points to the strongest currently documented findings, not a
 leaderboard. The repo contains exploratory, fixed-item experiments on one
 GTX 1050 Ti; repeated deterministic outputs are consistency checks, not
 independent hardware or item samples. Read each linked report for full methods,
-uncertainty, caveats, and raw artifacts.
+uncertainty, caveats, and raw artifacts. For the consolidated charter and
+prioritized RQs, see [`../research/research-charter.md`](../research/research-charter.md).
 
 | Conclusion | Evidence / protocol | Sample and result | Main limit | Raw evidence |
 |---|---|---|---|---|

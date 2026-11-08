@@ -3,6 +3,10 @@
 This page turns the measured evidence into a prioritized experiment plan. It does
 not replace the campaign records; every claim below points at an artifact.
 
+> A consolidated scientific charter (RQ/evidence matrix, weaknesses, P0–P3
+> priorities) lives in [`../research/research-charter.md`](../research/research-charter.md);
+> the H1–H5 designs below are its Track-A/B operational descendants.
+
 ## What is already established (measured)
 
 - **Throughput ceiling.** Qwen3-1.7B Q4_K_M, llama.cpp b12024, 6 threads:
