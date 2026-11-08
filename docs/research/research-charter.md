@@ -82,20 +82,19 @@ not studied here.
   unmeasured).** Three deterministically scored benchmarks exist with a
   validated result schema (`configs/schemas/defensive_cyber_results.v1.schema.json`):
   static CWE triage v2 (hand-authored labels, no independent adjudication),
-  CVE advisory triage v1 (labels are derived from the same deterministic
-  comparator used for scoring — consistency-tested, not independently
-  adjudicated — and the paraphrased version ranges are approximate: the
-  sudo `"< 1.9.5p2"` entry over-claims versions below 1.8.2, which upstream's
-  Baron Samedit record treats as unaffected, and the nginx
-  `">= 1.9.0 && < 1.9.11"` entry includes 1.9.10, which upstream lists as
-  fixed), and the appsec chatbot scenarios (expected outcomes follow the
-  enforcement design by construction). Plus historical exploratory probes
+  CVE advisory triage v1 (labels were independently verified against NVD
+  2.0/MITRE/upstream advisories on 2026-11-08 with per-case
+  `label_provenance`; the nonexistent nginx CVE-2016-0748 case was
+  redirected to the substantiated CVE-2016-0747, and boundary regressions
+  are test-locked — labels are no longer purely comparator-derived, though
+  no blinded second reviewer has relabeled them), and the appsec chatbot
+  scenarios (expected outcomes follow the enforcement design by
+  construction; per-call `call_reports` now distinguish authorized
+  execution from blocks, and weakened enforcement cannot fabricate a
+  clean authorized result). Plus historical exploratory probes
   (over-refusal 0/4, CI [0%, 60.2%]; injection ASR ≈50–100%; harness
   intercept 2/2), single-run. **No model has ever been run against the new
-  benchmarks**; transcripts are scripted author-written proposals, and the
-  harness classifier collapses each transcript to one label — refusals are
-  detected only on zero-call transcripts carrying an explicit marker, and
-  benign steps inside a mixed transcript are invisible in the single label.
+  benchmarks**; transcripts are scripted author-written proposals.
 
 ### Partially supported (started, incomplete, or blocked)
 
