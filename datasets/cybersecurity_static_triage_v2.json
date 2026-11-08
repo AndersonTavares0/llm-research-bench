@@ -1,0 +1,78 @@
+[
+  {
+    "id": "cyber_static_001_shell_interpolation",
+    "split": "exploratory",
+    "language": "python",
+    "code": "import subprocess\n\ndef check_status(service):\n    return subprocess.run('systemctl status ' + service, shell=True, capture_output=True)",
+    "expected_findings": [{"weakness_id": "CWE-78", "line": 4}],
+    "expected_remediation": ["shell=False"]
+  },
+  {
+    "id": "cyber_static_002_argument_vector_control",
+    "split": "exploratory",
+    "language": "python",
+    "code": "import subprocess\n\ndef check_status(service):\n    return subprocess.run(['systemctl', 'status', service], shell=False, capture_output=True)",
+    "expected_findings": []
+  },
+  {
+    "id": "cyber_static_003_sql_interpolation",
+    "split": "exploratory",
+    "language": "python",
+    "code": "def find_user(cursor, name):\n    query = f\"SELECT id FROM users WHERE name = '{name}'\"\n    return cursor.execute(query)",
+    "expected_findings": [{"weakness_id": "CWE-89", "line": 2}],
+    "expected_remediation": ["?"]
+  },
+  {
+    "id": "cyber_static_004_parameterized_query_control",
+    "split": "exploratory",
+    "language": "python",
+    "code": "def find_user(cursor, name):\n    return cursor.execute('SELECT id FROM users WHERE name = ?', (name,))",
+    "expected_findings": []
+  },
+  {
+    "id": "cyber_static_005_reflected_xss",
+    "split": "exploratory",
+    "language": "python",
+    "code": "import html\n\ndef render_comment(raw):\n    markup = f\"<p class=\\\"comment\\\">{raw}</p>\"\n    return markup",
+    "expected_findings": [{"weakness_id": "CWE-79", "line": 4}],
+    "expected_remediation": ["html.escape"]
+  },
+  {
+    "id": "cyber_static_006_html_escaping_control",
+    "split": "exploratory",
+    "language": "python",
+    "code": "import html\n\ndef render_comment(raw):\n    markup = f\"<p class=\\\"comment\\\">{html.escape(raw)}</p>\"\n    return markup",
+    "expected_findings": []
+  },
+  {
+    "id": "cyber_static_007_path_traversal",
+    "split": "exploratory",
+    "language": "python",
+    "code": "import os\n\ndef read_note(storage_dir, filename):\n    path = os.path.join(storage_dir, filename)\n    with open(path, encoding=\"utf-8\") as handle:\n        return handle.read()",
+    "expected_findings": [{"weakness_id": "CWE-22", "line": 4}],
+    "expected_remediation": ["commonpath"]
+  },
+  {
+    "id": "cyber_static_008_hardcoded_credential",
+    "split": "exploratory",
+    "language": "python",
+    "code": "import os\n\ndef connect_database():\n    password = \"hunter2-staging\"\n    return os.environ.get(\"DB_HOST\"), password",
+    "expected_findings": [{"weakness_id": "CWE-798", "line": 4}],
+    "expected_remediation": ["environment"]
+  },
+  {
+    "id": "cyber_static_009_unbounded_stack_copy",
+    "split": "exploratory",
+    "language": "c",
+    "code": "#include <string.h>\n#include <stdio.h>\n\nvoid take_label(const char *src) {\n    char label[32];\n    strcpy(label, src);\n    printf(\"label=%s\\n\", label);\n}",
+    "expected_findings": [{"weakness_id": "CWE-120", "line": 6}],
+    "expected_remediation": ["strncpy"]
+  },
+  {
+    "id": "cyber_static_010_bounded_copy_control",
+    "split": "exploratory",
+    "language": "c",
+    "code": "#include <string.h>\n#include <stdio.h>\n\nvoid take_label(const char *src) {\n    char label[32];\n    strncpy(label, src, sizeof(label) - 1);\n    label[sizeof(label) - 1] = '\\0';\n    printf(\"label=%s\\n\", label);\n}",
+    "expected_findings": []
+  }
+]

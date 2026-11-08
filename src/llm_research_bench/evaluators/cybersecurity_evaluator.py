@@ -1,7 +1,8 @@
 """Deterministic scoring for the offline static cybersecurity triage set.
 
 Candidate code is treated as data: this evaluator never imports or executes it.
-Responses use JSON: {"findings": [{"weakness_id": "CWE-78", "line": 4}]}.
+Responses use JSON: {"findings": [{"weakness_id": "CWE-78", "line": 4}]} and an
+optional "remediation" string graded against case["expected_remediation"].
 """
 
 import json
@@ -11,10 +12,21 @@ from typing import Any, Dict, List
 
 def score_static_triage_case(case: Dict[str, Any], response_text: str) -> Dict[str, Any]:
     """Score exact weakness-ID and source-line matches; malformed output is a miss."""
+    remediation_coverage = None
     try:
         response = json.loads(response_text)
         if not isinstance(response, dict) or not isinstance(response.get("findings"), list):
             raise ValueError("response must be an object with a findings list")
+        expected_remediation = case.get("expected_remediation")
+        if expected_remediation is not None:
+            remediation = response.get("remediation")
+            if remediation is not None and not isinstance(remediation, str):
+                raise ValueError("remediation must be a string when present")
+            rem = remediation.casefold() if isinstance(remediation, str) else ""
+            remediation_coverage = (
+                sum(keyword.casefold() in rem for keyword in expected_remediation)
+                / len(expected_remediation)
+            ) if isinstance(remediation, str) else 0.0
         predicted = set()
         line_count = len(case["code"].splitlines())
         for finding in response["findings"]:
@@ -49,6 +61,7 @@ def score_static_triage_case(case: Dict[str, Any], response_text: str) -> Dict[s
         "false_positive": fp,
         "false_negative": fn,
         "true_negative_case": not malformed and not expected and not predicted,
+        "remediation_coverage": remediation_coverage,
         "precision": precision,
         "recall": recall,
         "f1": f1,
@@ -80,6 +93,7 @@ def aggregate_static_triage_metrics(records: List[Dict[str, Any]]) -> Dict[str, 
     precision = tp / (tp + fp) if tp + fp else None
     recall = tp / (tp + fn) if tp + fn else None
     f1 = 2 * tp / (2 * tp + fp + fn) if 2 * tp + fp + fn else None
+    coverage = [row["remediation_coverage"] for row in records if row["remediation_coverage"] is not None]
     return {
         "case_count": len(records),
         "true_positive": tp,
@@ -87,6 +101,8 @@ def aggregate_static_triage_metrics(records: List[Dict[str, Any]]) -> Dict[str, 
         "false_negative": fn,
         "true_negative_cases": sum(row["true_negative_case"] for row in records),
         "malformed_outputs": sum(row["malformed_output"] for row in records),
+        "remediation_cases": len(coverage),
+        "mean_remediation_coverage": sum(coverage) / len(coverage) if coverage else None,
         "micro_precision": precision,
         "micro_recall": recall,
         "micro_f1": f1,

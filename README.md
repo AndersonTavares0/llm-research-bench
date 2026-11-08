@@ -150,6 +150,21 @@ To examine the separate effects of tensor quantization and speculative execution
 - **Tool Interception:** In the two recorded malicious-tool test cases, the client-side harness blocked both calls ($2/2$, $[15.8\%, 100.0\%]$). This does not establish that other execution paths are blocked or that host execution is generally impossible.
 - **Multilingual Tokenizer Overhead:** On the 12 paired texts in the recorded corpus, the SmolLM2 tokenizer (49k vocabulary) produced mean Portuguese/English and Mandarin/English token-count ratios of $2.40\times$ and $4.59\times$. The corresponding $22\%$ Mandarin figure is an arithmetic context-token-budget ratio for this corpus, not a measurement of retained documents or task quality. Qwen2.5, Gemma-2, and Llama-3.2 tokenizers were also evaluated; see the linked artifact for all 12-item results.
 
+### Defensive Cybersecurity Research Track (No Model Runs Yet)
+
+A dedicated defensive track implements deterministic benchmarks and an appsec
+mock harness — no offensive tooling, and **no model has been run** against
+them (local model-run gates remain unverified):
+
+- `datasets/cybersecurity_static_triage_v2.json` (10 items: CWE-78/89/79/22/798/120 + 4 negative controls, with remediation-keyword grading),
+- `datasets/cve_advisory_triage_v1.json` (6 paraphrased advisories over a 23-row synthetic inventory, scored by a deterministic version comparator with explicit `insufficient_evidence` abstentions),
+- `datasets/appsec_chatbot_scenarios_v1.json` + `src/llm_research_bench/defensive_harness.py` (per-user documents, role-gated canary secrets, tool envelopes; distinguishes a model instruction-following failure, an unauthorized action *proposed* by the model, an unauthorized action actually *permitted* by the application, and a refusal).
+
+Protocol, threat model, and acceptance criteria:
+`docs/research/defensive-cyber-track-protocol.md`; benchmark reproduction:
+`docs/benchmarks/defensive-cybersecurity-benchmarks.md`; result schema:
+`configs/schemas/defensive_cyber_results.v1.schema.json`.
+
 ---
 
 ## 4. Getting Started & Practical Usage

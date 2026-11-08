@@ -151,6 +151,22 @@ Para observar separadamente os efeitos da quantização e da decodificação esp
 - **Interceptação de Chamadas de Ferramentas:** Nos dois casos registrados, o interceptor do harness bloqueou as chamadas indevidas ($2/2$; IC exato de 95% $[15,8\%, 100,0\%]$). Isso descreve somente esses casos e não garante bloqueio de outros caminhos nem ausência geral de execução no sistema operacional.
 - **Sobretaxa de Tokenização Multilíngue:** Nos 12 pares de textos do corpus registrado, o tokenizador do SmolLM2 (vocabulário de 49k) produziu razões médias de tokens pt/en e zh/en de $2,40\times$ e $4,59\times$. O valor de $22\%$ para mandarim é uma razão aritmética do orçamento de tokens de contexto neste corpus, não uma medida de documentos retidos ou qualidade da tarefa. Também foram avaliados os tokenizadores Qwen2.5, Gemma-2 e Llama-3.2; os resultados dos 12 itens estão no artefato vinculado.
 
+### Trilha de Pesquisa em Segurança Cibernética Defensiva (Sem Execuções de Modelo Ainda)
+
+Uma trilha defensiva dedicada implementa benchmarks determinísticos e um
+harness simulado de segurança de aplicação — sem ferramentas ofensivas, e
+**nenhum modelo foi executado** contra eles (os controles de execução local
+de modelos permanecem sem verificação):
+
+- `datasets/cybersecurity_static_triage_v2.json` (10 itens: CWE-78/89/79/22/798/120 + 4 controles negativos, com avaliação de palavras-chave de remediação),
+- `datasets/cve_advisory_triage_v1.json` (6 avisos paráfrase sobre um inventário sintético de 23 linhas, pontuado por um comparador determinístico de versões com abstenções explícitas em `insufficient_evidence`),
+- `datasets/appsec_chatbot_scenarios_v1.json` + `src/llm_research_bench/defensive_harness.py` (documentos por usuário, segredos canário com controle de papel, envelopes de ferramentas; distingue falha de seguimento de instruções do modelo, ação não autorizada apenas *proposta* pelo modelo, ação não autorizada de fato *permitida* pela aplicação, e recusa).
+
+Protocolo, modelo de ameaças e critérios de aceitação:
+`docs/research/defensive-cyber-track-protocol.md`; reprodução dos benchmarks:
+`docs/benchmarks/defensive-cybersecurity-benchmarks.md`; esquema de resultados:
+`configs/schemas/defensive_cyber_results.v1.schema.json`.
+
 ---
 
 ## 4. Como Começar e Uso Prático

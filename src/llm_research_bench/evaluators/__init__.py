@@ -12,6 +12,14 @@ from .cybersecurity_evaluator import (
     score_static_triage_run,
     aggregate_static_triage_metrics,
 )
+from .cve_triage_evaluator import (
+    parse_version_key,
+    satisfies_range,
+    is_affected,
+    score_cve_advisory_case,
+    score_cve_advisory_run,
+    aggregate_cve_triage_metrics,
+)
 
 __all__ = [
     "BaseEvaluator",
@@ -24,4 +32,10 @@ __all__ = [
     "score_static_triage_case",
     "score_static_triage_run",
     "aggregate_static_triage_metrics",
+    "parse_version_key",
+    "satisfies_range",
+    "is_affected",
+    "score_cve_advisory_case",
+    "score_cve_advisory_run",
+    "aggregate_cve_triage_metrics",
 ]

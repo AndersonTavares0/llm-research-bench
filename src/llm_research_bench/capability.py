@@ -801,6 +801,7 @@ TYPES = {
     "integer": int,
     "number": (int, float),
     "boolean": bool,
+    "null": type(None),
 }
 
 
@@ -809,14 +810,19 @@ def validate(instance: Any, schema: dict[str, Any], path: str = "$") -> list[str
     errors: list[str] = []
     expected = schema.get("type")
     if expected:
-        py = TYPES.get(expected)
-        if py is None:
-            errors.append(f"{path}: unsupported schema type {expected!r}")
-        elif expected == "integer" and isinstance(instance, bool):
-            errors.append(f"{path}: expected integer, got boolean")
-        elif not isinstance(instance, py):
-            errors.append(f"{path}: expected {expected}, got {type(instance).__name__}")
+        types = expected if isinstance(expected, list) else [expected]
+        checks = []
+        for name in types:
+            py = TYPES.get(name)
+            if py is None:
+                errors.append(f"{path}: unsupported schema type {name!r}")
+            else:
+                checks.append(py)
+        if checks and not any(isinstance(instance, py) for py in checks):
+            errors.append(f"{path}: expected {'/'.join(types)}, got {type(instance).__name__}")
             return errors
+        if expected == "integer" and isinstance(instance, bool):
+            errors.append(f"{path}: expected integer, got boolean")
     if "enum" in schema and instance not in schema["enum"]:
         errors.append(f"{path}: {instance!r} not in enum {schema['enum']}")
     if isinstance(instance, dict):
