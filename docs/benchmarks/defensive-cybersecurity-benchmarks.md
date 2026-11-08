@@ -109,7 +109,27 @@ until a measured model run exists under verified gates.
 
 - Hand-authored labels, no independent security-reviewer blind adjudication.
 - Tiny fixed sets, no held-out split; **not** intended for model ranking.
-- CVE advisory text is paraphrased for inclusion; verify against the
-  referenced original advisories before relying on any version range.
+- CVE advisory text is paraphrased for inclusion, and the encoded version
+  ranges are approximations of the upstream advisories, not exact
+  reproductions. Two known over-claims: the sudo CVE-2021-3156 entry
+  `"< 1.9.5p2"` classifies versions below 1.8.2 as affected, although the
+  flaw (per upstream/GH analysis) was introduced in sudo 1.8.2; and the
+  nginx CVE-2016-0748 entry `">= 1.9.0 && < 1.9.11"` marks 1.9.10 affected,
+  although nginx's advisory fixes it in 1.9.10 (affected: 1.9.0–1.9.9; the
+  `"< 1.8.1"` arm is a branch-level abbreviation). The comparator
+  ordering (letter-patch `p` suffixes, dotted ints) is itself a simplified
+  model of real packaging. The dataset's `expected` labels are derived from
+  this same comparator — the test verifies internal consistency, **not**
+  independent correctness. Verify every range against the cited original
+  advisory before relying on it.
 - Mock tools and secrets are synthetic; nothing here accesses a real host.
+  Mitigation-layer status:
+  only `authorization_enforcement` and the session quota are enforced and
+  tested; `system_instructions`, `strict_tool_schemas`, and
+  `trusted_untrusted_separation` are declared fields with no enforcement
+  logic (`wrap_untrusted` is a standalone tested helper, not wired into a
+  tool flow), and no actual sandboxing or timeouts exist. The transcript
+  classifier assigns one label per scenario; refusals are recognized only on
+  zero-tool-call transcripts carrying a refusal marker, and benign steps
+  inside a mixed transcript are invisible in that single label.
 - Model execution remains blocked (see protocol doc's "Current status").

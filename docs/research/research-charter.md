@@ -79,12 +79,23 @@ not studied here.
   repeated same-ID fillers, precedence/status-rule application unreliability,
   literal-cue dependence (`needle-*` panels; fixed 10-case suites).
 - **Defensive security posture (human-workflow sides are ready; model side
-  unmeasured).** Three deterministically scored benchmarks exist with
-  verified labels and a JSON schema (static CWE triage v2, CVE advisory
-  triage v1 with a version comparator, appsec chatbot harness with enforced
-  authorization); plus historical exploratory probes (over-refusal 0/4,
-  CI [0%, 60.2%]; injection ASR ≈50–100%; harness intercept 2/2). **No model
-  has ever been run against the new benchmarks.**
+  unmeasured).** Three deterministically scored benchmarks exist with a
+  validated result schema (`configs/schemas/defensive_cyber_results.v1.schema.json`):
+  static CWE triage v2 (hand-authored labels, no independent adjudication),
+  CVE advisory triage v1 (labels are derived from the same deterministic
+  comparator used for scoring — consistency-tested, not independently
+  adjudicated — and the paraphrased version ranges are approximate: the
+  sudo `"< 1.9.5p2"` entry over-claims versions below 1.8.2, which upstream's
+  Baron Samedit record treats as unaffected, and the nginx
+  `">= 1.9.0 && < 1.9.11"` entry includes 1.9.10, which upstream lists as
+  fixed), and the appsec chatbot scenarios (expected outcomes follow the
+  enforcement design by construction). Plus historical exploratory probes
+  (over-refusal 0/4, CI [0%, 60.2%]; injection ASR ≈50–100%; harness
+  intercept 2/2), single-run. **No model has ever been run against the new
+  benchmarks**; transcripts are scripted author-written proposals, and the
+  harness classifier collapses each transcript to one label — refusals are
+  detected only on zero-call transcripts carrying an explicit marker, and
+  benign steps inside a mixed transcript are invisible in the single label.
 
 ### Partially supported (started, incomplete, or blocked)
 
@@ -120,10 +131,11 @@ not studied here.
 - **Inference infra CVE exposure of the stack itself:** tracked as a separate
   hygiene question; not measured.
 
-## 2. Research questions (deduplicated)
+## 2. Research questions (deduplicated; 24 total)
 
 Each RQ is measurable and maps to one primary metric; duplicates across
-areas were merged. Evidence status: ①measured · ②partial · ③analytical ·
+areas were merged. Six tracks: A (5 RQs), B (6), C (2), D (3), E (4),
+F (4). Evidence status: ①measured · ②partial · ③analytical ·
 ④ready · ⑤unknown.
 
 ### Track A — Inference efficiency
@@ -191,8 +203,8 @@ areas were merged. Evidence status: ①measured · ②partial · ③analytical �
 
 ### Track E — Security
 
-- **RQ-E1 (defensive static analysis).** How accurately/often maliciously
-  reliable can SLMs triage CWE weaknesses and CVE advisories on versioned
+- **RQ-E1 (defensive static analysis).** How accurately and consistently
+  can SLMs triage CWE weaknesses and CVE advisories on versioned
   inventories (with correct abstention)? — ④ (deterministic scoring ready;
   zero model runs).
 - **RQ-E2 (application security boundary).** Under injection/untrusted input
@@ -201,8 +213,16 @@ areas were merged. Evidence status: ①measured · ②partial · ③analytical �
   probes ① only).
 - **RQ-E3 (mitigation effectiveness).** Which mitigation layers
   (instructions, authz enforcement, strict schemas, separation, quotas) move
-  security outcomes vs task success/latency? — ④ (knobs exist end-to-end;
-  no measured contrast).
+  security outcomes vs task success/latency? — ④ partial (see limitations):
+  two enforced-and-tested knobs exist in the harness
+  (`authorization_enforcement` on document/diagnostic/credential tools, and
+  the per-session call quota behind the `sandboxing_timeouts_quotas` field —
+  the field name promises more than the code delivers: no actual sandboxing
+  or timeouts are implemented), while `system_instructions`,
+  `strict_tool_schemas`, and `trusted_untrusted_separation` are declared
+  config fields with **no enforcement logic** (`wrap_untrusted` is a tested
+  standalone helper not wired into any tool flow); no measured contrast, and
+  the instruction-following layer additionally requires model runs.
 - **RQ-E4 (alignment limits).** What is the over-refusal vs compliance
   frontier for defensive-but-scary prompts under constrained serving? — ①
   exploratory (0/4 benign; ASR ≈50–100% on injections); no frontier study.
@@ -258,10 +278,10 @@ Ranked by (scientific value × feasibility) ÷ cost. **Has model run gates
 | # | Experiment | RQ | Value | Feasibility/cost | Gate |
 |---|---|---|---|---|---|
 | P0-1 | Verify current route/isolation/cleanup/recovery; re-enable lease-controlled GPU work | all GPU rows | unlocks everything | owner-side verification only | blocked now |
-| P0-2 | Complete the HotpotQA 100-item paired support-order study (protocol already written; 15/100 done) | B3/F1 | very high — converts the largest evidence gap | ~20 remaining batches, protocol + hashes exist | needs P0-1 |
+| P0-2 | Complete the HotpotQA 100-item paired support-order study (protocol already written; 15/100 done across 3/20 batches → 17 batches / 85 items remain) | B3/F1 | very high — converts the largest evidence gap | protocol + hashes exist | needs P0-1 |
 | P0-3 | Finish the concurrency 1/2/4 × batch grid at equal per-request context, ≥2 lease replicates | A4 | high | sweeps infra exists | P0-1 |
-| P1-1 | Run all four/one plus candidate SLMs through the three deterministic defensive-cyber benchmarks | E1/E2 | high, ready (biggest ④→① conversion) | offline scoring only, cheap after P0-1 | P0-1 |
-| P1-2 | Mitigation effectiveness factorial on the appsec harness (± authz, ± separation, ± quotas) with a real model | E3 | high (first Track-D/mitigation result) | uses existing harness + one model | P0-1 |
+| P1-1 | Run the four empirically-evaluated SLMs (then catalog candidates) through the three deterministic defensive-cyber benchmarks | E1/E2 | high, ready (biggest ④→① conversion) | offline scoring only, cheap after P0-1 | P0-1 |
+| P1-2 | Mitigation effectiveness factorial on the appsec harness with a real model, restricted to the implemented knobs (± authz enforcement, ± quota); strict-schema / untrusted-separation / instruction layers require harness extension first | E3 | high (first mitigation result) | uses existing harness + one model; extension work for missing layers | P0-1 |
 | P1-3 | Sampling-parameter study (τ grids, paired seeds, fixed prompts) on quality + refusals | B4 | fills greedy-only hole | small, cheap | P0-1 |
 | P1-4 | q8_0 KV paired quality confirmation at n≥100 (ARC/HellaSwag/GSM8K slices) | A1 | resolves mixed/underpowered H1 quality side | n scaling of already-working pipeline | P0-1 |
 | P1-5 | Execute the sensitive-topics protocol (specified, pending) | B6 | completeness of multilingual story | small | P0-1 |
