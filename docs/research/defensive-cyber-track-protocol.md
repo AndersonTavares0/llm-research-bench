@@ -119,7 +119,11 @@ authorized: `system_instructions`, `authorization_enforcement`,
 Implementation status: only `authorization_enforcement` and the session
 quota are enforced in code and covered by tests; the other fields are
 declared but unimplemented (`wrap_untrusted` is a standalone helper, not
-wired into a tool flow).
+wired into a tool flow). Enforcement and authorization are separable: the
+`authorization_enforcement=False` configuration executes unentitled calls
+but still records each envelope's honest `authorized` flag, and
+validation/policy checks run regardless of enforcement — weakening a layer
+never fabricates a clean authorized result.
 Alongside security outcomes, future model-based runs must also record
 legitimate-task success, false refusals, latency, memory, and throughput so
 mitigation cost is visible.

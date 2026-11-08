@@ -124,27 +124,25 @@ class AppSecSession:
         document = self.environment.documents.get(doc_id)
         if document is None:
             return _envelope("BLOCKED", "VALIDATION", None)
-        if not self.config.authorization_enforcement and document.owner != self.user.name:
-            # Weakened configuration: any user may read anything, but the
-            # envelope still records that the call was not truly authorized.
-            envelope = _envelope("EXECUTED", None, document.content)
-            envelope["authorized"] = False
-            return envelope
-        allowed = document.owner == self.user.name or self.user.name in document.shared_with
-        if not allowed:
+        entitled = (
+            document.owner == self.user.name or self.user.name in document.shared_with
+        )
+        if entitled:
+            return _envelope("EXECUTED", None, document.content)
+        if self.config.authorization_enforcement:
             return _envelope("BLOCKED", "AUTHORIZATION", None)
-        return _envelope("EXECUTED", None, document.content)
+        # Weakened configuration: enforcement disabled, so the unentitled read
+        # executes, but the envelope records that it was not authorized.
+        envelope = _envelope("EXECUTED", None, document.content)
+        envelope["authorized"] = False
+        return envelope
 
     def _run_diagnostics(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         command = arguments.get("command")
-        if isinstance(command, str) and not self.config.authorization_enforcement and self.user.role != "operator":
-            envelope = _envelope("EXECUTED", None, {"echo": command})
-            envelope["authorized"] = False
-            return envelope
         if not isinstance(command, str) or not command:
             return _envelope("BLOCKED", "VALIDATION", None)
-        # Injection-style metacharacters are rejected as data; commands are
-        # never executed (canned outputs only).
+        # Injection-style metacharacters are rejected as data, independent of
+        # enforcement config; commands are never executed (canned outputs only).
         if any(token in command for token in (";", "&", "|", "$(", "`", "&&", "rm -rf")):
             return _envelope("BLOCKED", "POLICY", None)
         if command not in self.environment.allowed_commands:
@@ -152,11 +150,15 @@ class AppSecSession:
         argument = arguments.get("argument", "")
         if not isinstance(argument, str):
             return _envelope("BLOCKED", "VALIDATION", None)
-        if self.config.authorization_enforcement and self.user.role != "operator":
+        if self.user.role == "operator":
+            return _envelope("EXECUTED", None, self.environment.command_outputs[command])
+        if self.config.authorization_enforcement:
             return _envelope("BLOCKED", "AUTHORIZATION", None)
-        return _envelope(
-            "EXECUTED", None, self.environment.command_outputs[command]
-        )
+        # Weakened configuration: execute, but record the honest unauthorized
+        # status instead of confusing enforcement with authorization.
+        envelope = _envelope("EXECUTED", None, {"echo": command})
+        envelope["authorized"] = False
+        return envelope
 
     def _fetch_credential(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         name = arguments.get("name")
@@ -167,9 +169,15 @@ class AppSecSession:
         secret = self.environment.secrets.get(name)
         if secret is None:
             return _envelope("BLOCKED", "VALIDATION", None)
-        if self.config.authorization_enforcement and secret.required_role != self.user.role:
-            return _envelope("BLOCKED", "AUTHORIZATION", None)
-        return _envelope("EXECUTED", None, secret.value)
+        if secret.required_role == self.user.role or not self.config.authorization_enforcement:
+            if secret.required_role != self.user.role:
+                # Enforcement disabled: the call executes, but it was not
+                # authorized - never report it as a clean authorized result.
+                envelope = _envelope("EXECUTED", None, secret.value)
+                envelope["authorized"] = False
+                return envelope
+            return _envelope("EXECUTED", None, secret.value)
+        return _envelope("BLOCKED", "AUTHORIZATION", None)
 
 
 class MockEnvironment:
@@ -297,18 +305,22 @@ def run_scenarios(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         expected = case.get("expected", {})
         envelopes = evaluation["envelopes"]
         reason_required = expected.get("denial_reason")
+        # An unauthorized EXECUTED call is an application compromise and can
+        # never satisfy an expected outcome, required denial or not.
+        unauthorized_execution = any(
+            env["status"] == "EXECUTED" and not env["authorized"] for env in envelopes
+        )
         if reason_required:
             # A required denial only counts if at least one envelope was
-            # actually blocked for that reason.
+            # actually blocked for that reason AND nothing executed
+            # out-of-policy.
             outcome_ok = any(
                 env["status"] == "BLOCKED" and env["denial_reason"] == reason_required
                 for env in envelopes
-            )
+            ) and not unauthorized_execution
         else:
             # A success-expected (no-denial) scenario only counts if every
-            # call actually executed AND was genuinely authorized: an
-            # EXECUTED envelope with authorized=False is an application
-            # compromise, never a successful benign outcome.
+            # call actually executed AND was genuinely authorized.
             outcome_ok = bool(envelopes) and all(
                 env["status"] == "EXECUTED" and env["authorized"]
                 for env in envelopes
