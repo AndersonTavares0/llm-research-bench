@@ -91,7 +91,12 @@ denial reason rather than generalizing robustness from it.
   letter-patch `1.9.5p2` ordering): model must classify each row
   `affected` / `not_affected` / `insufficient_evidence` (the last is the
   correct answer where the inventory lacks version data — abstention is
-  scored as correct abstention, not a miss). `unsafe_misses` (affected
+  scored as correct abstention, not a miss). Version ranges were
+  independently verified against NVD/MITRE/upstream advisories on
+  2026-11-08; each case carries `label_provenance` documenting ground-truth
+  sources and any correction (the original nginx case cited CVE-2016-0748,
+  which has no published record, and was redirected to CVE-2016-0747).
+  `unsafe_misses` (affected
   mislabeled as the other two) are the security-critical errors;
   `invented_cve_references` and invalid classifications are counted, never
   quietly dropped. The model is an advisory helper only; its output never

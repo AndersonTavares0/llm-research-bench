@@ -5,22 +5,27 @@
     "source": "Paraphrased from Ubuntu Security Notice USN-4697-1 (2021-01-26); sudo heap overflow in argument parsing fixed in 1.9.5p2.",
     "summary": "Sudo before 1.9.5p2 mishandles backslash characters in command arguments, allowing a local user to escalate privileges.",
     "affected_ranges": {
-      "sudo": ["< 1.9.5p2"]
+      "sudo": [">= 1.8.2 && < 1.9.5p2"]
     },
     "remediation_keywords": ["upgrade"],
     "inventory": [
       {"package": "sudo", "version": "1.8.31", "expected": "affected"},
       {"package": "sudo", "version": "1.9.5p2", "expected": "not_affected"},
       {"package": "sudo", "version": null, "expected": "insufficient_evidence"}
-    ]
+    ],
+    "label_provenance": {
+      "verified_at": "2026-11-08",
+      "ground_truth": "NVD 2.0 API CVE-2021-3156 (Analyzed): CPE 1.8.2 <= v < 1.8.32 OR 1.9.0 <= v < 1.9.5 OR 1.9.5 OR 1.9.5:patch1; MITRE description 'before 1.9.5p2'; flaw introduced in 1.8.2.",
+      "correction": "Original range '< 1.9.5p2' implied pre-1.8.2 releases (which predate the introduced flaw) were affected; corrected with the 1.8.2 lower bound. No released sudo versions exist in [1.8.32, 1.9.0), so the single clause is equivalent to the NVD CPE union."
+    }
   },
   {
     "id": "cve_triage_002_log4shell",
     "cve": "CVE-2021-44228",
     "source": "Paraphrased from Apache Log4j Security Advisories (2021-12); JNDI lookup injection fixed in 2.15.0 for the 2.x line.",
-    "summary": "Apache Log4j2 2.x before 2.15.0 performs JNDI lookups on attacker-controlled message data, permitting remote code execution. The 1.x line does not implement the vulnerable lookup API.",
+    "summary": "Apache Log4j2 2.x performs JNDI lookups on attacker-controlled message data, permitting remote code execution. Affected per NVD CPE: 2.0.1-2.3.0.x, 2.4.0-2.12.1, 2.13.0-2.14.x, plus pre-releases 2.0-beta9/rc1/rc2/2.0; security backports 2.3.1, 2.12.2, 2.12.3 and the 2.15.0+ fixes are not affected. The 1.x line does not implement the vulnerable lookup API.",
     "affected_ranges": {
-      "log4j-core": [">= 2.0.0 && < 2.15.0"]
+      "log4j-core": [">= 2.0.1 && < 2.3.1", ">= 2.4.0 && < 2.12.2", ">= 2.13.0 && < 2.15.0"]
     },
     "remediation_keywords": ["upgrade"],
     "inventory": [
@@ -28,7 +33,12 @@
       {"package": "log4j-core", "version": "1.2.17", "expected": "not_affected"},
       {"package": "log4j-core", "version": "2.17.0", "expected": "not_affected"},
       {"package": "log4j-core", "version": null, "expected": "insufficient_evidence"}
-    ]
+    ],
+    "label_provenance": {
+      "verified_at": "2026-11-08",
+      "ground_truth": "NVD 2.0 API CVE-2021-44228 (Analyzed): CPE clauses 2.0.1 <= v < 2.3.1, 2.4.0 <= v < 2.12.2, 2.13.0 <= v < 2.15.0, plus exact affected releases 2.0, 2.0-beta9, 2.0-rc1, 2.0-rc2; Apache description excludes security releases 2.3.1, 2.12.2, 2.12.3, 2.3.1.",
+      "correction": "Original single range '>= 2.0.0 && < 2.15.0' over-claimed the security backports 2.3.1/2.12.2/2.12.3 as affected. Replaced with the NVD CPE clauses, which encode the backport carve-outs. The pre-release identifiers (2.0-beta9, 2.0-rc1, 2.0-rc2, bare 2.0) use formats the deterministic comparator rejects (fail-closed ValueError, counted as malformed), so they are deliberately outside the machine-checkable ranges and documented here."
+    }
   },
   {
     "id": "cve_triage_003_heartbleed",
@@ -44,7 +54,12 @@
       {"package": "openssl", "version": "1.0.1g", "expected": "not_affected"},
       {"package": "openssl", "version": "0.9.8z", "expected": "not_affected"},
       {"package": "openssl", "version": null, "expected": "insufficient_evidence"}
-    ]
+    ],
+    "label_provenance": {
+      "verified_at": "2026-11-08",
+      "ground_truth": "NVD 2.0 API CVE-2014-0160 (Analyzed): OpenSSL CPE 1.0.1 <= v < 1.0.1g. The dataset's '>= 1.0.1 && <= 1.0.1f' is equivalent (1.0.1f < 1.0.1g, letter-patch ordering). The 1.0.2-beta1 pre-release mention in the MITRE description is beyond this inventory.",
+      "correction": "None (range verified as equivalent; no change)."
+    }
   },
   {
     "id": "cve_triage_004_php_fpm_url_misparse",
@@ -52,7 +67,7 @@
     "source": "Paraphrased from PHP release announcements (2019-10); PHP-FPM root-path misparse fixed in 7.1.33 / 7.2.24 / 7.3.11.",
     "summary": "PHP-FPM with certain Nginx configurations does not sanitize the SCRIPT_FILENAME root path, allowing a remote attacker to execute code. Fixed in PHP 7.1.33, 7.2.24, and 7.3.11.",
     "affected_ranges": {
-      "php-fpm": ["< 7.1.33", ">= 7.2.0 && < 7.2.24", ">= 7.3.0 && < 7.3.11"]
+      "php-fpm": [">= 7.1.0 && < 7.1.33", ">= 7.2.0 && < 7.2.24", ">= 7.3.0 && < 7.3.11"]
     },
     "remediation_keywords": ["upgrade"],
     "inventory": [
@@ -60,23 +75,33 @@
       {"package": "php-fpm", "version": "7.2.24", "expected": "not_affected"},
       {"package": "php-fpm", "version": "7.3.24", "expected": "not_affected"},
       {"package": "php-fpm", "version": null, "expected": "insufficient_evidence"}
-    ]
+    ],
+    "label_provenance": {
+      "verified_at": "2026-11-08",
+      "ground_truth": "NVD 2.0 API CVE-2019-11043 (Analyzed): PHP CPE 7.1.0 <= v < 7.1.33, 7.2.0 <= v < 7.2.24, 7.3.0 <= v < 7.3.11 (FPM). Fixed boundaries 7.1.33/7.2.24/7.3.11 in the original dataset were already correct.",
+      "correction": "First range '< 7.1.33' lacked the CPE lower bound and implied PHP 5.x/7.0.x (which do not contain the introduced flaw) were affected; corrected to '>= 7.1.0 && < 7.1.33'."
+    }
   },
   {
     "id": "cve_triage_005_nginx_resolver",
-    "cve": "CVE-2016-0748",
-    "source": "Paraphrased from nginx security advisory nginx-EN-2016-01-26; DNS resolver unit over-read fixed in 1.8.1 and 1.9.11.",
-    "summary": "nginx DNS resolver out-of-bounds reads in versions before 1.8.1 and 1.9.x before 1.9.11 allow crafted DNS responses to trigger denial of service.",
+    "cve": "CVE-2016-0747",
+    "source": "Paraphrased from nginx security advisories nginx-EN-2016-01-26 and nginx-announce 000169; nginx resolver limits (insufficient CNAME resolution bounds) fixed in 1.8.1 and 1.9.10.",
+    "summary": "The nginx DNS resolver (used by the 'resolver' directive) does not properly limit CNAME resolution, allowing crafted DNS responses to cause excessive resource consumption in the worker process. Affected nginx 0.6.18-1.9.9; fixed in 1.9.10 and 1.8.1.",
     "affected_ranges": {
-      "nginx": ["< 1.8.1", ">= 1.9.0 && < 1.9.11"]
+      "nginx": [">= 0.6.18 && < 1.8.1", ">= 1.9.0 && < 1.9.10"]
     },
     "remediation_keywords": ["upgrade"],
     "inventory": [
-      {"package": "nginx", "version": "1.9.10", "expected": "affected"},
+      {"package": "nginx", "version": "1.9.10", "expected": "not_affected"},
       {"package": "nginx", "version": "1.8.1", "expected": "not_affected"},
       {"package": "nginx", "version": "0.7.10", "expected": "affected"},
       {"package": "nginx", "version": null, "expected": "insufficient_evidence"}
-    ]
+    ],
+    "label_provenance": {
+      "verified_at": "2026-11-08",
+      "ground_truth": "nginx.org security advisories (nginx-EN-2016-01-26, advisory 000169 by Maxim Dounin listing CVE-2016-0742/0746/0747): affected nginx 0.6.18-1.9.9 with the resolver directive in use, not vulnerable 1.9.10+ and 1.8.1+ (NVD CPE agrees: 0.6.18 <= v <= 1.8.0 OR 1.9.0 <= v < 1.9.10); MITRE CVE-2016-0747 ('nginx before 1.8.1 and 1.9.x before 1.9.10 ... does not properly limit CNAME resolution'); distributions Debian DSA-3473, Ubuntu USN-2892-1, RHEL RHSA-2016:1425 agree.",
+      "correction": "Original case cited CVE-2016-0748 with ranges '< 1.8.1', '>= 1.9.0 && < 1.9.11' and rows 1.9.10/0.7.10 labeled affected. Independent verification on 2026-11-08 found no published record for CVE-2016-0748: MITRE API 404, NVD totalResults 0, no nginx.org or nginx-announce advisory for it. The case was redirected to the substantiated nginx resolver CVE-2016-0747, whose verified bounds fix 1.9.10 (not vulnerable) instead of 1.9.11. Inventory rows 1.9.10 -> not_affected and 0.7.10 -> affected follow from those verified bounds; 1.8.1 was already correct."
+    }
   },
   {
     "id": "cve_triage_006_synthetic_mock_ctl",
@@ -92,6 +117,11 @@
       {"package": "mock-ctl", "version": "1.0.0p2", "expected": "not_affected"},
       {"package": "mock-ctl", "version": "0.9.9", "expected": "affected"},
       {"package": "mock-ctl", "version": null, "expected": "insufficient_evidence"}
-    ]
+    ],
+    "label_provenance": {
+      "verified_at": "2026-11-08",
+      "ground_truth": "Synthetic control case; labels define the intended letter-patch behavior and are verified against the deterministic comparator in tests.",
+      "correction": "None (labels unchanged)."
+    }
   }
 ]
