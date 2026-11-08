@@ -88,6 +88,58 @@ class TestDatasetIntegrity(unittest.TestCase):
             packages = {row["package"] for row in case["inventory"] if row["version"] is not None}
             self.assertTrue(packages <= set(case["affected_ranges"]))
 
+    def test_labels_carry_independent_verification_provenance(self):
+        # Regression: enforced independent provenance for authoritative
+        # range verification (NVD/MITRE/nginx.org, 2026-11-08).
+        for case in self.cases:
+            provenance = case.get("label_provenance")
+            self.assertIsInstance(provenance, dict, case["id"])
+            for field in ("verified_at", "ground_truth", "correction"):
+                self.assertTrue(provenance[field], case["id"])
+
+    def test_corrected_boundaries_match_authoritative_advisories(self):
+        def case_for(case_id):
+            return next(c for c in self.cases if c["id"] == case_id)
+
+        sudo = case_for("cve_triage_001_sudo_baron_samedit")
+        expectations = {
+            "cve_triage_001_sudo_baron_samedit": (
+                ("sudo", [("1.8.1", False), ("1.8.2", True), ("1.9.5", True),
+                          ("1.9.5p1", True), ("1.9.5p2", False)]),
+            ),
+            "cve_triage_002_log4shell": (
+                ("log4j-core", [("2.3.0", True), ("2.3.1", False), ("2.4.0", True),
+                                ("2.12.2", False), ("2.12.3", False), ("2.13.0", True),
+                                ("2.17.0", False), ("1.2.17", False)]),
+            ),
+            "cve_triage_003_heartbleed": (
+                ("openssl", [("1.0.1d", True), ("1.0.1f", True), ("1.0.1g", False),
+                             ("0.9.8z", False)]),
+            ),
+            "cve_triage_004_php_fpm_url_misparse": (
+                ("php-fpm", [("7.1.0", True), ("7.0.33", False), ("7.2.23", True),
+                             ("7.2.24", False), ("7.3.10", True), ("7.3.11", False)]),
+            ),
+            "cve_triage_005_nginx_resolver": (
+                ("nginx", [("0.7.10", True), ("1.8.0", True), ("1.8.1", False),
+                           ("1.9.9", True), ("1.9.10", False), ("1.9.11", False),
+                           ("1.9.5", True), ("0.6.17", False)]),
+            ),
+            "cve_triage_006_synthetic_mock_ctl": (
+                ("mock-ctl", [("0.9.9", True), ("1.0.0", True),
+                              ("1.0.0p1", False), ("1.0.0p2", False)]),
+            ),
+        }
+        for case_id, checks in expectations.items():
+            case = case_for(case_id)
+            for package, versions in checks:
+                for version, expected in versions:
+                    self.assertEqual(
+                        is_affected(case, package, version),
+                        expected,
+                        f"{case_id} {package} {version}",
+                    )
+
 
 class TestScoreCveAdvisoryCase(unittest.TestCase):
     @classmethod

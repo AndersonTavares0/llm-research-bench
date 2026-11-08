@@ -91,7 +91,12 @@ denial reason rather than generalizing robustness from it.
   letter-patch `1.9.5p2` ordering): model must classify each row
   `affected` / `not_affected` / `insufficient_evidence` (the last is the
   correct answer where the inventory lacks version data — abstention is
-  scored as correct abstention, not a miss). `unsafe_misses` (affected
+  scored as correct abstention, not a miss). Version ranges were
+  independently verified against NVD/MITRE/upstream advisories on
+  2026-11-08; each case carries `label_provenance` documenting ground-truth
+  sources and any correction (the original nginx case cited CVE-2016-0748,
+  which has no published record, and was redirected to CVE-2016-0747).
+  `unsafe_misses` (affected
   mislabeled as the other two) are the security-critical errors;
   `invented_cve_references` and invalid classifications are counted, never
   quietly dropped. The model is an advisory helper only; its output never
@@ -114,7 +119,11 @@ authorized: `system_instructions`, `authorization_enforcement`,
 Implementation status: only `authorization_enforcement` and the session
 quota are enforced in code and covered by tests; the other fields are
 declared but unimplemented (`wrap_untrusted` is a standalone helper, not
-wired into a tool flow).
+wired into a tool flow). Enforcement and authorization are separable: the
+`authorization_enforcement=False` configuration executes unentitled calls
+but still records each envelope's honest `authorized` flag, and
+validation/policy checks run regardless of enforcement — weakening a layer
+never fabricates a clean authorized result.
 Alongside security outcomes, future model-based runs must also record
 legitimate-task success, false refusals, latency, memory, and throughput so
 mitigation cost is visible.
