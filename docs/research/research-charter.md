@@ -274,6 +274,12 @@ F (4). Evidence status: ①measured · ②partial · ③analytical ·
 Ranked by (scientific value × feasibility) ÷ cost. **Has model run gates
 (P0 first row) changes everything downstream.**
 
+**Active hypotheses (max two at a time).** (1) H5/RQ-B3+F1 — complete the
+HotpotQA 100-item paired support-order study (P0-2; protocol and artifact
+hashes exist; blocked only by P0-1); (2) F3 routing/cascade replay (P2-5) —
+offline simulation over recorded outputs, needs no gate. Everything else
+queues behind P0-1 and these two.
+
 | # | Experiment | RQ | Value | Feasibility/cost | Gate |
 |---|---|---|---|---|---|
 | P0-1 | Verify current route/isolation/cleanup/recovery; re-enable lease-controlled GPU work | all GPU rows | unlocks everything | owner-side verification only | blocked now |
