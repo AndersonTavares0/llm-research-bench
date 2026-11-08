@@ -14,7 +14,7 @@
 
 **Autor:** Anderson Tavares (Graduando em Engenharia de Software e Ciência de Dados)<br/>
 **Repositório do Projeto:** [https://github.com/AndersonTavares0/llm-research-bench](https://github.com/AndersonTavares0/llm-research-bench)<br/>
-**Plataforma de Pesquisa Interativa:** [http://localhost:3000](http://localhost:3000) (Next.js 16 / ECharts / WCAG 2.2 AA)<br/>
+**Plataforma de Pesquisa Interativa (No ar):** [https://andersontavares0.github.io/llm-research-bench/](https://andersontavares0.github.io/llm-research-bench/) (No ar no GitHub Pages / WCAG 2.2 AA)<br/>
 **Idioma:** **Português (Brasil)** | [English Version](README.md)
 
 ---
