@@ -13,7 +13,8 @@ import {
   HelpCircle,
   Info,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  MousePointer
 } from 'lucide-react';
 
 interface ScatterFrontierProps {
@@ -32,7 +33,7 @@ export const MODEL_VISUAL_CONFIG: Record<
     borderColor: string;
     darkColor: string;
     darkBorderColor: string;
-    symbol: 'circle' | 'rect' | 'triangle' | 'diamond' | 'pin';
+    symbol: 'circle';
     symbolSize: number;
     labelPosition: 'top' | 'bottom' | 'left' | 'right';
   }
@@ -45,7 +46,7 @@ export const MODEL_VISUAL_CONFIG: Record<
     darkColor: '#38BDF8',
     darkBorderColor: '#0369A1',
     symbol: 'circle',
-    symbolSize: 20,
+    symbolSize: 10,
     labelPosition: 'right'
   },
   'smollm2-17b': {
@@ -55,8 +56,8 @@ export const MODEL_VISUAL_CONFIG: Record<
     borderColor: '#A7F3D0',
     darkColor: '#34D399',
     darkBorderColor: '#047857',
-    symbol: 'diamond',
-    symbolSize: 22,
+    symbol: 'circle',
+    symbolSize: 10,
     labelPosition: 'top'
   },
   'gemma4-e2b': {
@@ -64,10 +65,10 @@ export const MODEL_VISUAL_CONFIG: Record<
     family: 'Gemma',
     color: '#EA580C',
     borderColor: '#FED7AA',
-    darkColor: '#F97316',
+    darkColor: '#FB923C',
     darkBorderColor: '#9A3412',
-    symbol: 'triangle',
-    symbolSize: 22,
+    symbol: 'circle',
+    symbolSize: 10,
     labelPosition: 'left'
   },
   'gemma4-base': {
@@ -77,19 +78,19 @@ export const MODEL_VISUAL_CONFIG: Record<
     borderColor: '#FDE68A',
     darkColor: '#FBBF24',
     darkBorderColor: '#B45309',
-    symbol: 'diamond',
-    symbolSize: 20,
+    symbol: 'circle',
+    symbolSize: 10,
     labelPosition: 'bottom'
   },
   'qwen35-2b': {
     shortName: 'Qwen3.5:2B',
     family: 'Qwen',
-    color: '#006D77',
+    color: '#0D9488',
     borderColor: '#99F6E4',
     darkColor: '#2DD4BF',
     darkBorderColor: '#004F56',
     symbol: 'circle',
-    symbolSize: 20,
+    symbolSize: 10,
     labelPosition: 'right'
   },
   'llama32-3b': {
@@ -99,8 +100,8 @@ export const MODEL_VISUAL_CONFIG: Record<
     borderColor: '#C7D2FE',
     darkColor: '#818CF8',
     darkBorderColor: '#4338CA',
-    symbol: 'rect',
-    symbolSize: 20,
+    symbol: 'circle',
+    symbolSize: 10,
     labelPosition: 'top'
   },
   'qwen35-4b': {
@@ -111,7 +112,7 @@ export const MODEL_VISUAL_CONFIG: Record<
     darkColor: '#C084FC',
     darkBorderColor: '#6B21A8',
     symbol: 'circle',
-    symbolSize: 22,
+    symbolSize: 10,
     labelPosition: 'top'
   }
 };
@@ -204,6 +205,7 @@ export const ScatterFrontier: React.FC<ScatterFrontierProps> = ({
   const [showPareto, setShowPareto] = useState<boolean>(true);
   const [showExplanation, setShowExplanation] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
+  const [activeModelId, setActiveModelId] = useState<string | null>(null);
   const [isDark, setIsDark] = useState<boolean>(false);
 
   useEffect(() => {
@@ -259,6 +261,8 @@ export const ScatterFrontier: React.FC<ScatterFrontierProps> = ({
   }, [gtxModels, xMetric, yMetric, showPareto]);
 
   const seriesData = useMemo(() => {
+    const isAnySelected = activeModelId !== null;
+
     const points = gtxModels.map((m) => {
       const cfg = MODEL_VISUAL_CONFIG[m.id] || {
         shortName: m.name,
@@ -268,84 +272,95 @@ export const ScatterFrontier: React.FC<ScatterFrontierProps> = ({
         darkColor: '#2DD4BF',
         darkBorderColor: '#004F56',
         symbol: 'circle' as const,
-        symbolSize: 20,
+        symbolSize: 10,
         labelPosition: 'top' as const
       };
 
+      const isSelected = activeModelId === m.id;
+      const opacity = isAnySelected ? (isSelected ? 1.0 : 0.35) : 1.0;
       const dotColor = isDark ? cfg.darkColor : cfg.color;
-      const dotBorder = isDark ? cfg.darkBorderColor : cfg.borderColor;
-      const labelBg = isDark ? 'rgba(10, 14, 15, 0.90)' : 'rgba(255, 255, 255, 0.94)';
-      const labelText = isDark ? '#F2F5F5' : '#0E1415';
-      const labelBorder = isDark ? cfg.darkBorderColor : cfg.borderColor;
+      const dotBorder = isDark ? '#0A0E0F' : '#FFFFFF';
+      const labelText = isDark ? (isSelected ? '#FFFFFF' : '#E2E8F0') : (isSelected ? '#000000' : '#1E293B');
+      const haloColor = isDark ? '#0B0F14' : '#FFFFFF';
 
-      // Dynamic collision avoidance depending on active metrics
+      // Dynamic collision-free placement tailored per active metric preset
       let dynamicPos: 'top' | 'bottom' | 'left' | 'right' = cfg.labelPosition;
-      let dynamicDistance = 7;
+      let dynamicDistance = 8;
 
       if (xMetricKey === 'parameters_b') {
-        // At 2.0B, Gemma variants and Qwen3.5:2B share the exact same X=2.0B
-        if (m.id === 'gemma4-e2b') {
-          dynamicPos = 'right';
-        } else if (m.id === 'gemma4-base') {
-          dynamicPos = 'bottom';
-        } else if (m.id === 'qwen35-2b') {
-          dynamicPos = 'top';
-        } else if (m.id === 'smollm2-17b') {
-          dynamicPos = 'top';
-        } else if (m.id === 'qwen25-05b') {
-          dynamicPos = 'top';
-          dynamicDistance = 9;
-        } else if (m.id === 'qwen35-4b') {
-          dynamicPos = 'left';
-        }
+        // Latency vs Parameter Size:
+        // At 2.0B: Qwen3.5:2B (TTFT: 142ms, top), Gemma MTP (115ms, right), Gemma Base (72ms, bottom)
+        if (m.id === 'gemma4-e2b') dynamicPos = 'right';
+        else if (m.id === 'gemma4-base') dynamicPos = 'bottom';
+        else if (m.id === 'qwen35-2b') dynamicPos = 'top';
+        else if (m.id === 'smollm2-17b') dynamicPos = 'left';
+        else if (m.id === 'qwen25-05b') dynamicPos = 'right';
+        else if (m.id === 'llama32-3b') dynamicPos = 'top';
+        else if (m.id === 'qwen35-4b') dynamicPos = 'left';
       } else if (xMetricKey === 'vram_peak_mib') {
+        // Speed vs VRAM & Memory Efficiency:
+        // Qwen2.5:0.5B (620 MiB) -> right
+        // SmolLM2:1.7B (1184 MiB, 52.1 tok/s) -> top
+        // Gemma-4:E2B (MTP) (1510 MiB, 46.3 tok/s) -> left
+        // Qwen3.5:2B (1598 MiB, 37.5 tok/s) -> right
+        // Gemma-4:E2B (Base) (1800 MiB, 34.5 tok/s) -> bottom
+        // Llama-3.2:3B (2120 MiB, 27.4 tok/s) -> top
+        // Qwen3.5:4B (3069 MiB, 18.4 tok/s) -> top
         if (m.id === 'gemma4-e2b') dynamicPos = 'left';
         else if (m.id === 'gemma4-base') dynamicPos = 'bottom';
         else if (m.id === 'qwen35-2b') dynamicPos = 'right';
-        else if (m.id === 'qwen25-05b') dynamicPos = 'right';
         else if (m.id === 'smollm2-17b') dynamicPos = 'top';
+        else if (m.id === 'qwen25-05b') dynamicPos = 'right';
+        else if (m.id === 'llama32-3b') dynamicPos = 'top';
         else if (m.id === 'qwen35-4b') dynamicPos = 'top';
+      } else if (xMetricKey === 'generation_tok_s') {
+        // Quality vs Speed:
+        if (m.id === 'gemma4-e2b') dynamicPos = 'top';
+        else if (m.id === 'gemma4-base') dynamicPos = 'bottom';
+        else if (m.id === 'qwen35-2b') dynamicPos = 'top';
+        else if (m.id === 'smollm2-17b') dynamicPos = 'right';
+        else if (m.id === 'llama32-3b') dynamicPos = 'left';
+        else if (m.id === 'qwen35-4b') dynamicPos = 'top';
+        else if (m.id === 'qwen25-05b') dynamicPos = 'left';
       }
 
       return {
         name: m.name,
         value: [xMetric.getValue(m), yMetric.getValue(m)],
         model: m,
-        symbol: cfg.symbol,
-        symbolSize: cfg.symbolSize,
+        symbol: 'circle',
+        symbolSize: isSelected ? 14 : 10,
         itemStyle: {
           color: dotColor,
           borderColor: dotBorder,
-          borderWidth: 2,
-          shadowBlur: 10,
-          shadowColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.15)'
+          borderWidth: isSelected ? 2.5 : 2,
+          opacity: opacity,
+          shadowBlur: isSelected ? 12 : 6,
+          shadowColor: isSelected ? dotColor : (isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.15)')
         },
         label: {
           show: true,
           position: dynamicPos,
           formatter: () => cfg.shortName,
-          fontSize: 11,
-          fontWeight: 600,
+          fontSize: 10,
+          fontWeight: isSelected ? 700 : 600,
           fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
           color: labelText,
-          backgroundColor: labelBg,
-          borderColor: labelBorder,
-          borderWidth: 1,
-          borderRadius: 4,
-          padding: [3, 6],
+          textBorderColor: haloColor,
+          textBorderWidth: 3,
           distance: dynamicDistance
         },
         emphasis: {
           scale: 1.35,
           itemStyle: {
             borderWidth: 3,
-            shadowBlur: 16
+            shadowBlur: 14,
+            opacity: 1.0
           },
           label: {
             show: true,
             fontWeight: 700,
-            borderColor: dotColor,
-            borderWidth: 1.5
+            fontSize: 11
           }
         }
       };
@@ -353,7 +368,7 @@ export const ScatterFrontier: React.FC<ScatterFrontierProps> = ({
 
     const series: any[] = [
       {
-        name: 'Evaluated Models (GTX 1050 Ti)',
+        name: 'Evaluated Models',
         type: 'scatter',
         data: points,
         z: 2
@@ -368,7 +383,7 @@ export const ScatterFrontier: React.FC<ScatterFrontierProps> = ({
         smooth: false,
         lineStyle: {
           color: '#10b981',
-          width: 2.5,
+          width: 2,
           type: 'dashed'
         },
         symbol: 'none',
@@ -377,7 +392,7 @@ export const ScatterFrontier: React.FC<ScatterFrontierProps> = ({
     }
 
     return series;
-  }, [gtxModels, xMetric, yMetric, showPareto, paretoPoints, isDark]);
+  }, [gtxModels, xMetric, yMetric, showPareto, paretoPoints, isDark, activeModelId]);
 
   const chartOptions: echarts.EChartsOption = useMemo(() => {
     return {
@@ -428,18 +443,20 @@ export const ScatterFrontier: React.FC<ScatterFrontierProps> = ({
         }
       },
       legend: {
+        show: showPareto && paretoPoints.length > 0,
         top: '2%',
         right: '4%',
+        data: ['Pareto Optimal Frontier'],
         textStyle: {
-          color: '#94a3b8',
+          color: isDark ? '#94a3b8' : '#64748b',
           fontSize: 11
         }
       },
       grid: {
-        top: '14%',
-        left: '6%',
-        right: '6%',
-        bottom: '12%',
+        top: '8%',
+        left: '5%',
+        right: '5%',
+        bottom: '10%',
         containLabel: true
       },
       xAxis: {
@@ -489,8 +506,12 @@ export const ScatterFrontier: React.FC<ScatterFrontierProps> = ({
   const handleChartEvents = useMemo(() => {
     return {
       click: (params: any) => {
-        if (params.data && params.data.model && onSelectModel) {
-          onSelectModel(params.data.model);
+        if (params.data && params.data.model) {
+          const clickedModel = params.data.model;
+          setActiveModelId((prev) => (prev === clickedModel.id ? null : clickedModel.id));
+          if (onSelectModel) {
+            onSelectModel(clickedModel);
+          }
         }
       }
     };
@@ -663,44 +684,60 @@ export const ScatterFrontier: React.FC<ScatterFrontierProps> = ({
         </div>
       </div>
 
-      {/* Model Legend Bar (Direct visual identification & differentiation) */}
-      <div className="flex items-center gap-1.5 overflow-x-auto py-2 scrollbar-none border-t border-[#E2E5E5] dark:border-[#242F32] text-xs">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-[#526063] dark:text-[#98A8AA] shrink-0 mr-1">
-          Evaluated Models:
-        </span>
-        {gtxModels.map((m) => {
-          const cfg = MODEL_VISUAL_CONFIG[m.id];
-          if (!cfg) return null;
-          const dotColor = isDark ? cfg.darkColor : cfg.color;
-          return (
-            <button
-              key={m.id}
-              onClick={() => onSelectModel?.(m)}
-              className="flex items-center gap-1.5 px-2 py-1 rounded bg-[#FFFFFF] dark:bg-[#121719] border border-[#E2E5E5] dark:border-[#242F32] hover:border-[#006D77] dark:hover:border-[#2DD4BF] transition-colors shrink-0 text-left group"
-              title={`Click to inspect ${m.name} telemetry`}
-            >
-              <span
-                className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
-                style={{ backgroundColor: dotColor }}
-                aria-hidden="true"
-              />
-              <span className="font-mono text-xs font-semibold text-[#0E1415] dark:text-[#F2F5F5] group-hover:text-[#006D77] dark:group-hover:text-[#2DD4BF]">
-                {cfg.shortName}
-              </span>
-              <span className="text-[10px] text-[#526063] dark:text-[#98A8AA] font-mono">
-                {m.quantization}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
       {/* View Switch: Interactive Canvas or Equivalent Accessible Table */}
       {viewMode === 'chart' ? (
-        <div className="pt-2">
-          <EChartWrapper options={chartOptions} height={420} onEvents={handleChartEvents} />
-          <div className="mt-2 text-right text-[11px] text-slate-500 dark:text-slate-400">
-            Hardware: NVIDIA GTX 1050 Ti (4096 MiB GDDR5, PVE CT 108). Click any point to inspect detailed telemetry.
+        <div className="pt-1 space-y-3">
+          <EChartWrapper options={chartOptions} height={400} onEvents={handleChartEvents} />
+
+          {/* Compact Interactive Model Highlight Tray */}
+          <div className="pt-2.5 border-t border-[#E2E5E5] dark:border-[#242F32] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#526063] dark:text-[#98A8AA] font-semibold mr-1 flex items-center gap-1">
+                <MousePointer className="w-3 h-3 text-[#006D77] dark:text-[#2DD4BF]" aria-hidden="true" />
+                Highlight Model:
+              </span>
+              {gtxModels.map((m) => {
+                const cfg = MODEL_VISUAL_CONFIG[m.id];
+                if (!cfg) return null;
+                const isSelected = activeModelId === m.id;
+                const dotColor = isDark ? cfg.darkColor : cfg.color;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => {
+                      setActiveModelId(isSelected ? null : m.id);
+                      onSelectModel?.(m);
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-mono transition-all ${
+                      isSelected
+                        ? 'ring-2 ring-[#006D77] dark:ring-[#2DD4BF] bg-[#E6F3F4] dark:bg-[#0D2C28] font-bold text-[#0E1415] dark:text-[#F2F5F5] shadow-xs'
+                        : 'bg-[#F5F5F3] dark:bg-[#182022] hover:bg-[#ECEEED] dark:hover:bg-[#202B2E] text-[#475456] dark:text-[#98A8AA] border border-[#E2E5E5] dark:border-[#242F32]'
+                    }`}
+                    title={`Click to highlight and inspect ${m.name}`}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: dotColor }}
+                      aria-hidden="true"
+                    />
+                    <span>{cfg.shortName}</span>
+                  </button>
+                );
+              })}
+              {activeModelId && (
+                <button
+                  onClick={() => setActiveModelId(null)}
+                  className="text-[10px] text-[#526063] dark:text-[#98A8AA] hover:text-[#006D77] dark:hover:text-[#2DD4BF] underline font-mono ml-1"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <div className="text-[11px] text-[#526063] dark:text-[#98A8AA] shrink-0 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" />
+              <span>Click point or pill to inspect telemetry (GTX 1050 Ti 4 GiB)</span>
+            </div>
           </div>
         </div>
       ) : (
