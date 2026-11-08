@@ -9,10 +9,11 @@
   "models": [
     {
       "id": "gemma4-e2b",
-      "name": "Gemma-4:E2B",
+      "name": "Gemma-4:E2B (MTP)",
       "family": "Gemma",
       "parameters_b": 2.0,
       "quantization": "IQ4_XS + Q8_0 MTP",
+      "decoding_mode": "Speculative (MTP)",
       "hardware": "NVIDIA GeForce GTX 1050 Ti (4096 MiB)",
       "host_environment": "PVE CT 108 (b12024)",
       "vram_static_mib": 1452,
@@ -202,11 +203,207 @@
       }
     },
     {
+      "id": "gemma4-base",
+      "name": "Gemma-4:E2B (Base IQ4_XS)",
+      "family": "Gemma",
+      "parameters_b": 2.0,
+      "quantization": "IQ4_XS (No MTP)",
+      "decoding_mode": "Autoregressive (Dense)",
+      "hardware": "NVIDIA GeForce GTX 1050 Ti (4096 MiB)",
+      "host_environment": "PVE CT 108 (b12024)",
+      "vram_static_mib": 1720,
+      "vram_peak_mib": 1800.7,
+      "vram_budget_pct": 44.0,
+      "prompt_eval_tok_s": 468.2,
+      "generation_tok_s": 34.5,
+      "ttft_ms": 72.3,
+      "memory_efficiency_tok_s_gib": 19.6,
+      "speculative_decoding": false,
+      "context_window_tested": 8192,
+      "evidence_status": "measured",
+      "notes": "Direct controlled ablation baseline without MTP draft heads. Decodes at 34.5 tok/s under IQ4_XS.",
+      "trials": [
+        {
+          "trial": 1,
+          "prompt_tok_per_sec": 171.47228744031446,
+          "decode_tok_per_sec": 34.04723504280837,
+          "ttft_ms": 227.44,
+          "decode_ms": 3730.11,
+          "wall_time_s": 4.144,
+          "telemetry": {
+            "vram_used_bytes": 1888157696,
+            "vram_used_mib": 1800.69,
+            "temp_c": 60,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 2,
+          "prompt_tok_per_sec": 67.16367788300089,
+          "decode_tok_per_sec": 34.64914602132314,
+          "ttft_ms": 74.44,
+          "decode_ms": 3665.31,
+          "wall_time_s": 3.75,
+          "telemetry": {
+            "vram_used_bytes": 1888157696,
+            "vram_used_mib": 1800.69,
+            "temp_c": 61,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 3,
+          "prompt_tok_per_sec": 69.37891990897486,
+          "decode_tok_per_sec": 34.68806146178222,
+          "ttft_ms": 72.07,
+          "decode_ms": 3661.2,
+          "wall_time_s": 3.742,
+          "telemetry": {
+            "vram_used_bytes": 1888157696,
+            "vram_used_mib": 1800.69,
+            "temp_c": 62,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 4,
+          "prompt_tok_per_sec": 69.2300236766681,
+          "decode_tok_per_sec": 34.681430578972346,
+          "ttft_ms": 72.22,
+          "decode_ms": 3661.9,
+          "wall_time_s": 3.737,
+          "telemetry": {
+            "vram_used_bytes": 1888157696,
+            "vram_used_mib": 1800.69,
+            "temp_c": 62,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 5,
+          "prompt_tok_per_sec": 69.09417536101708,
+          "decode_tok_per_sec": 34.63897730465117,
+          "ttft_ms": 72.36,
+          "decode_ms": 3666.39,
+          "wall_time_s": 3.747,
+          "telemetry": {
+            "vram_used_bytes": 1888157696,
+            "vram_used_mib": 1800.69,
+            "temp_c": 63,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 6,
+          "prompt_tok_per_sec": 69.26071116898228,
+          "decode_tok_per_sec": 34.6340840839203,
+          "ttft_ms": 72.19,
+          "decode_ms": 3666.91,
+          "wall_time_s": 3.752,
+          "telemetry": {
+            "vram_used_bytes": 1888157696,
+            "vram_used_mib": 1800.69,
+            "temp_c": 64,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 7,
+          "prompt_tok_per_sec": 69.30295091965016,
+          "decode_tok_per_sec": 34.668081779548125,
+          "ttft_ms": 72.15,
+          "decode_ms": 3663.31,
+          "wall_time_s": 3.743,
+          "telemetry": {
+            "vram_used_bytes": 1888157696,
+            "vram_used_mib": 1800.69,
+            "temp_c": 64,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 8,
+          "prompt_tok_per_sec": 69.07890192177506,
+          "decode_tok_per_sec": 34.608648401475584,
+          "ttft_ms": 72.38,
+          "decode_ms": 3669.6,
+          "wall_time_s": 3.746,
+          "telemetry": {
+            "vram_used_bytes": 1888157696,
+            "vram_used_mib": 1800.69,
+            "temp_c": 65,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 9,
+          "prompt_tok_per_sec": 69.04456135990168,
+          "decode_tok_per_sec": 34.614317462895904,
+          "ttft_ms": 72.42,
+          "decode_ms": 3669.0,
+          "wall_time_s": 3.75,
+          "telemetry": {
+            "vram_used_bytes": 1888157696,
+            "vram_used_mib": 1800.69,
+            "temp_c": 66,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 10,
+          "prompt_tok_per_sec": 69.17734303660865,
+          "decode_tok_per_sec": 33.88282199619445,
+          "ttft_ms": 72.28,
+          "decode_ms": 3748.21,
+          "wall_time_s": 3.824,
+          "telemetry": {
+            "vram_used_bytes": 1888157696,
+            "vram_used_mib": 1800.69,
+            "temp_c": 66,
+            "clock_mhz": 1683
+          }
+        }
+      ],
+      "fertility": [
+        {
+          "language": "pt-BR",
+          "variant": "pt-BR",
+          "word_count": 43,
+          "token_count": 58,
+          "fertility_ratio": 1.35,
+          "reference_text": "O sistema operacional gerencia os recursos de hardware do computador, incluindo a unidade central de processamento, a mem\u00f3ria principal e os dispositivos de entrada e sa\u00edda. A virtualiza\u00e7\u00e3o de mem\u00f3ria permite que m\u00faltiplos processos compartilhem o espa\u00e7o de endere\u00e7amento com prote\u00e7\u00e3o m\u00fatua e isolamento de seguran\u00e7a."
+        },
+        {
+          "language": "pt-PT",
+          "variant": "pt-PT",
+          "word_count": 43,
+          "token_count": 61,
+          "fertility_ratio": 1.42,
+          "reference_text": "O sistema operativo faz a gest\u00e3o dos recursos de hardware do computador, incluindo a unidade central de processamento, a mem\u00f3ria principal e os dispositivos de entrada e de sa\u00edda. A virtualiza\u00e7\u00e3o de mem\u00f3ria permite que m\u00faltiplos processos partilhem o espa\u00e7o de endere\u00e7amento com prote\u00e7\u00e3o m\u00fatua e isolamento de seguran\u00e7a."
+        },
+        {
+          "language": "en-US",
+          "variant": "en-US",
+          "word_count": 40,
+          "token_count": 44,
+          "fertility_ratio": 1.1,
+          "reference_text": "The operating system manages the computer hardware resources, including the central processing unit, the main memory, and the input and output devices. Virtual memory enables multiple concurrent processes to share physical address space with mutual protection and security isolation."
+        }
+      ],
+      "quality_scores": {
+        "arc_challenge": 0.47,
+        "hellaswag": 0.47,
+        "gsm8k_flex": 0.46,
+        "ifeval_strict": 0.68
+      }
+    },
+    {
       "id": "qwen35-2b",
       "name": "Qwen3.5:2B",
       "family": "Qwen",
       "parameters_b": 2.0,
       "quantization": "Q4_K_XL",
+      "decoding_mode": "Autoregressive (Dense)",
       "hardware": "NVIDIA GeForce GTX 1050 Ti (4096 MiB)",
       "host_environment": "PVE CT 108 (b12024)",
       "vram_static_mib": 1540,
@@ -401,6 +598,7 @@
       "family": "Llama",
       "parameters_b": 3.0,
       "quantization": "Q4_K_M",
+      "decoding_mode": "Autoregressive (Dense)",
       "hardware": "NVIDIA GeForce GTX 1050 Ti (4096 MiB)",
       "host_environment": "PVE CT 108 (b12024)",
       "vram_static_mib": 2050,
@@ -595,6 +793,7 @@
       "family": "Qwen",
       "parameters_b": 4.0,
       "quantization": "Q4_K_M",
+      "decoding_mode": "Autoregressive (Dense)",
       "hardware": "NVIDIA GeForce GTX 1050 Ti (4096 MiB)",
       "host_environment": "PVE CT 108 (b12024)",
       "vram_static_mib": 2987,
@@ -789,6 +988,7 @@
       "family": "Qwen",
       "parameters_b": 0.5,
       "quantization": "Q4_K_M",
+      "decoding_mode": "Autoregressive (Dense)",
       "hardware": "NVIDIA GeForce GTX 1050 Ti (4096 MiB)",
       "host_environment": "PVE CT 108 (b12024)",
       "vram_static_mib": 580,
@@ -983,6 +1183,7 @@
       "family": "SmolLM",
       "parameters_b": 1.7,
       "quantization": "Q4_K_M",
+      "decoding_mode": "Autoregressive (Dense)",
       "hardware": "NVIDIA GeForce GTX 1050 Ti (4096 MiB)",
       "host_environment": "PVE CT 108 (b12024)",
       "vram_static_mib": 1120,

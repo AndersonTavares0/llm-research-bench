@@ -70,6 +70,17 @@ export const MODEL_VISUAL_CONFIG: Record<
     symbolSize: 22,
     labelPosition: 'left'
   },
+  'gemma4-base': {
+    shortName: 'Gemma-4:E2B (Base)',
+    family: 'Gemma',
+    color: '#D97706',
+    borderColor: '#FDE68A',
+    darkColor: '#FBBF24',
+    darkBorderColor: '#B45309',
+    symbol: 'diamond',
+    symbolSize: 20,
+    labelPosition: 'bottom'
+  },
   'qwen35-2b': {
     shortName: 'Qwen3.5:2B',
     family: 'Qwen',
@@ -267,6 +278,35 @@ export const ScatterFrontier: React.FC<ScatterFrontierProps> = ({
       const labelText = isDark ? '#F2F5F5' : '#0E1415';
       const labelBorder = isDark ? cfg.darkBorderColor : cfg.borderColor;
 
+      // Dynamic collision avoidance depending on active metrics
+      let dynamicPos: 'top' | 'bottom' | 'left' | 'right' = cfg.labelPosition;
+      let dynamicDistance = 7;
+
+      if (xMetricKey === 'parameters_b') {
+        // At 2.0B, Gemma variants and Qwen3.5:2B share the exact same X=2.0B
+        if (m.id === 'gemma4-e2b') {
+          dynamicPos = 'right';
+        } else if (m.id === 'gemma4-base') {
+          dynamicPos = 'bottom';
+        } else if (m.id === 'qwen35-2b') {
+          dynamicPos = 'top';
+        } else if (m.id === 'smollm2-17b') {
+          dynamicPos = 'top';
+        } else if (m.id === 'qwen25-05b') {
+          dynamicPos = 'top';
+          dynamicDistance = 9;
+        } else if (m.id === 'qwen35-4b') {
+          dynamicPos = 'left';
+        }
+      } else if (xMetricKey === 'vram_peak_mib') {
+        if (m.id === 'gemma4-e2b') dynamicPos = 'left';
+        else if (m.id === 'gemma4-base') dynamicPos = 'bottom';
+        else if (m.id === 'qwen35-2b') dynamicPos = 'right';
+        else if (m.id === 'qwen25-05b') dynamicPos = 'right';
+        else if (m.id === 'smollm2-17b') dynamicPos = 'top';
+        else if (m.id === 'qwen35-4b') dynamicPos = 'top';
+      }
+
       return {
         name: m.name,
         value: [xMetric.getValue(m), yMetric.getValue(m)],
@@ -282,7 +322,7 @@ export const ScatterFrontier: React.FC<ScatterFrontierProps> = ({
         },
         label: {
           show: true,
-          position: cfg.labelPosition,
+          position: dynamicPos,
           formatter: () => cfg.shortName,
           fontSize: 11,
           fontWeight: 600,
@@ -293,7 +333,7 @@ export const ScatterFrontier: React.FC<ScatterFrontierProps> = ({
           borderWidth: 1,
           borderRadius: 4,
           padding: [3, 6],
-          distance: 7
+          distance: dynamicDistance
         },
         emphasis: {
           scale: 1.35,
@@ -535,12 +575,12 @@ export const ScatterFrontier: React.FC<ScatterFrontierProps> = ({
         </div>
       )}
 
-      {/* Preset Buttons & Metric Dropdowns */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 pt-1">
-        {/* Presets */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs" role="group" aria-label="Chart preset views">
-          <span className="text-[11px] font-mono uppercase tracking-wider text-[#526063] dark:text-[#98A8AA] shrink-0 mr-1 flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-[#006D77] dark:text-[#2DD4BF]" aria-hidden="true" />
+      {/* Preset Buttons & Dynamic Metric Controls (Spacious, Uncrowded 2-Row Layout) */}
+      <div className="space-y-3 pt-1">
+        {/* Row 1: Presets (Wrapping naturally with full visibility, zero clipping) */}
+        <div className="flex flex-wrap items-center gap-2 text-xs" role="group" aria-label="Chart preset views">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-[#526063] dark:text-[#98A8AA] shrink-0 mr-1 flex items-center gap-1 font-semibold">
+            <Sparkles className="w-3.5 h-3.5 text-[#006D77] dark:text-[#2DD4BF]" aria-hidden="true" />
             Presets:
           </span>
           {presets.map((p) => {
@@ -553,7 +593,7 @@ export const ScatterFrontier: React.FC<ScatterFrontierProps> = ({
                   setYMetricKey(p.y);
                 }}
                 aria-pressed={isActive}
-                className={`px-3 py-1.5 rounded-md font-medium whitespace-nowrap transition-colors shrink-0 text-xs ${
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors text-xs whitespace-nowrap ${
                   isActive
                     ? 'bg-[#006D77] dark:bg-[#2DD4BF] text-white dark:text-[#0A0E0F] font-semibold shadow-sm'
                     : 'bg-[#F5F5F3] dark:bg-[#182022] text-[#475456] dark:text-[#98A8AA] border border-[#E2E5E5] dark:border-[#242F32] hover:bg-[#ECEEED] dark:hover:bg-[#1D2629]'
@@ -565,54 +605,56 @@ export const ScatterFrontier: React.FC<ScatterFrontierProps> = ({
           })}
         </div>
 
-        {/* Dynamic Metric Pickers */}
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-[#161d31] px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
-            <label htmlFor="x-metric-select" className="text-slate-600 dark:text-slate-400 font-semibold shrink-0">
-              X-Axis:
-            </label>
-            <select
-              id="x-metric-select"
-              value={xMetricKey}
-              onChange={(e) => setXMetricKey(e.target.value as MetricKey)}
-              aria-label="Select metric for X-axis"
-              className="bg-transparent text-slate-800 dark:text-slate-200 outline-none cursor-pointer text-xs"
-            >
-              {METRICS.map((m) => (
-                <option key={m.key} value={m.key} className="bg-white dark:bg-[#0f1422] text-slate-900 dark:text-slate-200">
-                  {m.label} ({m.unit})
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Row 2: Metric Pickers & Pareto Toggle */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-[#E2E5E5] dark:border-[#242F32]">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <div className="flex items-center gap-1.5 bg-[#F5F5F3] dark:bg-[#182022] px-2.5 py-1.5 rounded-md border border-[#E2E5E5] dark:border-[#242F32]">
+              <label htmlFor="x-metric-select" className="text-[#526063] dark:text-[#98A8AA] font-semibold shrink-0">
+                X-Axis:
+              </label>
+              <select
+                id="x-metric-select"
+                value={xMetricKey}
+                onChange={(e) => setXMetricKey(e.target.value as MetricKey)}
+                aria-label="Select metric for X-axis"
+                className="bg-transparent text-[#0E1415] dark:text-[#F2F5F5] outline-none cursor-pointer text-xs font-medium"
+              >
+                {METRICS.map((m) => (
+                  <option key={m.key} value={m.key} className="bg-white dark:bg-[#0A0E0F] text-[#0E1415] dark:text-[#F2F5F5]">
+                    {m.label} ({m.unit})
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-[#161d31] px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
-            <label htmlFor="y-metric-select" className="text-slate-600 dark:text-slate-400 font-semibold shrink-0">
-              Y-Axis:
-            </label>
-            <select
-              id="y-metric-select"
-              value={yMetricKey}
-              onChange={(e) => setYMetricKey(e.target.value as MetricKey)}
-              aria-label="Select metric for Y-axis"
-              className="bg-transparent text-slate-800 dark:text-slate-200 outline-none cursor-pointer text-xs"
-            >
-              {METRICS.map((m) => (
-                <option key={m.key} value={m.key} className="bg-white dark:bg-[#0f1422] text-slate-900 dark:text-slate-200">
-                  {m.label} ({m.unit})
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center gap-1.5 bg-[#F5F5F3] dark:bg-[#182022] px-2.5 py-1.5 rounded-md border border-[#E2E5E5] dark:border-[#242F32]">
+              <label htmlFor="y-metric-select" className="text-[#526063] dark:text-[#98A8AA] font-semibold shrink-0">
+                Y-Axis:
+              </label>
+              <select
+                id="y-metric-select"
+                value={yMetricKey}
+                onChange={(e) => setYMetricKey(e.target.value as MetricKey)}
+                aria-label="Select metric for Y-axis"
+                className="bg-transparent text-[#0E1415] dark:text-[#F2F5F5] outline-none cursor-pointer text-xs font-medium"
+              >
+                {METRICS.map((m) => (
+                  <option key={m.key} value={m.key} className="bg-white dark:bg-[#0A0E0F] text-[#0E1415] dark:text-[#F2F5F5]">
+                    {m.label} ({m.unit})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Pareto Toggle */}
           <button
             onClick={() => setShowPareto(!showPareto)}
             aria-pressed={showPareto}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors ${
               showPareto
-                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700'
-                : 'bg-slate-100 dark:bg-[#161d31] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800'
+                ? 'bg-[#E6F3F4] dark:bg-[#0D2C28] text-[#006D77] dark:text-[#2DD4BF] border-[#006D77]/30 dark:border-[#2DD4BF]/40'
+                : 'bg-[#F5F5F3] dark:bg-[#182022] text-[#526063] dark:text-[#98A8AA] border-[#E2E5E5] dark:border-[#242F32]'
             }`}
           >
             <TrendingUp className="w-3.5 h-3.5" aria-hidden="true" />

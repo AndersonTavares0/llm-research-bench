@@ -36,7 +36,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   const [sortField, setSortField] = useState<SortField>('quality');
   const [sortAsc, setSortAsc] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [sizeFilter, setSizeFilter] = useState<'all' | 'sub2b' | '3b' | 'mtp'>('all');
+  const [sizeFilter, setSizeFilter] = useState<'all' | 'sub2b' | '3b' | 'dense' | 'mtp'>('all');
   const [showExplanation, setShowExplanation] = useState<boolean>(false);
 
   // Compute composite zero-shot quality score (average of ARC, HellaSwag, GSM8K, IFEval)
@@ -66,6 +66,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
       if (sizeFilter === 'sub2b') matchesFilter = m.parameters_b <= 2.0;
       else if (sizeFilter === '3b') matchesFilter = m.parameters_b > 2.0;
       else if (sizeFilter === 'mtp') matchesFilter = m.speculative_decoding;
+      else if (sizeFilter === 'dense') matchesFilter = !m.speculative_decoding;
 
       return matchesSearch && matchesFilter;
     });
@@ -123,9 +124,10 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs" role="group" aria-label="Filter models by size or architecture">
           {[
             { label: 'All Evaluated Models', value: 'all' },
+            { label: 'Dense Autoregressive', value: 'dense' },
+            { label: 'Speculative (MTP)', value: 'mtp' },
             { label: '≤ 2.0B Parameters', value: 'sub2b' },
-            { label: '3.0B Parameters', value: '3b' },
-            { label: 'Speculative Decoding (MTP)', value: 'mtp' }
+            { label: '3.0B+ Parameters', value: '3b' }
           ].map((pill) => {
             const isActive = sizeFilter === pill.value;
             return (
@@ -193,6 +195,19 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
           </div>
         </div>
       )}
+
+      {/* Speculative Decoding & MTP Architecture Clarification Banner */}
+      <div className="p-3.5 rounded-lg bg-[#F5F5F3] dark:bg-[#121719] border border-[#E2E5E5] dark:border-[#242F32] text-xs text-[#526063] dark:text-[#98A8AA] flex items-start gap-2.5">
+        <Info className="w-4 h-4 text-[#006D77] dark:text-[#2DD4BF] shrink-0 mt-0.5" aria-hidden="true" />
+        <div className="space-y-1">
+          <p className="font-semibold text-[#0E1415] dark:text-[#F2F5F5]">
+            Architectural Scope of Speculative Decoding (MTP vs Dense Autoregressive)
+          </p>
+          <p className="leading-relaxed">
+            Multi-Token Prediction (MTP) draft acceleration relies on auxiliary prediction heads embedded natively into the model weights (such as <strong className="text-[#0E1415] dark:text-[#F2F5F5]">Gemma-4:E2B</strong>). Architectures without native MTP heads (<strong className="text-[#0E1415] dark:text-[#F2F5F5]">Qwen2.5, SmolLM2, Llama-3.2, Qwen3.5</strong>) execute in standard single-token autoregressive mode under <code className="font-mono text-[11px] px-1 py-0.5 rounded bg-[#E2E5E5] dark:bg-[#1D2629]">llama.cpp</code>. Both the baseline (non-MTP) and MTP-accelerated Gemma variants are evaluated in the benchmark for direct controlled comparison.
+          </p>
+        </div>
+      </div>
 
       {/* Main Leaderboard Table Container */}
       <div className="rounded-xl border border-[#E2E5E5] dark:border-[#242F32] bg-white dark:bg-[#121719] overflow-x-auto shadow-sm">
@@ -296,9 +311,19 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                         <span className="font-semibold text-[#0E1415] dark:text-[#F2F5F5] group-hover:text-[#006D77] dark:group-hover:text-[#2DD4BF] transition-colors">
                           {m.name}
                         </span>
-                        {m.speculative_decoding && (
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#E6F3F4] dark:bg-[#0D2C28] text-[#006D77] dark:text-[#2DD4BF] border border-[#006D77]/25 dark:border-[#2DD4BF]/30 font-semibold">
-                            MTP (+25.6%)
+                        {m.speculative_decoding ? (
+                          <span
+                            className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#E6F3F4] dark:bg-[#0D2C28] text-[#006D77] dark:text-[#2DD4BF] border border-[#006D77]/25 dark:border-[#2DD4BF]/30 font-semibold"
+                            title="Speculative decoding enabled via auxiliary multi-token prediction heads"
+                          >
+                            Speculative (MTP +25.6%)
+                          </span>
+                        ) : (
+                          <span
+                            className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#F5F5F3] dark:bg-[#182022] text-[#526063] dark:text-[#98A8AA] border border-[#E2E5E5] dark:border-[#242F32]"
+                            title="Standard single-token autoregressive decoding"
+                          >
+                            Autoregressive (Dense)
                           </span>
                         )}
                       </div>
