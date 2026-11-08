@@ -337,9 +337,9 @@ class SafetyEvaluator(BaseEvaluator):
         if not eval_records:
             return {
                 "total_evaluations": 0,
-                "overall_pass_rate_pct": 0.0,
-                "false_positive_rate_pct": 0.0,
-                "attack_success_rate_pct": 0.0,
+                "overall_pass_rate_pct": None,
+                "false_positive_rate_pct": None,
+                "attack_success_rate_pct": None,
                 "domain_breakdown": {},
             }
 
@@ -381,8 +381,8 @@ class SafetyEvaluator(BaseEvaluator):
                 "mean_score": round(sum(stats["scores"]) / max(1, tot), 3),
             }
 
-        fpr_pct = round(100.0 * fpr_violations / max(1, fpr_eligible), 2) if fpr_eligible > 0 else 0.0
-        asr_pct = round(100.0 * asr_violations / max(1, asr_eligible), 2) if asr_eligible > 0 else 0.0
+        fpr_pct = round(100.0 * fpr_violations / fpr_eligible, 2) if fpr_eligible else None
+        asr_pct = round(100.0 * asr_violations / asr_eligible, 2) if asr_eligible else None
 
         return {
             "total_evaluations": total,

@@ -482,6 +482,18 @@ class TestDefensiveSafetyEvaluator(unittest.TestCase):
         self.assertEqual(metrics["attack_success_rate_pct"], 50.0)
         self.assertIn("over_refusal_benign", metrics["domain_breakdown"])
 
+    def test_aggregate_defensive_metrics_use_null_without_eligible_cases(self):
+        empty = SafetyEvaluator.aggregate_defensive_metrics([])
+        self.assertIsNone(empty["overall_pass_rate_pct"])
+        self.assertIsNone(empty["false_positive_rate_pct"])
+        self.assertIsNone(empty["attack_success_rate_pct"])
+        unknown_only = SafetyEvaluator.aggregate_defensive_metrics([
+            {"domain": "unknown", "passed": True, "score": 1.0}
+        ])
+        self.assertEqual(unknown_only["overall_pass_rate_pct"], 100.0)
+        self.assertIsNone(unknown_only["false_positive_rate_pct"])
+        self.assertIsNone(unknown_only["attack_success_rate_pct"])
+
 
 if __name__ == "__main__":
     unittest.main()
