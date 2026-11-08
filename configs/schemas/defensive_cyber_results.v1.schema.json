@@ -1,0 +1,150 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Defensive cybersecurity track results v1",
+  "description": "Envelopes for the three offline defensive-cyber record types. Written in the JSON-Schema subset enforced by src/llm_research_bench/capability.py::validate (type/enum/required/additionalProperties/items only; no $ref or oneOf). Record payloads corresponding to each benchmark value MUST be validated against the definition named in x-record-schema-mapping. Nothing in a schema-valid file is evidence that a model was evaluated: use status=deterministic_scoring_only until real model runs are recorded.",
+  "type": "object",
+  "required": ["generated_by", "status", "benchmark", "summary", "records"],
+  "properties": {
+    "generated_by": {"type": "string", "minLength": 1},
+    "status": {
+      "type": "string",
+      "enum": ["deterministic_scoring_only", "measured"],
+      "description": "deterministic_scoring_only: no model produced the responses."
+    },
+    "benchmark": {
+      "type": "string",
+      "enum": [
+        "static_vulnerability_triage",
+        "cve_advisory_triage",
+        "appsec_chatbot_scenarios"
+      ]
+    },
+    "dataset_version": {"type": "string"},
+    "summary": {"type": "object"},
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "object"}
+    }
+  },
+  "additionalProperties": true,
+  "x-record-schema-mapping": {
+    "static_vulnerability_triage": "vulnerability_analysis_record",
+    "cve_advisory_triage": "cve_triage_case_record",
+    "appsec_chatbot_scenarios": "appsec_scenario_record"
+  },
+  "definitions": {
+    "vulnerability_analysis_record": {
+      "type": "object",
+      "required": ["id", "malformed_output", "true_positive", "false_positive", "false_negative", "true_negative_case"],
+      "properties": {
+        "id": {"type": "string"},
+        "malformed_output": {"type": "boolean"},
+        "true_positive": {"type": "integer"},
+        "false_positive": {"type": "integer"},
+        "false_negative": {"type": "integer"},
+        "true_negative_case": {"type": "boolean"},
+        "precision": {"type": ["number", "null"]},
+        "recall": {"type": ["number", "null"]},
+        "f1": {"type": ["number", "null"]},
+        "remediation_coverage": {"type": ["number", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "cve_triage_case_record": {
+      "type": "object",
+      "required": ["id", "cve", "malformed_output", "inventory_rows", "records"],
+      "properties": {
+        "id": {"type": "string"},
+        "cve": {"type": "string", "pattern": "^CVE-"},
+        "malformed_output": {"type": "boolean"},
+        "inventory_rows": {"type": "integer"},
+        "classified_rows": {"type": "integer"},
+        "correct_classifications": {"type": "integer"},
+        "accuracy": {"type": ["number", "null"]},
+        "unsafe_misses": {"type": "integer"},
+        "false_alarms": {"type": "integer"},
+        "correct_abstentions": {"type": "integer"},
+        "abstention_rate": {"type": ["number", "null"]},
+        "unclassified_rows": {"type": "integer"},
+        "invalid_classifications": {"type": "integer"},
+        "invented_cve_references": {"type": "integer"},
+        "remediation_coverage": {"type": ["number", "null"]},
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["package", "expected", "classified", "correct", "unsafe_miss", "false_alarm"],
+            "properties": {
+              "package": {"type": "string"},
+              "version": {"type": ["string", "null"]},
+              "expected": {"type": "string", "enum": ["affected", "not_affected", "insufficient_evidence"]},
+              "classification_status": {"type": ["string", "null"]},
+              "classified": {"type": "boolean"},
+              "correct": {"type": "boolean"},
+              "unsafe_miss": {"type": "boolean"},
+              "false_alarm": {"type": "boolean"}
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "appsec_scenario_record": {
+      "type": "object",
+      "required": ["id", "attack_type", "expected", "expected_match", "classification", "envelopes"],
+      "properties": {
+        "id": {"type": "string"},
+        "attack_type": {"type": "string"},
+        "expected": {
+          "type": "object",
+          "properties": {
+            "status": {"type": "string", "enum": ["EXECUTED", "BLOCKED"]},
+            "denial_reason": {
+              "type": ["string", "null"],
+              "enum": ["AUTHORIZATION", "POLICY", "VALIDATION", "QUOTA", "UNKNOWN_TOOL", null]
+            }
+          }
+        },
+        "expected_match": {"type": "boolean"},
+        "classification": {
+          "type": "string",
+          "enum": [
+            "model_refused",
+            "benign_complete",
+            "unauthorized_blocked",
+            "invalid_use_blocked",
+            "application_compromise"
+          ]
+        },
+        "secret_canary_leaked": {"type": "boolean"},
+        "denial_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["AUTHORIZATION", "POLICY", "VALIDATION", "QUOTA", "UNKNOWN_TOOL"]
+          }
+        },
+        "envelopes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["status", "denial_reason", "authorized", "result"],
+            "properties": {
+              "status": {"type": "string", "enum": ["EXECUTED", "BLOCKED"]},
+              "denial_reason": {
+                "type": ["string", "null"],
+                "enum": ["AUTHORIZATION", "POLICY", "VALIDATION", "QUOTA", "UNKNOWN_TOOL", null]
+              },
+              "authorized": {"type": "boolean"},
+              "result": {}
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

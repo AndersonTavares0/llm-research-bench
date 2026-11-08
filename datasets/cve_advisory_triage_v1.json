@@ -1,0 +1,97 @@
+[
+  {
+    "id": "cve_triage_001_sudo_baron_samedit",
+    "cve": "CVE-2021-3156",
+    "source": "Paraphrased from Ubuntu Security Notice USN-4697-1 (2021-01-26); sudo heap overflow in argument parsing fixed in 1.9.5p2.",
+    "summary": "Sudo before 1.9.5p2 mishandles backslash characters in command arguments, allowing a local user to escalate privileges.",
+    "affected_ranges": {
+      "sudo": ["< 1.9.5p2"]
+    },
+    "remediation_keywords": ["upgrade"],
+    "inventory": [
+      {"package": "sudo", "version": "1.8.31", "expected": "affected"},
+      {"package": "sudo", "version": "1.9.5p2", "expected": "not_affected"},
+      {"package": "sudo", "version": null, "expected": "insufficient_evidence"}
+    ]
+  },
+  {
+    "id": "cve_triage_002_log4shell",
+    "cve": "CVE-2021-44228",
+    "source": "Paraphrased from Apache Log4j Security Advisories (2021-12); JNDI lookup injection fixed in 2.15.0 for the 2.x line.",
+    "summary": "Apache Log4j2 2.x before 2.15.0 performs JNDI lookups on attacker-controlled message data, permitting remote code execution. The 1.x line does not implement the vulnerable lookup API.",
+    "affected_ranges": {
+      "log4j-core": [">= 2.0.0 && < 2.15.0"]
+    },
+    "remediation_keywords": ["upgrade"],
+    "inventory": [
+      {"package": "log4j-core", "version": "2.14.1", "expected": "affected"},
+      {"package": "log4j-core", "version": "1.2.17", "expected": "not_affected"},
+      {"package": "log4j-core", "version": "2.17.0", "expected": "not_affected"},
+      {"package": "log4j-core", "version": null, "expected": "insufficient_evidence"}
+    ]
+  },
+  {
+    "id": "cve_triage_003_heartbleed",
+    "cve": "CVE-2014-0160",
+    "source": "Paraphrased from OpenSSL Security Advisory [06 Apr 2014]; TLS heartbeat over-read fixed in 1.0.1g.",
+    "summary": "OpenSSL 1.0.1 through 1.0.1f mishandles the TLS heartbeat extension and over-reads adjacent memory without bounds checks.",
+    "affected_ranges": {
+      "openssl": [">= 1.0.1 && <= 1.0.1f"]
+    },
+    "remediation_keywords": ["upgrade"],
+    "inventory": [
+      {"package": "openssl", "version": "1.0.1d", "expected": "affected"},
+      {"package": "openssl", "version": "1.0.1g", "expected": "not_affected"},
+      {"package": "openssl", "version": "0.9.8z", "expected": "not_affected"},
+      {"package": "openssl", "version": null, "expected": "insufficient_evidence"}
+    ]
+  },
+  {
+    "id": "cve_triage_004_php_fpm_url_misparse",
+    "cve": "CVE-2019-11043",
+    "source": "Paraphrased from PHP release announcements (2019-10); PHP-FPM root-path misparse fixed in 7.1.33 / 7.2.24 / 7.3.11.",
+    "summary": "PHP-FPM with certain Nginx configurations does not sanitize the SCRIPT_FILENAME root path, allowing a remote attacker to execute code. Fixed in PHP 7.1.33, 7.2.24, and 7.3.11.",
+    "affected_ranges": {
+      "php-fpm": ["< 7.1.33", ">= 7.2.0 && < 7.2.24", ">= 7.3.0 && < 7.3.11"]
+    },
+    "remediation_keywords": ["upgrade"],
+    "inventory": [
+      {"package": "php-fpm", "version": "7.1.30", "expected": "affected"},
+      {"package": "php-fpm", "version": "7.2.24", "expected": "not_affected"},
+      {"package": "php-fpm", "version": "7.3.24", "expected": "not_affected"},
+      {"package": "php-fpm", "version": null, "expected": "insufficient_evidence"}
+    ]
+  },
+  {
+    "id": "cve_triage_005_nginx_resolver",
+    "cve": "CVE-2016-0748",
+    "source": "Paraphrased from nginx security advisory nginx-EN-2016-01-26; DNS resolver unit over-read fixed in 1.8.1 and 1.9.11.",
+    "summary": "nginx DNS resolver out-of-bounds reads in versions before 1.8.1 and 1.9.x before 1.9.11 allow crafted DNS responses to trigger denial of service.",
+    "affected_ranges": {
+      "nginx": ["< 1.8.1", ">= 1.9.0 && < 1.9.11"]
+    },
+    "remediation_keywords": ["upgrade"],
+    "inventory": [
+      {"package": "nginx", "version": "1.9.10", "expected": "affected"},
+      {"package": "nginx", "version": "1.8.1", "expected": "not_affected"},
+      {"package": "nginx", "version": "0.7.10", "expected": "affected"},
+      {"package": "nginx", "version": null, "expected": "insufficient_evidence"}
+    ]
+  },
+  {
+    "id": "cve_triage_006_synthetic_mock_ctl",
+    "cve": "CVE-2089-0000",
+    "source": "Synthetic advisory created for this benchmark (no real-world counterpart); exercises letter-patch version ordering.",
+    "summary": "The fictional mock-ctl homelab utility before 1.0.0p1 ships test-only control endpoints to production. This advisory is synthetic and only exercises deterministic version logic.",
+    "affected_ranges": {
+      "mock-ctl": ["< 1.0.0p1"]
+    },
+    "remediation_keywords": ["upgrade"],
+    "inventory": [
+      {"package": "mock-ctl", "version": "1.0.0", "expected": "affected"},
+      {"package": "mock-ctl", "version": "1.0.0p2", "expected": "not_affected"},
+      {"package": "mock-ctl", "version": "0.9.9", "expected": "affected"},
+      {"package": "mock-ctl", "version": null, "expected": "insufficient_evidence"}
+    ]
+  }
+]
