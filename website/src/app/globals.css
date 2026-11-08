@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+/* ==========================================================================
+   SLM-LIMITS SCIENTIFIC DESIGN SYSTEM (web/DESIGN.md)
+   Epoch AI Editorial Rigor + Artificial Analysis Data Telemetry
+   ========================================================================== */
+
+:root {
+  /* Light Mode (Primary Canvas: Archival Paper) */
+  --background: #FBFBFA;
+  --surface: #FFFFFF;
+  --surface-subtle: #F5F5F3;
+  --surface-hover: #ECEEED;
+  --border: #E2E5E5;
+  --border-subtle: #ECEEED;
+  --border-strong: #BAC2C2;
+  --foreground: #0E1415;
+  --foreground-muted: #475456;
+  --foreground-tertiary: #526063;
+
+  /* Theme Accents (Deep Scientific Teal & Physical Semantics) */
+  --primary: #006D77;
+  --primary-hover: #00535B;
+  --primary-surface: #E6F3F4;
+  --accent-speed: #0284C7;
+  --accent-quality: #006D77;
+  --accent-pareto: #0E7A5A;
+  --accent-warning: #B45309;
+  --accent-danger: #BE123C;
+
+  /* Evidence Status Tokens */
+  --status-measured: #0E7A5A;
+  --status-partial: #B45309;
+  --status-analytical: #4338CA;
+  --status-ready: #475456;
+  --status-unknown: #526063;
+
+  /* Chart & Grid */
+  --chart-grid: #ECEEED;
+  --chart-axis: #526063;
+}
+
+.dark {
+  /* Dark Mode (Laboratory Complement: Obsidian Canvas) */
+  --background: #0A0E0F;
+  --surface: #121719;
+  --surface-subtle: #182022;
+  --surface-hover: #1D2629;
+  --border: #242F32;
+  --border-subtle: #1C2426;
+  --border-strong: #3B4C50;
+  --foreground: #F2F5F5;
+  --foreground-muted: #98A8AA;
+  --foreground-tertiary: #98A8AA;
+
+  /* Theme Accents */
+  --primary: #2DD4BF;
+  --primary-hover: #14B8A6;
+  --primary-surface: #0D2C28;
+  --accent-speed: #38BDF8;
+  --accent-quality: #2DD4BF;
+  --accent-pareto: #34D399;
+  --accent-warning: #FBBF24;
+  --accent-danger: #FB7185;
+
+  /* Evidence Status Tokens */
+  --status-measured: #34D399;
+  --status-partial: #FBBF24;
+  --status-analytical: #818CF8;
+  --status-ready: #98A8AA;
+  --status-unknown: #98A8AA;
+
+  /* Chart & Grid */
+  --chart-grid: #1C2426;
+  --chart-axis: #98A8AA;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Editorial Serif Headlines */
+.font-serif {
+  font-family: var(--font-newsreader), Georgia, Cambria, "Times New Roman", serif;
+}
+
+/* Precision Tabular Monospace */
+.font-mono {
+  font-family: var(--font-jetbrains-mono), Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle Technical Grid Overlay */
+.bg-grid-subtle {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(71, 84, 86, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(71, 84, 86, 0.06) 1px, transparent 1px);
+}
+
+.dark .bg-grid-subtle {
+  background-image: 
+    linear-gradient(to right, rgba(152, 168, 170, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(152, 168, 170, 0.05) 1px, transparent 1px);
+}
+
+/* Accessible focus visible outlines (WCAG 2.2 AA) */
+*:focus-visible {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: 2px;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--primary);
+  color: #FFFFFF;
+  padding: 8px 16px;
+  z-index: 100;
+  font-weight: 600;
+  font-size: 13px;
+  border-radius: 0 0 6px 0;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Custom scrollbars for data tables */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}

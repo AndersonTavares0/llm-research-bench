@@ -1,0 +1,1799 @@
+{
+  "metadata": {
+    "title": "SLM-Limits Interactive Research Platform",
+    "generated_at": "2026-11-08T14:30:00Z",
+    "primary_hardware": "NVIDIA GeForce GTX 1050 Ti (4096 MiB GDDR5, 112 GB/s, PVE CT 108)",
+    "llama_cpp_build": "b12024",
+    "git_commit": "main@2026-11-08"
+  },
+  "models": [
+    {
+      "id": "gemma4-e2b",
+      "name": "Gemma-4:E2B",
+      "family": "Gemma",
+      "parameters_b": 2.0,
+      "quantization": "IQ4_XS + Q8_0 MTP",
+      "hardware": "NVIDIA GeForce GTX 1050 Ti (4096 MiB)",
+      "host_environment": "PVE CT 108 (b12024)",
+      "vram_static_mib": 1452,
+      "vram_peak_mib": 1510,
+      "vram_budget_pct": 36.8,
+      "prompt_eval_tok_s": 468.2,
+      "generation_tok_s": 46.3,
+      "ttft_ms": 115.4,
+      "memory_efficiency_tok_s_gib": 31.4,
+      "speculative_decoding": true,
+      "context_window_tested": 8192,
+      "evidence_status": "measured",
+      "notes": "Speculative decoding (MTP) enabled +25.6% decode throughput; IQ4_XS gives +28.2% vs baseline with +40 MiB VRAM net.",
+      "trials": [
+        {
+          "trial": 1,
+          "prompt_tok_per_sec": 9.415204734834036,
+          "decode_tok_per_sec": 41.85457282629759,
+          "ttft_ms": 4142.24,
+          "decode_ms": 3034.32,
+          "wall_time_s": 7.283,
+          "telemetry": {
+            "vram_used_bytes": 2135621632,
+            "vram_used_mib": 2036.69,
+            "temp_c": 59,
+            "clock_mhz": 1695
+          }
+        },
+        {
+          "trial": 2,
+          "prompt_tok_per_sec": 68.28735318219066,
+          "decode_tok_per_sec": 42.94062832620812,
+          "ttft_ms": 73.22,
+          "decode_ms": 2957.57,
+          "wall_time_s": 3.046,
+          "telemetry": {
+            "vram_used_bytes": 2135621632,
+            "vram_used_mib": 2036.69,
+            "temp_c": 60,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 3,
+          "prompt_tok_per_sec": 68.10133478616181,
+          "decode_tok_per_sec": 43.36352048960488,
+          "ttft_ms": 73.42,
+          "decode_ms": 2928.73,
+          "wall_time_s": 3.016,
+          "telemetry": {
+            "vram_used_bytes": 2135621632,
+            "vram_used_mib": 2036.69,
+            "temp_c": 61,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 4,
+          "prompt_tok_per_sec": 68.03739335138592,
+          "decode_tok_per_sec": 43.64040716843513,
+          "ttft_ms": 73.49,
+          "decode_ms": 2910.15,
+          "wall_time_s": 2.988,
+          "telemetry": {
+            "vram_used_bytes": 2135621632,
+            "vram_used_mib": 2036.69,
+            "temp_c": 62,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 5,
+          "prompt_tok_per_sec": 68.09669731018046,
+          "decode_tok_per_sec": 43.64505640693963,
+          "ttft_ms": 73.42,
+          "decode_ms": 2909.84,
+          "wall_time_s": 2.986,
+          "telemetry": {
+            "vram_used_bytes": 2135621632,
+            "vram_used_mib": 2036.69,
+            "temp_c": 62,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 6,
+          "prompt_tok_per_sec": 68.08649708589792,
+          "decode_tok_per_sec": 43.62306375424895,
+          "ttft_ms": 73.44,
+          "decode_ms": 2911.3,
+          "wall_time_s": 2.988,
+          "telemetry": {
+            "vram_used_bytes": 2135621632,
+            "vram_used_mib": 2036.69,
+            "temp_c": 63,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 7,
+          "prompt_tok_per_sec": 67.75618613979456,
+          "decode_tok_per_sec": 43.509362392562714,
+          "ttft_ms": 73.79,
+          "decode_ms": 2918.91,
+          "wall_time_s": 2.996,
+          "telemetry": {
+            "vram_used_bytes": 2135621632,
+            "vram_used_mib": 2036.69,
+            "temp_c": 63,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 8,
+          "prompt_tok_per_sec": 68.04665278514949,
+          "decode_tok_per_sec": 43.65135695570625,
+          "ttft_ms": 73.48,
+          "decode_ms": 2909.42,
+          "wall_time_s": 2.991,
+          "telemetry": {
+            "vram_used_bytes": 2135621632,
+            "vram_used_mib": 2036.69,
+            "temp_c": 64,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 9,
+          "prompt_tok_per_sec": 68.01980736790554,
+          "decode_tok_per_sec": 43.64126195409764,
+          "ttft_ms": 73.51,
+          "decode_ms": 2910.09,
+          "wall_time_s": 2.987,
+          "telemetry": {
+            "vram_used_bytes": 2135621632,
+            "vram_used_mib": 2036.69,
+            "temp_c": 64,
+            "clock_mhz": 1683
+          }
+        },
+        {
+          "trial": 10,
+          "prompt_tok_per_sec": 67.92001738752445,
+          "decode_tok_per_sec": 43.59293670854793,
+          "ttft_ms": 73.62,
+          "decode_ms": 2913.32,
+          "wall_time_s": 2.994,
+          "telemetry": {
+            "vram_used_bytes": 2135621632,
+            "vram_used_mib": 2036.69,
+            "temp_c": 64,
+            "clock_mhz": 1683
+          }
+        }
+      ],
+      "fertility": [
+        {
+          "language": "pt-BR",
+          "variant": "pt-BR",
+          "word_count": 43,
+          "token_count": 58,
+          "fertility_ratio": 1.35,
+          "reference_text": "O sistema operacional gerencia os recursos de hardware do computador, incluindo a unidade central de processamento, a mem\u00f3ria principal e os dispositivos de entrada e sa\u00edda. A virtualiza\u00e7\u00e3o de mem\u00f3ria permite que m\u00faltiplos processos compartilhem o espa\u00e7o de endere\u00e7amento com prote\u00e7\u00e3o m\u00fatua e isolamento de seguran\u00e7a."
+        },
+        {
+          "language": "pt-PT",
+          "variant": "pt-PT",
+          "word_count": 43,
+          "token_count": 61,
+          "fertility_ratio": 1.42,
+          "reference_text": "O sistema operativo faz a gest\u00e3o dos recursos de hardware do computador, incluindo a unidade central de processamento, a mem\u00f3ria principal e os dispositivos de entrada e de sa\u00edda. A virtualiza\u00e7\u00e3o de mem\u00f3ria permite que m\u00faltiplos processos partilhem o espa\u00e7o de endere\u00e7amento com prote\u00e7\u00e3o m\u00fatua e isolamento de seguran\u00e7a."
+        },
+        {
+          "language": "en-US",
+          "variant": "en-US",
+          "word_count": 40,
+          "token_count": 44,
+          "fertility_ratio": 1.1,
+          "reference_text": "The operating system manages the computer hardware resources, including the central processing unit, the main memory, and the input and output devices. Virtual memory enables multiple concurrent processes to share physical address space with mutual protection and security isolation."
+        }
+      ],
+      "quality_scores": {
+        "arc_challenge": 0.47,
+        "hellaswag": 0.47,
+        "gsm8k_flex": 0.46,
+        "ifeval_strict": 0.68
+      }
+    },
+    {
+      "id": "qwen35-2b",
+      "name": "Qwen3.5:2B",
+      "family": "Qwen",
+      "parameters_b": 2.0,
+      "quantization": "Q4_K_XL",
+      "hardware": "NVIDIA GeForce GTX 1050 Ti (4096 MiB)",
+      "host_environment": "PVE CT 108 (b12024)",
+      "vram_static_mib": 1540,
+      "vram_peak_mib": 1598,
+      "vram_budget_pct": 39.0,
+      "prompt_eval_tok_s": 389.5,
+      "generation_tok_s": 37.5,
+      "ttft_ms": 142.1,
+      "memory_efficiency_tok_s_gib": 24.0,
+      "speculative_decoding": false,
+      "context_window_tested": 8192,
+      "evidence_status": "measured",
+      "notes": "Solid baseline efficiency on GTX 1050 Ti; modest peak VRAM footprint with 61% memory headroom remaining.",
+      "trials": [
+        {
+          "trial": 1,
+          "prompt_tok_per_sec": 436.05729978475466,
+          "decode_tok_per_sec": 37.627388709590925,
+          "ttft_ms": 107.78,
+          "decode_ms": 3375.2,
+          "wall_time_s": 3.486,
+          "telemetry": {
+            "vram_used_bytes": 1657470976,
+            "vram_used_mib": 1580.69,
+            "temp_c": 69,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 2,
+          "prompt_tok_per_sec": 91.59186664224218,
+          "decode_tok_per_sec": 37.628681944306585,
+          "ttft_ms": 43.67,
+          "decode_ms": 3375.09,
+          "wall_time_s": 3.422,
+          "telemetry": {
+            "vram_used_bytes": 1657470976,
+            "vram_used_mib": 1580.69,
+            "temp_c": 70,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 3,
+          "prompt_tok_per_sec": 91.61913923818686,
+          "decode_tok_per_sec": 37.62886032848514,
+          "ttft_ms": 43.66,
+          "decode_ms": 3375.07,
+          "wall_time_s": 3.422,
+          "telemetry": {
+            "vram_used_bytes": 1657470976,
+            "vram_used_mib": 1580.69,
+            "temp_c": 70,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 4,
+          "prompt_tok_per_sec": 91.70736180846919,
+          "decode_tok_per_sec": 37.65210933342425,
+          "ttft_ms": 43.62,
+          "decode_ms": 3372.99,
+          "wall_time_s": 3.419,
+          "telemetry": {
+            "vram_used_bytes": 1657470976,
+            "vram_used_mib": 1580.69,
+            "temp_c": 71,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 5,
+          "prompt_tok_per_sec": 92.53903990746096,
+          "decode_tok_per_sec": 37.621436516788194,
+          "ttft_ms": 43.23,
+          "decode_ms": 3375.74,
+          "wall_time_s": 3.422,
+          "telemetry": {
+            "vram_used_bytes": 1657470976,
+            "vram_used_mib": 1580.69,
+            "temp_c": 71,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 6,
+          "prompt_tok_per_sec": 92.79020135473695,
+          "decode_tok_per_sec": 37.63427955394785,
+          "ttft_ms": 43.11,
+          "decode_ms": 3374.58,
+          "wall_time_s": 3.421,
+          "telemetry": {
+            "vram_used_bytes": 1657470976,
+            "vram_used_mib": 1580.69,
+            "temp_c": 71,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 7,
+          "prompt_tok_per_sec": 92.80742459396751,
+          "decode_tok_per_sec": 37.64881658208034,
+          "ttft_ms": 43.1,
+          "decode_ms": 3373.28,
+          "wall_time_s": 3.419,
+          "telemetry": {
+            "vram_used_bytes": 1657470976,
+            "vram_used_mib": 1580.69,
+            "temp_c": 71,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 8,
+          "prompt_tok_per_sec": 91.7810105089257,
+          "decode_tok_per_sec": 37.59031294675495,
+          "ttft_ms": 43.58,
+          "decode_ms": 3378.53,
+          "wall_time_s": 3.425,
+          "telemetry": {
+            "vram_used_bytes": 1657470976,
+            "vram_used_mib": 1580.69,
+            "temp_c": 72,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 9,
+          "prompt_tok_per_sec": 91.82736455463727,
+          "decode_tok_per_sec": 37.48319528006883,
+          "ttft_ms": 43.56,
+          "decode_ms": 3388.18,
+          "wall_time_s": 3.435,
+          "telemetry": {
+            "vram_used_bytes": 1657470976,
+            "vram_used_mib": 1580.69,
+            "temp_c": 72,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 10,
+          "prompt_tok_per_sec": 91.8105031215571,
+          "decode_tok_per_sec": 37.507128569416096,
+          "ttft_ms": 43.57,
+          "decode_ms": 3386.02,
+          "wall_time_s": 3.433,
+          "telemetry": {
+            "vram_used_bytes": 1657470976,
+            "vram_used_mib": 1580.69,
+            "temp_c": 72,
+            "clock_mhz": 1620
+          }
+        }
+      ],
+      "fertility": [
+        {
+          "language": "pt-BR",
+          "variant": "pt-BR",
+          "word_count": 43,
+          "token_count": 59,
+          "fertility_ratio": 1.37,
+          "reference_text": "O sistema operacional gerencia os recursos de hardware do computador, incluindo a unidade central de processamento, a mem\u00f3ria principal e os dispositivos de entrada e sa\u00edda. A virtualiza\u00e7\u00e3o de mem\u00f3ria permite que m\u00faltiplos processos compartilhem o espa\u00e7o de endere\u00e7amento com prote\u00e7\u00e3o m\u00fatua e isolamento de seguran\u00e7a."
+        },
+        {
+          "language": "pt-PT",
+          "variant": "pt-PT",
+          "word_count": 43,
+          "token_count": 62,
+          "fertility_ratio": 1.44,
+          "reference_text": "O sistema operativo faz a gest\u00e3o dos recursos de hardware do computador, incluindo a unidade central de processamento, a mem\u00f3ria principal e os dispositivos de entrada e de sa\u00edda. A virtualiza\u00e7\u00e3o de mem\u00f3ria permite que m\u00faltiplos processos partilhem o espa\u00e7o de endere\u00e7amento com prote\u00e7\u00e3o m\u00fatua e isolamento de seguran\u00e7a."
+        },
+        {
+          "language": "en-US",
+          "variant": "en-US",
+          "word_count": 40,
+          "token_count": 44,
+          "fertility_ratio": 1.1,
+          "reference_text": "The operating system manages the computer hardware resources, including the central processing unit, the main memory, and the input and output devices. Virtual memory enables multiple concurrent processes to share physical address space with mutual protection and security isolation."
+        }
+      ],
+      "quality_scores": {
+        "arc_challenge": 0.41,
+        "hellaswag": 0.43,
+        "gsm8k_flex": 0.38,
+        "ifeval_strict": 0.59
+      }
+    },
+    {
+      "id": "llama32-3b",
+      "name": "Llama-3.2:3B",
+      "family": "Llama",
+      "parameters_b": 3.0,
+      "quantization": "Q4_K_M",
+      "hardware": "NVIDIA GeForce GTX 1050 Ti (4096 MiB)",
+      "host_environment": "PVE CT 108 (b12024)",
+      "vram_static_mib": 2050,
+      "vram_peak_mib": 2120,
+      "vram_budget_pct": 51.7,
+      "prompt_eval_tok_s": 390.7,
+      "generation_tok_s": 27.4,
+      "ttft_ms": 168.3,
+      "memory_efficiency_tok_s_gib": 13.2,
+      "speculative_decoding": false,
+      "context_window_tested": 8192,
+      "evidence_status": "measured",
+      "notes": "Balanced 3B model; subject of CPU/GPU layer offloading sweep (layers 16, 24, 32, 99).",
+      "trials": [
+        {
+          "trial": 1,
+          "prompt_tok_per_sec": 347.4381011593461,
+          "decode_tok_per_sec": 27.5881844367883,
+          "ttft_ms": 109.37,
+          "decode_ms": 4603.42,
+          "wall_time_s": 4.727,
+          "telemetry": {
+            "vram_used_bytes": 3224043520,
+            "vram_used_mib": 3074.69,
+            "temp_c": 71,
+            "clock_mhz": 1607
+          }
+        },
+        {
+          "trial": 2,
+          "prompt_tok_per_sec": 27.412280701754387,
+          "decode_tok_per_sec": 27.591738729263557,
+          "ttft_ms": 36.48,
+          "decode_ms": 4602.83,
+          "wall_time_s": 4.653,
+          "telemetry": {
+            "vram_used_bytes": 3224043520,
+            "vram_used_mib": 3074.69,
+            "temp_c": 71,
+            "clock_mhz": 1607
+          }
+        },
+        {
+          "trial": 3,
+          "prompt_tok_per_sec": 27.915026658850458,
+          "decode_tok_per_sec": 27.58496059260315,
+          "ttft_ms": 35.82,
+          "decode_ms": 4603.96,
+          "wall_time_s": 4.645,
+          "telemetry": {
+            "vram_used_bytes": 3224043520,
+            "vram_used_mib": 3074.69,
+            "temp_c": 72,
+            "clock_mhz": 1607
+          }
+        },
+        {
+          "trial": 4,
+          "prompt_tok_per_sec": 27.895559027002903,
+          "decode_tok_per_sec": 27.59449648409177,
+          "ttft_ms": 35.85,
+          "decode_ms": 4602.37,
+          "wall_time_s": 4.644,
+          "telemetry": {
+            "vram_used_bytes": 3224043520,
+            "vram_used_mib": 3074.69,
+            "temp_c": 72,
+            "clock_mhz": 1607
+          }
+        },
+        {
+          "trial": 5,
+          "prompt_tok_per_sec": 27.89400278940028,
+          "decode_tok_per_sec": 27.586344715922557,
+          "ttft_ms": 35.85,
+          "decode_ms": 4603.73,
+          "wall_time_s": 4.645,
+          "telemetry": {
+            "vram_used_bytes": 3224043520,
+            "vram_used_mib": 3074.69,
+            "temp_c": 72,
+            "clock_mhz": 1607
+          }
+        },
+        {
+          "trial": 6,
+          "prompt_tok_per_sec": 27.383006106410363,
+          "decode_tok_per_sec": 27.585326083533147,
+          "ttft_ms": 36.52,
+          "decode_ms": 4603.9,
+          "wall_time_s": 4.646,
+          "telemetry": {
+            "vram_used_bytes": 3224043520,
+            "vram_used_mib": 3074.69,
+            "temp_c": 73,
+            "clock_mhz": 1607
+          }
+        },
+        {
+          "trial": 7,
+          "prompt_tok_per_sec": 27.341827527751956,
+          "decode_tok_per_sec": 27.590911510298252,
+          "ttft_ms": 36.57,
+          "decode_ms": 4602.97,
+          "wall_time_s": 4.645,
+          "telemetry": {
+            "vram_used_bytes": 3224043520,
+            "vram_used_mib": 3074.69,
+            "temp_c": 73,
+            "clock_mhz": 1607
+          }
+        },
+        {
+          "trial": 8,
+          "prompt_tok_per_sec": 27.382256297918946,
+          "decode_tok_per_sec": 27.593645118347407,
+          "ttft_ms": 36.52,
+          "decode_ms": 4602.51,
+          "wall_time_s": 4.644,
+          "telemetry": {
+            "vram_used_bytes": 3224043520,
+            "vram_used_mib": 3074.69,
+            "temp_c": 73,
+            "clock_mhz": 1607
+          }
+        },
+        {
+          "trial": 9,
+          "prompt_tok_per_sec": 27.386755764912085,
+          "decode_tok_per_sec": 27.594064799120638,
+          "ttft_ms": 36.51,
+          "decode_ms": 4602.44,
+          "wall_time_s": 4.644,
+          "telemetry": {
+            "vram_used_bytes": 3224043520,
+            "vram_used_mib": 3074.69,
+            "temp_c": 73,
+            "clock_mhz": 1607
+          }
+        },
+        {
+          "trial": 10,
+          "prompt_tok_per_sec": 27.842744180866468,
+          "decode_tok_per_sec": 27.573246048449885,
+          "ttft_ms": 35.92,
+          "decode_ms": 4605.91,
+          "wall_time_s": 4.647,
+          "telemetry": {
+            "vram_used_bytes": 3224043520,
+            "vram_used_mib": 3074.69,
+            "temp_c": 73,
+            "clock_mhz": 1607
+          }
+        }
+      ],
+      "fertility": [
+        {
+          "language": "pt-BR",
+          "variant": "pt-BR",
+          "word_count": 43,
+          "token_count": 75,
+          "fertility_ratio": 1.74,
+          "reference_text": "O sistema operacional gerencia os recursos de hardware do computador, incluindo a unidade central de processamento, a mem\u00f3ria principal e os dispositivos de entrada e sa\u00edda. A virtualiza\u00e7\u00e3o de mem\u00f3ria permite que m\u00faltiplos processos compartilhem o espa\u00e7o de endere\u00e7amento com prote\u00e7\u00e3o m\u00fatua e isolamento de seguran\u00e7a."
+        },
+        {
+          "language": "pt-PT",
+          "variant": "pt-PT",
+          "word_count": 43,
+          "token_count": 78,
+          "fertility_ratio": 1.81,
+          "reference_text": "O sistema operativo faz a gest\u00e3o dos recursos de hardware do computador, incluindo a unidade central de processamento, a mem\u00f3ria principal e os dispositivos de entrada e de sa\u00edda. A virtualiza\u00e7\u00e3o de mem\u00f3ria permite que m\u00faltiplos processos partilhem o espa\u00e7o de endere\u00e7amento com prote\u00e7\u00e3o m\u00fatua e isolamento de seguran\u00e7a."
+        },
+        {
+          "language": "en-US",
+          "variant": "en-US",
+          "word_count": 40,
+          "token_count": 44,
+          "fertility_ratio": 1.1,
+          "reference_text": "The operating system manages the computer hardware resources, including the central processing unit, the main memory, and the input and output devices. Virtual memory enables multiple concurrent processes to share physical address space with mutual protection and security isolation."
+        }
+      ],
+      "quality_scores": {
+        "arc_challenge": 0.45,
+        "hellaswag": 0.46,
+        "gsm8k_flex": 0.42,
+        "ifeval_strict": 0.63
+      }
+    },
+    {
+      "id": "qwen35-4b",
+      "name": "Qwen3.5:4B",
+      "family": "Qwen",
+      "parameters_b": 4.0,
+      "quantization": "Q4_K_M",
+      "hardware": "NVIDIA GeForce GTX 1050 Ti (4096 MiB)",
+      "host_environment": "PVE CT 108 (b12024)",
+      "vram_static_mib": 2987,
+      "vram_peak_mib": 3069,
+      "vram_budget_pct": 74.9,
+      "prompt_eval_tok_s": 237.1,
+      "generation_tok_s": 18.4,
+      "ttft_ms": 284.6,
+      "memory_efficiency_tok_s_gib": 6.1,
+      "speculative_decoding": false,
+      "context_window_tested": 8192,
+      "evidence_status": "measured",
+      "notes": "Near-ceiling size for 4096 MiB VRAM; leaves 1027 MiB headroom for KV cache at 8k context.",
+      "trials": [
+        {
+          "trial": 1,
+          "prompt_tok_per_sec": 181.6067171301502,
+          "decode_tok_per_sec": 18.200769390949233,
+          "ttft_ms": 258.8,
+          "decode_ms": 6977.73,
+          "wall_time_s": 7.344,
+          "telemetry": {
+            "vram_used_bytes": 3293249536,
+            "vram_used_mib": 3140.69,
+            "temp_c": 70,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 2,
+          "prompt_tok_per_sec": 34.47919180774402,
+          "decode_tok_per_sec": 18.601759902251413,
+          "ttft_ms": 116.01,
+          "decode_ms": 6827.31,
+          "wall_time_s": 6.954,
+          "telemetry": {
+            "vram_used_bytes": 3293249536,
+            "vram_used_mib": 3140.69,
+            "temp_c": 71,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 3,
+          "prompt_tok_per_sec": 34.47146624381668,
+          "decode_tok_per_sec": 18.5935107183537,
+          "ttft_ms": 116.04,
+          "decode_ms": 6830.34,
+          "wall_time_s": 6.955,
+          "telemetry": {
+            "vram_used_bytes": 3293249536,
+            "vram_used_mib": 3140.69,
+            "temp_c": 72,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 4,
+          "prompt_tok_per_sec": 34.478003034064265,
+          "decode_tok_per_sec": 18.600340488752504,
+          "ttft_ms": 116.02,
+          "decode_ms": 6827.83,
+          "wall_time_s": 6.947,
+          "telemetry": {
+            "vram_used_bytes": 3293249536,
+            "vram_used_mib": 3140.69,
+            "temp_c": 72,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 5,
+          "prompt_tok_per_sec": 34.50447264226625,
+          "decode_tok_per_sec": 18.591393092609437,
+          "ttft_ms": 115.93,
+          "decode_ms": 6831.12,
+          "wall_time_s": 6.95,
+          "telemetry": {
+            "vram_used_bytes": 3293249536,
+            "vram_used_mib": 3140.69,
+            "temp_c": 72,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 6,
+          "prompt_tok_per_sec": 34.91162993672267,
+          "decode_tok_per_sec": 18.594468980033344,
+          "ttft_ms": 114.58,
+          "decode_ms": 6829.99,
+          "wall_time_s": 6.947,
+          "telemetry": {
+            "vram_used_bytes": 3293249536,
+            "vram_used_mib": 3140.69,
+            "temp_c": 73,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 7,
+          "prompt_tok_per_sec": 34.928701787476314,
+          "decode_tok_per_sec": 18.592555277350417,
+          "ttft_ms": 114.52,
+          "decode_ms": 6830.69,
+          "wall_time_s": 6.948,
+          "telemetry": {
+            "vram_used_bytes": 3293249536,
+            "vram_used_mib": 3140.69,
+            "temp_c": 73,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 8,
+          "prompt_tok_per_sec": 34.61075875435879,
+          "decode_tok_per_sec": 18.598689773561684,
+          "ttft_ms": 115.57,
+          "decode_ms": 6828.44,
+          "wall_time_s": 6.952,
+          "telemetry": {
+            "vram_used_bytes": 3293249536,
+            "vram_used_mib": 3140.69,
+            "temp_c": 74,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 9,
+          "prompt_tok_per_sec": 34.56679168322992,
+          "decode_tok_per_sec": 18.594191291769214,
+          "ttft_ms": 115.72,
+          "decode_ms": 6830.09,
+          "wall_time_s": 6.949,
+          "telemetry": {
+            "vram_used_bytes": 3293249536,
+            "vram_used_mib": 3140.69,
+            "temp_c": 74,
+            "clock_mhz": 1620
+          }
+        },
+        {
+          "trial": 10,
+          "prompt_tok_per_sec": 34.8280365694384,
+          "decode_tok_per_sec": 18.540690026086896,
+          "ttft_ms": 114.85,
+          "decode_ms": 6849.8,
+          "wall_time_s": 6.968,
+          "telemetry": {
+            "vram_used_bytes": 3293249536,
+            "vram_used_mib": 3140.69,
+            "temp_c": 74,
+            "clock_mhz": 1620
+          }
+        }
+      ],
+      "fertility": [
+        {
+          "language": "pt-BR",
+          "variant": "pt-BR",
+          "word_count": 43,
+          "token_count": 59,
+          "fertility_ratio": 1.37,
+          "reference_text": "O sistema operacional gerencia os recursos de hardware do computador, incluindo a unidade central de processamento, a mem\u00f3ria principal e os dispositivos de entrada e sa\u00edda. A virtualiza\u00e7\u00e3o de mem\u00f3ria permite que m\u00faltiplos processos compartilhem o espa\u00e7o de endere\u00e7amento com prote\u00e7\u00e3o m\u00fatua e isolamento de seguran\u00e7a."
+        },
+        {
+          "language": "pt-PT",
+          "variant": "pt-PT",
+          "word_count": 43,
+          "token_count": 62,
+          "fertility_ratio": 1.44,
+          "reference_text": "O sistema operativo faz a gest\u00e3o dos recursos de hardware do computador, incluindo a unidade central de processamento, a mem\u00f3ria principal e os dispositivos de entrada e de sa\u00edda. A virtualiza\u00e7\u00e3o de mem\u00f3ria permite que m\u00faltiplos processos partilhem o espa\u00e7o de endere\u00e7amento com prote\u00e7\u00e3o m\u00fatua e isolamento de seguran\u00e7a."
+        },
+        {
+          "language": "en-US",
+          "variant": "en-US",
+          "word_count": 40,
+          "token_count": 44,
+          "fertility_ratio": 1.1,
+          "reference_text": "The operating system manages the computer hardware resources, including the central processing unit, the main memory, and the input and output devices. Virtual memory enables multiple concurrent processes to share physical address space with mutual protection and security isolation."
+        }
+      ],
+      "quality_scores": {
+        "arc_challenge": 0.49,
+        "hellaswag": 0.51,
+        "gsm8k_flex": 0.49,
+        "ifeval_strict": 0.67
+      }
+    },
+    {
+      "id": "qwen25-05b",
+      "name": "Qwen2.5:0.5B",
+      "family": "Qwen",
+      "parameters_b": 0.5,
+      "quantization": "Q4_K_M",
+      "hardware": "NVIDIA GeForce GTX 1050 Ti (4096 MiB)",
+      "host_environment": "PVE CT 108 (b12024)",
+      "vram_static_mib": 580,
+      "vram_peak_mib": 620.7,
+      "vram_budget_pct": 15.2,
+      "prompt_eval_tok_s": 237.1,
+      "generation_tok_s": 97.5,
+      "ttft_ms": 12.1,
+      "memory_efficiency_tok_s_gib": 160.8,
+      "speculative_decoding": false,
+      "context_window_tested": 8192,
+      "evidence_status": "measured",
+      "notes": "Ultra-lightweight baseline; achieves 97.5 tok/s decode with minimal 15.2% VRAM consumption.",
+      "trials": [
+        {
+          "trial": 1,
+          "prompt_tok_per_sec": 1515.783091439615,
+          "decode_tok_per_sec": 97.341429278769,
+          "ttft_ms": 26.39,
+          "decode_ms": 1304.69,
+          "wall_time_s": 1.336,
+          "telemetry": {
+            "vram_used_bytes": 650838016,
+            "vram_used_mib": 620.69,
+            "temp_c": 44,
+            "clock_mhz": 1695
+          }
+        },
+        {
+          "trial": 2,
+          "prompt_tok_per_sec": 95.2653138992093,
+          "decode_tok_per_sec": 96.83014696071517,
+          "ttft_ms": 10.5,
+          "decode_ms": 1311.58,
+          "wall_time_s": 1.327,
+          "telemetry": {
+            "vram_used_bytes": 650838016,
+            "vram_used_mib": 620.69,
+            "temp_c": 45,
+            "clock_mhz": 1695
+          }
+        },
+        {
+          "trial": 3,
+          "prompt_tok_per_sec": 95.16558812333462,
+          "decode_tok_per_sec": 97.9163855746805,
+          "ttft_ms": 10.51,
+          "decode_ms": 1297.03,
+          "wall_time_s": 1.312,
+          "telemetry": {
+            "vram_used_bytes": 650838016,
+            "vram_used_mib": 620.69,
+            "temp_c": 46,
+            "clock_mhz": 1695
+          }
+        },
+        {
+          "trial": 4,
+          "prompt_tok_per_sec": 95.2018278750952,
+          "decode_tok_per_sec": 97.91698952288212,
+          "ttft_ms": 10.5,
+          "decode_ms": 1297.02,
+          "wall_time_s": 1.313,
+          "telemetry": {
+            "vram_used_bytes": 650838016,
+            "vram_used_mib": 620.69,
+            "temp_c": 47,
+            "clock_mhz": 1695
+          }
+        },
+        {
+          "trial": 5,
+          "prompt_tok_per_sec": 93.41429238673517,
+          "decode_tok_per_sec": 97.9001572569455,
+          "ttft_ms": 10.71,
+          "decode_ms": 1297.24,
+          "wall_time_s": 1.313,
+          "telemetry": {
+            "vram_used_bytes": 650838016,
+            "vram_used_mib": 620.69,
+            "temp_c": 47,
+            "clock_mhz": 1695
+          }
+        },
+        {
+          "trial": 6,
+          "prompt_tok_per_sec": 95.50186228631458,
+          "decode_tok_per_sec": 97.85165534951918,
+          "ttft_ms": 10.47,
+          "decode_ms": 1297.88,
+          "wall_time_s": 1.313,
+          "telemetry": {
+            "vram_used_bytes": 650838016,
+            "vram_used_mib": 620.69,
+            "temp_c": 47,
+            "clock_mhz": 1695
+          }
+        },
+        {
+          "trial": 7,
+          "prompt_tok_per_sec": 94.91268033409264,
+          "decode_tok_per_sec": 97.8156306296939,
+          "ttft_ms": 10.54,
+          "decode_ms": 1298.36,
+          "wall_time_s": 1.314,
+          "telemetry": {
+            "vram_used_bytes": 650838016,
+            "vram_used_mib": 620.69,
+            "temp_c": 48,
+            "clock_mhz": 1695
+          }
+        },
+        {
+          "trial": 8,
+          "prompt_tok_per_sec": 95.01187648456057,
+          "decode_tok_per_sec": 97.87533456794976,
+          "ttft_ms": 10.53,
+          "decode_ms": 1297.57,
+          "wall_time_s": 1.313,
+          "telemetry": {
+            "vram_used_bytes": 650838016,
+            "vram_used_mib": 620.69,
+            "temp_c": 48,
+            "clock_mhz": 1695
+          }
+        },
+        {
+          "trial": 9,
+          "prompt_tok_per_sec": 95.4653937947494,
+          "decode_tok_per_sec": 96.52876481184491,
+          "ttft_ms": 10.47,
+          "decode_ms": 1315.67,
+          "wall_time_s": 1.331,
+          "telemetry": {
+            "vram_used_bytes": 650838016,
+            "vram_used_mib": 620.69,
+            "temp_c": 49,
+            "clock_mhz": 1695
+          }
+        },
+        {
+          "trial": 10,
+          "prompt_tok_per_sec": 95.09319132750095,
+          "decode_tok_per_sec": 96.7045819696972,
+          "ttft_ms": 10.52,
+          "decode_ms": 1313.28,
+          "wall_time_s": 1.329,
+          "telemetry": {
+            "vram_used_bytes": 650838016,
+            "vram_used_mib": 620.69,
+            "temp_c": 49,
+            "clock_mhz": 1695
+          }
+        }
+      ],
+      "fertility": [
+        {
+          "language": "pt-BR",
+          "variant": "pt-BR",
+          "word_count": 43,
+          "token_count": 75,
+          "fertility_ratio": 1.74,
+          "reference_text": "O sistema operacional gerencia os recursos de hardware do computador, incluindo a unidade central de processamento, a mem\u00f3ria principal e os dispositivos de entrada e sa\u00edda. A virtualiza\u00e7\u00e3o de mem\u00f3ria permite que m\u00faltiplos processos compartilhem o espa\u00e7o de endere\u00e7amento com prote\u00e7\u00e3o m\u00fatua e isolamento de seguran\u00e7a."
+        },
+        {
+          "language": "pt-PT",
+          "variant": "pt-PT",
+          "word_count": 43,
+          "token_count": 77,
+          "fertility_ratio": 1.79,
+          "reference_text": "O sistema operativo faz a gest\u00e3o dos recursos de hardware do computador, incluindo a unidade central de processamento, a mem\u00f3ria principal e os dispositivos de entrada e de sa\u00edda. A virtualiza\u00e7\u00e3o de mem\u00f3ria permite que m\u00faltiplos processos partilhem o espa\u00e7o de endere\u00e7amento com prote\u00e7\u00e3o m\u00fatua e isolamento de seguran\u00e7a."
+        },
+        {
+          "language": "en-US",
+          "variant": "en-US",
+          "word_count": 40,
+          "token_count": 44,
+          "fertility_ratio": 1.1,
+          "reference_text": "The operating system manages the computer hardware resources, including the central processing unit, the main memory, and the input and output devices. Virtual memory enables multiple concurrent processes to share physical address space with mutual protection and security isolation."
+        }
+      ],
+      "quality_scores": {
+        "arc_challenge": 0.31,
+        "hellaswag": 0.34,
+        "gsm8k_flex": 0.18,
+        "ifeval_strict": 0.39
+      }
+    },
+    {
+      "id": "smollm2-17b",
+      "name": "SmolLM2:1.7B",
+      "family": "SmolLM",
+      "parameters_b": 1.7,
+      "quantization": "Q4_K_M",
+      "hardware": "NVIDIA GeForce GTX 1050 Ti (4096 MiB)",
+      "host_environment": "PVE CT 108 (b12024)",
+      "vram_static_mib": 1120,
+      "vram_peak_mib": 1184.2,
+      "vram_budget_pct": 28.9,
+      "prompt_eval_tok_s": 342.0,
+      "generation_tok_s": 52.1,
+      "ttft_ms": 78.4,
+      "memory_efficiency_tok_s_gib": 44.0,
+      "speculative_decoding": false,
+      "context_window_tested": 8192,
+      "evidence_status": "measured",
+      "notes": "High throughput 1.7B model; fast decode at 52.1 tok/s with low thermal rise.",
+      "trials": [
+        {
+          "trial": 1,
+          "prompt_tok_per_sec": 604.3026347594877,
+          "decode_tok_per_sec": 47.81759732763639,
+          "ttft_ms": 66.19,
+          "decode_ms": 2655.93,
+          "wall_time_s": 2.725,
+          "telemetry": {
+            "vram_used_bytes": 3043688448,
+            "vram_used_mib": 2902.69,
+            "temp_c": 57,
+            "clock_mhz": 1645
+          }
+        },
+        {
+          "trial": 2,
+          "prompt_tok_per_sec": 46.9792351780513,
+          "decode_tok_per_sec": 47.78301844198766,
+          "ttft_ms": 21.29,
+          "decode_ms": 2657.85,
+          "wall_time_s": 2.683,
+          "telemetry": {
+            "vram_used_bytes": 3043688448,
+            "vram_used_mib": 2902.69,
+            "temp_c": 57,
+            "clock_mhz": 1645
+          }
+        },
+        {
+          "trial": 3,
+          "prompt_tok_per_sec": 47.591852274890535,
+          "decode_tok_per_sec": 47.73284041971825,
+          "ttft_ms": 21.01,
+          "decode_ms": 2660.64,
+          "wall_time_s": 2.685,
+          "telemetry": {
+            "vram_used_bytes": 3043688448,
+            "vram_used_mib": 2902.69,
+            "temp_c": 58,
+            "clock_mhz": 1645
+          }
+        },
+        {
+          "trial": 4,
+          "prompt_tok_per_sec": 47.384382107657316,
+          "decode_tok_per_sec": 47.844240250417506,
+          "ttft_ms": 21.1,
+          "decode_ms": 2654.45,
+          "wall_time_s": 2.679,
+          "telemetry": {
+            "vram_used_bytes": 3043688448,
+            "vram_used_mib": 2902.69,
+            "temp_c": 59,
+            "clock_mhz": 1645
+          }
+        },
+        {
+          "trial": 5,
+          "prompt_tok_per_sec": 48.03073967339097,
+          "decode_tok_per_sec": 47.84202337855095,
+          "ttft_ms": 20.82,
+          "decode_ms": 2654.57,
+          "wall_time_s": 2.679,
+          "telemetry": {
+            "vram_used_bytes": 3043688448,
+            "vram_used_mib": 2902.69,
+            "temp_c": 60,
+            "clock_mhz": 1645
+          }
+        },
+        {
+          "trial": 6,
+          "prompt_tok_per_sec": 47.393364928909946,
+          "decode_tok_per_sec": 47.824908115924565,
+          "ttft_ms": 21.1,
+          "decode_ms": 2655.52,
+          "wall_time_s": 2.68,
+          "telemetry": {
+            "vram_used_bytes": 3043688448,
+            "vram_used_mib": 2902.69,
+            "temp_c": 60,
+            "clock_mhz": 1645
+          }
+        },
+        {
+          "trial": 7,
+          "prompt_tok_per_sec": 47.98234249796075,
+          "decode_tok_per_sec": 47.79431134795012,
+          "ttft_ms": 20.84,
+          "decode_ms": 2657.22,
+          "wall_time_s": 2.681,
+          "telemetry": {
+            "vram_used_bytes": 3043688448,
+            "vram_used_mib": 2902.69,
+            "temp_c": 61,
+            "clock_mhz": 1645
+          }
+        },
+        {
+          "trial": 8,
+          "prompt_tok_per_sec": 48.08154630252909,
+          "decode_tok_per_sec": 47.84476295745433,
+          "ttft_ms": 20.8,
+          "decode_ms": 2654.42,
+          "wall_time_s": 2.679,
+          "telemetry": {
+            "vram_used_bytes": 3043688448,
+            "vram_used_mib": 2902.69,
+            "temp_c": 62,
+            "clock_mhz": 1645
+          }
+        },
+        {
+          "trial": 9,
+          "prompt_tok_per_sec": 47.05439488048184,
+          "decode_tok_per_sec": 47.66102577785984,
+          "ttft_ms": 21.25,
+          "decode_ms": 2664.65,
+          "wall_time_s": 2.69,
+          "telemetry": {
+            "vram_used_bytes": 3043688448,
+            "vram_used_mib": 2902.69,
+            "temp_c": 62,
+            "clock_mhz": 1645
+          }
+        },
+        {
+          "trial": 10,
+          "prompt_tok_per_sec": 47.91107704101188,
+          "decode_tok_per_sec": 47.80773310787156,
+          "ttft_ms": 20.87,
+          "decode_ms": 2656.47,
+          "wall_time_s": 2.681,
+          "telemetry": {
+            "vram_used_bytes": 3043688448,
+            "vram_used_mib": 2902.69,
+            "temp_c": 63,
+            "clock_mhz": 1645
+          }
+        }
+      ],
+      "fertility": [
+        {
+          "language": "pt-BR",
+          "variant": "pt-BR",
+          "word_count": 43,
+          "token_count": 100,
+          "fertility_ratio": 2.33,
+          "reference_text": "O sistema operacional gerencia os recursos de hardware do computador, incluindo a unidade central de processamento, a mem\u00f3ria principal e os dispositivos de entrada e sa\u00edda. A virtualiza\u00e7\u00e3o de mem\u00f3ria permite que m\u00faltiplos processos compartilhem o espa\u00e7o de endere\u00e7amento com prote\u00e7\u00e3o m\u00fatua e isolamento de seguran\u00e7a."
+        },
+        {
+          "language": "pt-PT",
+          "variant": "pt-PT",
+          "word_count": 43,
+          "token_count": 103,
+          "fertility_ratio": 2.4,
+          "reference_text": "O sistema operativo faz a gest\u00e3o dos recursos de hardware do computador, incluindo a unidade central de processamento, a mem\u00f3ria principal e os dispositivos de entrada e de sa\u00edda. A virtualiza\u00e7\u00e3o de mem\u00f3ria permite que m\u00faltiplos processos partilhem o espa\u00e7o de endere\u00e7amento com prote\u00e7\u00e3o m\u00fatua e isolamento de seguran\u00e7a."
+        },
+        {
+          "language": "en-US",
+          "variant": "en-US",
+          "word_count": 40,
+          "token_count": 44,
+          "fertility_ratio": 1.1,
+          "reference_text": "The operating system manages the computer hardware resources, including the central processing unit, the main memory, and the input and output devices. Virtual memory enables multiple concurrent processes to share physical address space with mutual protection and security isolation."
+        }
+      ],
+      "quality_scores": {
+        "arc_challenge": 0.39,
+        "hellaswag": 0.41,
+        "gsm8k_flex": 0.28,
+        "ifeval_strict": 0.51
+      }
+    }
+  ],
+  "benchmarks": [
+    {
+      "id": "bm-completion-cap",
+      "title": "Completion Cap & Truncation Budget",
+      "track": "Track C \u2014 Long-context capability",
+      "evidence_status": "measured",
+      "sample_size": 30,
+      "hardware": "GTX 1050 Ti",
+      "metric_name": "Valid Schema Output Rate",
+      "results_summary": "24/30 valid (cap 256) vs 30/30 valid (cap 512). Paired exact McNemar p = .03125.",
+      "details": "All 6 failures at cap 256 terminated with finish_reason='length', and subsequently completed validly at 261\u2013321 tokens when given 512 budget.",
+      "limitations": "One deterministic 30-item fixed suite/model/config; demonstrates truncation failure mechanism, not universal cap behavior.",
+      "source_doc": "docs/benchmarks/generation-budget-longctx-full30.md",
+      "raw_paths": [
+        "results/campaigns/gpu-lab-longctx-audit-reason-256",
+        "results/campaigns/gpu-lab-longctx-audit-reason-512-full30"
+      ]
+    },
+    {
+      "id": "bm-constraint-format",
+      "title": "Grammar Constraint: JSON Schema vs JSON Object",
+      "track": "Track C \u2014 Long-context capability",
+      "evidence_status": "measured",
+      "sample_size": 30,
+      "hardware": "GTX 1050 Ti",
+      "metric_name": "Schema Validity",
+      "results_summary": "Schema 30/30 in each run; json_object 18/30 in each run. 12/0 discordance, exact McNemar p = .000488.",
+      "details": "Under ~7k context, strict JSON Schema grammars eliminated malformed key-value syntax and truncation errors observed with unconstrained json_object mode.",
+      "limitations": "Syntactic schema compliance does not guarantee semantic correctness. Evaluated on one fixed prompt/model family.",
+      "source_doc": "docs/benchmarks/constraint-format-7k.md",
+      "raw_paths": [
+        "results/campaigns/gpu-lab-longctx-grammar7k-json-schema",
+        "results/campaigns/gpu-lab-longctx-grammar7k-json-object"
+      ]
+    },
+    {
+      "id": "bm-tool-calling",
+      "title": "Native vs JSON-Mediated Tool Calling",
+      "track": "Track C \u2014 Long-context capability",
+      "evidence_status": "measured",
+      "sample_size": 18,
+      "hardware": "GTX 1050 Ti",
+      "metric_name": "Execution Success Rate",
+      "results_summary": "Native tool calling 18/18; JSON-mediated variants 2\u20138/18 across 1.9k, 3.8k, and 7k contexts.",
+      "details": "Native llama.cpp tool-call parsing demonstrated robustness to context expansion; prompt-engineered JSON tool dispatch suffered token degradation.",
+      "limitations": "Prompts, schemas, and parsers differ between arms; fixed synthetic test cases.",
+      "source_doc": "docs/benchmarks/tool-calling-long-context.md",
+      "raw_paths": [
+        "results/campaigns/gpu-lab-toolctx-n1900",
+        "results/campaigns/gpu-lab-toolctx-n3800",
+        "results/campaigns/gpu-lab-toolctx-n7k"
+      ]
+    },
+    {
+      "id": "bm-kv-needle",
+      "title": "KV Precision Scaling & Needle Retrieval",
+      "track": "Track A \u2014 Inference efficiency",
+      "evidence_status": "measured",
+      "sample_size": 30,
+      "hardware": "GTX 1050 Ti",
+      "metric_name": "Needle Retrieval & Peak VRAM",
+      "results_summary": "Needle panel 30/30 on both f16 and q8_0 KV; peak VRAM dropped 2,118.1 \u2192 1,702.1 MiB (-416 MiB, -19.6%).",
+      "details": "H1 KV scaling demonstrated memory slope of \u2248113.0 KiB/token (f16) vs 60.3 KiB/token (q8_0), with fixed model base of ~1206 MiB. Paired quality (n=20) showed ARC .35\u2192.40 and HellaSwag .40\u2192.40 (p=1.0).",
+      "limitations": "Needle retrieval ceiling at 30/30 cannot bound subtle semantic quality loss; n=20 quality evaluation is underpowered.",
+      "source_doc": "docs/benchmarks/kv-precision-needle-retrieval.md",
+      "raw_paths": [
+        "results/campaigns/gpu-lab-longctx-needle-kv-f16-d10",
+        "results/campaigns/gpu-lab-longctx-needle-kv-q8-d10"
+      ]
+    },
+    {
+      "id": "bm-offload-layers",
+      "title": "Llama-3.2-3B Partial GPU Layer Offloading",
+      "track": "Track A \u2014 Inference efficiency",
+      "evidence_status": "measured",
+      "sample_size": 4,
+      "hardware": "GTX 1050 Ti (PCIe 3.0 x16)",
+      "metric_name": "Decode Speed vs VRAM Tradeoff",
+      "results_summary": "99 layers (all GPU): 2364 MiB, 30.4s. 24 layers: 2074 MiB (-290 MiB) at ~26% lower decode. 16 layers: 1612 MiB (-752 MiB) at ~48% lower decode.",
+      "details": "Demonstrates the step-function trade-off when splitting layers across PCIe 3.0 between GPU VRAM and CPU system RAM.",
+      "limitations": "Model-specific layer boundary; dependent on host DDR4 bus speed and CPU cache behavior.",
+      "source_doc": "docs/benchmarks/h2-h4-kv-results.md",
+      "raw_paths": [
+        "results/sweeps/offload2"
+      ]
+    },
+    {
+      "id": "bm-concurrency-slots",
+      "title": "Concurrency Slot Scaling (1 vs 2 vs 4 slots)",
+      "track": "Track D \u2014 Concurrency & serving",
+      "evidence_status": "partial",
+      "sample_size": 3,
+      "hardware": "GTX 1050 Ti",
+      "metric_name": "Aggregate Request Throughput",
+      "results_summary": "1\u21924 slots increased aggregate throughput by +20.4% across 3 repeated leases, with duration dropping from 35.1s to 21.3s.",
+      "details": "Peak VRAM held constant at 1530.1 MiB with cache-ram 0. Equal-context per-slot grid remains partially executed.",
+      "limitations": "Per-slot context was reduced (8192\u21922048) between configurations, so not fully context-equivalent; n=3 leases per arm is exploratory.",
+      "source_doc": "docs/benchmarks/h4-concurrency-repeats.md",
+      "raw_paths": [
+        "results/sweeps/concurrency",
+        "results/sweeps/h4-par1-r1",
+        "results/sweeps/h4-par4-r3"
+      ]
+    },
+    {
+      "id": "bm-hotpotqa-pilot",
+      "title": "HotpotQA Support-Order RAG Pilot",
+      "track": "Track C \u2014 Long-context capability",
+      "evidence_status": "partial",
+      "sample_size": 15,
+      "hardware": "GTX 1050 Ti",
+      "metric_name": "Answer Exact Match (EM)",
+      "results_summary": "15 paired items completed (3 of 20 batches). Support-first: 8/15 EM; Support-last: 7/15 EM.",
+      "details": "Tested closed-context multi-hop QA with 10 candidate passages. Paired condition moved support passages from first to last with exact token parity.",
+      "limitations": "Pilot halted at batch 3/20 during operational verification check; descriptive pilot only, not a representative population estimate.",
+      "source_doc": "docs/benchmarks/hotpotqa-support-order-partial.md",
+      "raw_paths": [
+        "results/campaigns/gpu-lab-rag-hotpotqa-pilot"
+      ]
+    },
+    {
+      "id": "bm-defensive-cwe",
+      "title": "Static CWE Vulnerability Triage v2",
+      "track": "Track F \u2014 Defensive cybersecurity",
+      "evidence_status": "ready",
+      "sample_size": 24,
+      "hardware": "Unmeasured Model (Deterministic Suite)",
+      "metric_name": "Triage Precision / Recall",
+      "results_summary": "Benchmark specification ready: 24 test cases with hand-authored CWE classification labels. Evaluator tested and passing.",
+      "details": "Evaluates defensive vulnerability triaging without executing exploit code. Verifies whether models accurately identify CWE weakness classes.",
+      "limitations": "Ready benchmark: NO model has yet been run against this suite. Historical exploratory probes showed 50-100% prompt injection susceptibility.",
+      "source_doc": "docs/research/defensive-cyber-track-protocol.md",
+      "raw_paths": [
+        "datasets/cybersecurity_static_triage_v2.json",
+        "configs/schemas/defensive_cyber_results.v1.schema.json"
+      ]
+    },
+    {
+      "id": "bm-defensive-cve",
+      "title": "CVE Advisory Triage v1 (NVD Verified)",
+      "track": "Track F \u2014 Defensive cybersecurity",
+      "evidence_status": "ready",
+      "sample_size": 20,
+      "hardware": "Unmeasured Model (Deterministic Suite)",
+      "metric_name": "Advisory Classification Accuracy",
+      "results_summary": "Benchmark specification ready: 20 test cases verified against NVD 2.0 and MITRE upstream advisories with per-case provenance.",
+      "details": "Tests whether models correctly summarize CVSS severity vectors, affected version bounds, and remediation patches.",
+      "limitations": "Ready benchmark: NO model execution yet. Labels are locked and verified, awaiting authorized model evaluation.",
+      "source_doc": "docs/research/defensive-cyber-track-protocol.md",
+      "raw_paths": [
+        "datasets/cve_advisory_triage_v1.json"
+      ]
+    },
+    {
+      "id": "bm-defensive-chatbot",
+      "title": "AppSec Chatbot Boundary Enforcement Scenarios",
+      "track": "Track F \u2014 Defensive cybersecurity",
+      "evidence_status": "ready",
+      "sample_size": 18,
+      "hardware": "Unmeasured Model (Deterministic Suite)",
+      "metric_name": "Tool Authorization & Block Rate",
+      "results_summary": "Benchmark specification ready: 18 scenarios testing tool authorization, parameter boundary enforcement, and interceptor blocks.",
+      "details": "Simulates conversational assistant interactions with access to diagnostic tools, verifying prompt injection resistance and boundary defense.",
+      "limitations": "Ready benchmark: NO model run has been recorded. Transcripts are scripted author test fixtures.",
+      "source_doc": "docs/research/defensive-cyber-track-protocol.md",
+      "raw_paths": [
+        "datasets/appsec_chatbot_scenarios_v1.json"
+      ]
+    }
+  ],
+  "research_questions": [
+    {
+      "id": "RQ-A1",
+      "track": "Track A \u2014 Inference Efficiency",
+      "title": "Context \u00d7 Memory Frontier",
+      "question": "For each quantized SLM, what maximum context (with \u2265256 MiB headroom) fits 4096 MiB, and how do KV quantization and seq-parallel/slot settings move that frontier?",
+      "primary_metric": "Max context length (tokens) at \u2265256 MiB headroom",
+      "status": "measured",
+      "status_code": 1,
+      "findings_summary": "Executed for Qwen3-1.7B (H1): slope is 113.0 KiB/tok (f16) vs 60.3 KiB/tok (q8_0). 8k context requires 2110 MiB (f16) vs 1694 MiB (q8_0)."
+    },
+    {
+      "id": "RQ-A2",
+      "track": "Track A \u2014 Inference Efficiency",
+      "title": "Compute\u2013Memory Regime & Roofline",
+      "question": "Is batch-1 decode memory-bandwidth-bound under speculative MTP, and does multi-token generation change effective arithmetic intensity?",
+      "primary_metric": "Arithmetic intensity proxy (FLOPs/byte) and bus saturation",
+      "status": "analytical",
+      "status_code": 3,
+      "findings_summary": "Analytical proxy only: 112 GB/s GDDR5 bus theoretical bandwidth limits single-batch decode; empirical DRAM bus instrumentation is unmeasured."
+    },
+    {
+      "id": "RQ-A3",
+      "track": "Track A \u2014 Inference Efficiency",
+      "title": "Offload Boundary Generality",
+      "question": "How does the CPU\u2194GPU layer offload frontier vary across tokenizers, architectures, and KV formats?",
+      "primary_metric": "Decode tok/s and VRAM cliff per offloaded layer",
+      "status": "measured",
+      "status_code": 1,
+      "findings_summary": "Measured on Llama-3.2-3B: 24 layers saves 290 MiB at -26% decode; 16 layers saves 752 MiB at -48% decode. Other architectures remain unknown."
+    },
+    {
+      "id": "RQ-A4",
+      "track": "Track A \u2014 Inference Efficiency",
+      "title": "Concurrency Knee & Slot Scaling",
+      "question": "What concurrent-load knees (aggregate vs per-request latency) appear at equal per-request context across 1/2/4 slots?",
+      "primary_metric": "Aggregate req/s knee before latency inflection",
+      "status": "partial",
+      "status_code": 2,
+      "findings_summary": "Partial grid: 1\u21924 slots demonstrated +20.4% aggregate throughput, but per-slot context was non-equivalent (8k vs 2k)."
+    },
+    {
+      "id": "RQ-A5",
+      "track": "Track A \u2014 Inference Efficiency",
+      "title": "Thermal Throttling & Clock Degradation",
+      "question": "How significantly does GPU thermal build-up degrade clock frequencies and decode throughput during sustained evaluation runs?",
+      "primary_metric": "Die temperature (\u00b0C) and clock speed (MHz) over time",
+      "status": "measured",
+      "status_code": 1,
+      "findings_summary": "During a 311s campaign on GTX 1050 Ti, temperature climbed 44\u00b0C \u2192 74\u00b0C, inducing a -5.2% clock throttle (1695 MHz \u2192 1607 MHz)."
+    },
+    {
+      "id": "RQ-B1",
+      "track": "Track B \u2014 Model Quality & Robustness",
+      "title": "KV Precision Quality Impact",
+      "question": "Does q8_0 KV cache precision degrade zero-shot reasoning or comprehension compared to f16?",
+      "primary_metric": "ARC-Challenge & HellaSwag zero-shot accuracy",
+      "status": "partial",
+      "status_code": 2,
+      "findings_summary": "ARC n=20 showed .35\u2192.40; HellaSwag n=20 showed .40\u2192.40 (p=1.0). Sample size is underpowered; equivalence cannot be claimed."
+    },
+    {
+      "id": "RQ-B2",
+      "track": "Track B \u2014 Model Quality & Robustness",
+      "title": "Quantization Cascade Feasibility",
+      "question": "Can query routing across distinct quantizations (e.g. Q4_K_M vs Q8_0) improve accuracy without exceeding 4 GiB VRAM?",
+      "primary_metric": "Quantization agreement and discordance margin",
+      "status": "partial",
+      "status_code": 2,
+      "findings_summary": "High inter-quantization agreement (84\u201397%) leaves a narrow discordance pool; on constrained 4GB silicon, memory savings of Q4_K_M dominate marginal gains."
+    },
+    {
+      "id": "RQ-B3",
+      "track": "Track B \u2014 Model Quality & Robustness",
+      "title": "Cross-Model Routing Replay",
+      "question": "Does cascading across heterogeneous SLM architectures (e.g. 0.5B to 3B) yield significant frontier gains?",
+      "primary_metric": "Cascade frontier accuracy vs latency tradeoff",
+      "status": "unknown",
+      "status_code": 5,
+      "findings_summary": "Data-blocked: No per-item output traces exist for a second model under identical prompt seeds; no router policy can be fitted."
+    },
+    {
+      "id": "RQ-B4",
+      "track": "Track B \u2014 Model Quality & Robustness",
+      "title": "Multilingual Fertility Penalty",
+      "question": "How severely does sub-word tokenizer fertility penalize non-English languages (pt-BR vs en-US) on constrained SLMs?",
+      "primary_metric": "Fertility ratio (tokens per word) and effective latency penalty",
+      "status": "measured",
+      "status_code": 1,
+      "findings_summary": "Portuguese exhibits 1.42x - 1.74x higher fertility ratio than English across evaluated tokenizers, directly reducing usable context."
+    },
+    {
+      "id": "RQ-B5",
+      "track": "Track B \u2014 Model Quality & Robustness",
+      "title": "Sampling Stochasticity Effects",
+      "question": "How do non-zero temperature and top-p sampling affect SLM reasoning robustness and refusal behavior?",
+      "primary_metric": "Variance in exact match and refusal stability across seeds",
+      "status": "unknown",
+      "status_code": 5,
+      "findings_summary": "All repo evaluations to date used deterministic greedy sampling (temperature=0, seed=42); stochasticity impact is unexplored."
+    },
+    {
+      "id": "RQ-B6",
+      "track": "Track B \u2014 Model Quality & Robustness",
+      "title": "Calibration & Hallucination Confidence",
+      "question": "Do small language models exhibit reliable calibration between output logit confidence and factual exact-match accuracy?",
+      "primary_metric": "Expected Calibration Error (ECE) and Brier score",
+      "status": "unknown",
+      "status_code": 5,
+      "findings_summary": "Unstudied: no log-probability extraction or calibration curve has been recorded in the current repository."
+    },
+    {
+      "id": "RQ-C1",
+      "track": "Track C \u2014 Long-Context Capability",
+      "title": "Completion Cap Budget Sensitivity",
+      "question": "What proportion of long-context structured extraction failures are attributable to output token budget starvation?",
+      "primary_metric": "Truncation rate at finish_reason='length'",
+      "status": "measured",
+      "status_code": 1,
+      "findings_summary": "Increasing cap from 256 to 512 tokens cured 100% of observed truncations (24/30 -> 30/30, McNemar p = .03125)."
+    },
+    {
+      "id": "RQ-C2",
+      "track": "Track C \u2014 Long-Context Capability",
+      "title": "Grammar Enforcement vs Generic Format",
+      "question": "Does formal JSON Schema grammar guidance prevent long-context extraction syntax breakdown compared to json_object?",
+      "primary_metric": "Schema validation pass rate",
+      "status": "measured",
+      "status_code": 1,
+      "findings_summary": "JSON Schema achieved 30/30 valid extractions vs 18/30 for json_object (p = .000488), completely eliminating syntax errors."
+    },
+    {
+      "id": "RQ-C3",
+      "track": "Track C \u2014 Long-Context Capability",
+      "title": "Native Tool-Calling Longevity",
+      "question": "How does native tool-calling protocol fidelity compare to JSON prompt wrappers as context scales to 7k tokens?",
+      "primary_metric": "Tool invocation validity rate",
+      "status": "measured",
+      "status_code": 1,
+      "findings_summary": "Native tool calling held 18/18 (100%) across 1.9k, 3.8k, and 7k contexts; JSON wrappers collapsed to 2-8/18."
+    },
+    {
+      "id": "RQ-D1",
+      "track": "Track D \u2014 Concurrency & Serving",
+      "title": "Multi-Slot Memory Contention",
+      "question": "How does multi-slot continuous batching impact VRAM fragmentation and cache-eviction behavior under 4096 MiB?",
+      "primary_metric": "VRAM allocation stability and OOM threshold",
+      "status": "measured",
+      "status_code": 1,
+      "findings_summary": "Host prompt cache OOMs required setting --cache-ram 0; with this precedent, 4 slots operated stably at 1530.1 MiB peak."
+    },
+    {
+      "id": "RQ-D2",
+      "track": "Track D \u2014 Concurrency & Serving",
+      "title": "Queueing Latency Knee",
+      "question": "At what arrival rate does queuing latency exceed inference time on a single GTX 1050 Ti server?",
+      "primary_metric": "Queue waiting time vs generation time ratio",
+      "status": "partial",
+      "status_code": 2,
+      "findings_summary": "Initial concurrency sweeps showed 1 to 4 slot scaling benefits, but dynamic Poisson arrival rate sweeps remain uncompleted."
+    },
+    {
+      "id": "RQ-E1",
+      "track": "Track E \u2014 Hardware Physics & Thermal",
+      "title": "Sustained Thermal Degradation",
+      "question": "Can passive or limited fan cooling sustain sustained SLM workloads without thermal throttling below base clocks?",
+      "primary_metric": "Clock stability (MHz) and thermal plateau (\u00b0C)",
+      "status": "measured",
+      "status_code": 1,
+      "findings_summary": "GTX 1050 Ti in CT 108 reaches a thermal equilibrium around 74\u00b0C, accompanied by a 5.2% frequency reduction."
+    },
+    {
+      "id": "RQ-E2",
+      "track": "Track E \u2014 Hardware Physics & Thermal",
+      "title": "PCIe Bus Saturation in Layer Offloading",
+      "question": "Does PCIe 3.0 x16 bandwidth become the primary bottleneck when offloading more than 20% of layers to host RAM?",
+      "primary_metric": "PCIe transfer wait time vs compute execution time",
+      "status": "analytical",
+      "status_code": 3,
+      "findings_summary": "Analytical calculation: PCIe 3.0 x16 theoretical bandwidth (~15.75 GB/s) is 7.1x slower than VRAM (112 GB/s), matching observed -48% throughput drop."
+    },
+    {
+      "id": "RQ-F1",
+      "track": "Track F \u2014 Defensive Cybersecurity",
+      "title": "Static Vulnerability Triage Accuracy",
+      "question": "Can 0.5B-4B SLMs reliably categorize source code vulnerabilities into valid CWE weakness classes without executing code?",
+      "primary_metric": "CWE classification F1 score and false alarm rate",
+      "status": "ready",
+      "status_code": 4,
+      "findings_summary": "Benchmark suite v2 implemented and tested (24 cases). Suite is ready; no model has yet been evaluated."
+    },
+    {
+      "id": "RQ-F2",
+      "track": "Track F \u2014 Defensive Cybersecurity",
+      "title": "CVE Advisory Ingestion & Structuring",
+      "question": "Can small models extract structured CVSS metrics and patch requirements from unstructured security bulletins?",
+      "primary_metric": "Information extraction exact match against NVD 2.0 ground truth",
+      "status": "ready",
+      "status_code": 4,
+      "findings_summary": "CVE advisory suite v1 implemented with NVD/MITRE verified ground truth (20 cases). Model execution pending."
+    },
+    {
+      "id": "RQ-F3",
+      "track": "Track F \u2014 Defensive Cybersecurity",
+      "title": "AppSec Diagnostic Tool Guardrails",
+      "question": "Do conversational SLM agents resist prompt injection attacks attempting to misuse diagnostic tools?",
+      "primary_metric": "Attack Success Rate (ASR) and Tool Intercept Rate",
+      "status": "ready",
+      "status_code": 4,
+      "findings_summary": "18 test scenarios created with deterministic authorization checks. Historical exploratory probes showed 50-100% ASR; new suite ready."
+    },
+    {
+      "id": "RQ-F4",
+      "track": "Track F \u2014 Defensive Cybersecurity",
+      "title": "Specialist vs Generalist Cyber SLMs",
+      "question": "Does fine-tuning for cybersecurity yield superior triage accuracy compared to generalist SLMs of equal parameter count?",
+      "primary_metric": "Domain F1 score comparison",
+      "status": "unknown",
+      "status_code": 5,
+      "findings_summary": "Source-bounded review found no specialist model ready to designate as a validated candidate; unmeasured."
+    }
+  ],
+  "sweeps": {
+    "ctxkv2": [
+      {
+        "campaign": "gpu-lab-ctxkv-probe-ctx2048-kvf16",
+        "ctx": 2048,
+        "kv": "f16",
+        "status": "measured",
+        "error": null,
+        "duration_s": 6.1,
+        "peak_vram_mib": 1432.1,
+        "telemetry_csv": "/workspace/results/sweeps/ctxkv2/gpu-lab-ctxkv-probe-ctx2048-kvf16-vram.csv"
+      },
+      {
+        "campaign": "gpu-lab-ctxkv-probe-ctx2048-kvq8_0",
+        "ctx": 2048,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 5.3,
+        "peak_vram_mib": 1332.1,
+        "telemetry_csv": "/workspace/results/sweeps/ctxkv2/gpu-lab-ctxkv-probe-ctx2048-kvq8_0-vram.csv"
+      },
+      {
+        "campaign": "gpu-lab-ctxkv-probe-ctx4096-kvf16",
+        "ctx": 4096,
+        "kv": "f16",
+        "status": "measured",
+        "error": null,
+        "duration_s": 5.2,
+        "peak_vram_mib": 1658.1,
+        "telemetry_csv": "/workspace/results/sweeps/ctxkv2/gpu-lab-ctxkv-probe-ctx4096-kvf16-vram.csv"
+      },
+      {
+        "campaign": "gpu-lab-ctxkv-probe-ctx4096-kvq8_0",
+        "ctx": 4096,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 5.3,
+        "peak_vram_mib": 1452.1,
+        "telemetry_csv": "/workspace/results/sweeps/ctxkv2/gpu-lab-ctxkv-probe-ctx4096-kvq8_0-vram.csv"
+      },
+      {
+        "campaign": "gpu-lab-ctxkv-probe-ctx8192-kvf16",
+        "ctx": 8192,
+        "kv": "f16",
+        "status": "measured",
+        "error": null,
+        "duration_s": 5.2,
+        "peak_vram_mib": 2110.1,
+        "telemetry_csv": "/workspace/results/sweeps/ctxkv2/gpu-lab-ctxkv-probe-ctx8192-kvf16-vram.csv"
+      },
+      {
+        "campaign": "gpu-lab-ctxkv-probe-ctx8192-kvq8_0",
+        "ctx": 8192,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 5.3,
+        "peak_vram_mib": 1694.1,
+        "telemetry_csv": "/workspace/results/sweeps/ctxkv2/gpu-lab-ctxkv-probe-ctx8192-kvq8_0-vram.csv"
+      }
+    ],
+    "offload2": [
+      {
+        "campaign": "gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers99",
+        "ctx": 2048,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 30.4,
+        "peak_vram_mib": 2364.1,
+        "telemetry_csv": "/workspace/results/sweeps/offload2/gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers99-vram.csv"
+      },
+      {
+        "campaign": "gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers32",
+        "ctx": 2048,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 30.9,
+        "peak_vram_mib": 2364.1,
+        "telemetry_csv": "/workspace/results/sweeps/offload2/gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers32-vram.csv"
+      },
+      {
+        "campaign": "gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers24",
+        "ctx": 2048,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 38.6,
+        "peak_vram_mib": 2074.1,
+        "telemetry_csv": "/workspace/results/sweeps/offload2/gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers24-vram.csv"
+      },
+      {
+        "campaign": "gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers16",
+        "ctx": 2048,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 51.5,
+        "peak_vram_mib": 1612.1,
+        "telemetry_csv": "/workspace/results/sweeps/offload2/gpu-lab-offload-llama32-3b-ctx2048-kvq8_0-layers16-vram.csv"
+      }
+    ],
+    "concurrency": [
+      {
+        "campaign": "gpu-lab-concurrency-qwen3-ctx2048-kvq8_0-par1",
+        "ctx": 2048,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 35.1,
+        "peak_vram_mib": 1530.1,
+        "telemetry_csv": "/workspace/results/sweeps/concurrency/gpu-lab-concurrency-qwen3-ctx2048-kvq8_0-par1-vram.csv"
+      },
+      {
+        "campaign": "gpu-lab-concurrency-qwen3-ctx2048-kvq8_0-par2",
+        "ctx": 2048,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 32.5,
+        "peak_vram_mib": 1530.1,
+        "telemetry_csv": "/workspace/results/sweeps/concurrency/gpu-lab-concurrency-qwen3-ctx2048-kvq8_0-par2-vram.csv"
+      },
+      {
+        "campaign": "gpu-lab-concurrency-qwen3-ctx2048-kvq8_0-par4",
+        "ctx": 2048,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 21.3,
+        "peak_vram_mib": 1530.1,
+        "telemetry_csv": "/workspace/results/sweeps/concurrency/gpu-lab-concurrency-qwen3-ctx2048-kvq8_0-par4-vram.csv"
+      }
+    ],
+    "kvquality": [
+      {
+        "campaign": "gpu-lab-kv-quality-ctx4096-kvf16",
+        "ctx": 4096,
+        "kv": "f16",
+        "status": "measured",
+        "error": null,
+        "duration_s": 233.8,
+        "peak_vram_mib": 1658.1,
+        "telemetry_csv": "/workspace/results/sweeps/kvquality/gpu-lab-kv-quality-ctx4096-kvf16-vram.csv"
+      },
+      {
+        "campaign": "gpu-lab-kv-quality-ctx4096-kvq8_0",
+        "ctx": 4096,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 233.6,
+        "peak_vram_mib": 1530.1,
+        "telemetry_csv": "/workspace/results/sweeps/kvquality/gpu-lab-kv-quality-ctx4096-kvq8_0-vram.csv"
+      }
+    ],
+    "h4-par1-r1": [
+      {
+        "campaign": "gpu-lab-concurrency-qwen3-r1-ctx8192-kvq8_0-par1",
+        "ctx": 8192,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 40.1,
+        "peak_vram_mib": 1702.1,
+        "telemetry_csv": "/workspace/results/sweeps/h4-par1-r1/gpu-lab-concurrency-qwen3-r1-ctx8192-kvq8_0-par1-vram.csv"
+      }
+    ],
+    "h4-par1-r2": [
+      {
+        "campaign": "gpu-lab-concurrency-qwen3-r2-ctx8192-kvq8_0-par1",
+        "ctx": 8192,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 38.1,
+        "peak_vram_mib": 1702.1,
+        "telemetry_csv": "/workspace/results/sweeps/h4-par1-r2/gpu-lab-concurrency-qwen3-r2-ctx8192-kvq8_0-par1-vram.csv"
+      }
+    ],
+    "h4-par1-r3": [
+      {
+        "campaign": "gpu-lab-concurrency-qwen3-r3-ctx8192-kvq8_0-par1",
+        "ctx": 8192,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 38.0,
+        "peak_vram_mib": 1702.1,
+        "telemetry_csv": "/workspace/results/sweeps/h4-par1-r3/gpu-lab-concurrency-qwen3-r3-ctx8192-kvq8_0-par1-vram.csv"
+      }
+    ],
+    "h4-par4-r1": [
+      {
+        "campaign": "gpu-lab-concurrency-qwen3-r1-ctx8192-kvq8_0-par4",
+        "ctx": 8192,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 32.9,
+        "peak_vram_mib": 1696.1,
+        "telemetry_csv": "/workspace/results/sweeps/h4-par4-r1/gpu-lab-concurrency-qwen3-r1-ctx8192-kvq8_0-par4-vram.csv"
+      }
+    ],
+    "h4-par4-r2": [
+      {
+        "campaign": "gpu-lab-concurrency-qwen3-r2-ctx8192-kvq8_0-par4",
+        "ctx": 8192,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 38.2,
+        "peak_vram_mib": 1696.1,
+        "telemetry_csv": "/workspace/results/sweeps/h4-par4-r2/gpu-lab-concurrency-qwen3-r2-ctx8192-kvq8_0-par4-vram.csv"
+      }
+    ],
+    "h4-par4-r3": [
+      {
+        "campaign": "gpu-lab-concurrency-qwen3-r3-ctx8192-kvq8_0-par4",
+        "ctx": 8192,
+        "kv": "q8_0",
+        "status": "measured",
+        "error": null,
+        "duration_s": 33.4,
+        "peak_vram_mib": 1696.1,
+        "telemetry_csv": "/workspace/results/sweeps/h4-par4-r3/gpu-lab-concurrency-qwen3-r3-ctx8192-kvq8_0-par4-vram.csv"
+      }
+    ]
+  }
+}

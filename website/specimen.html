@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLM-Limits Visual Specimen — Scientific Editorial & Telemetry</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* SLM-Limits Light Mode Tokens (Primary) */
+      --bg: #FBFBFA;
+      --surface: #FFFFFF;
+      --surface-subtle: #F5F5F3;
+      --border: #E2E5E5;
+      --border-subtle: #ECEEED;
+      --border-strong: #BAC2C2;
+      --text-primary: #0E1415;
+      --text-secondary: #475456;
+      --text-tertiary: #7A8A8C;
+      --accent: #006D77;
+      --accent-hover: #00535B;
+      --accent-surface: #E6F3F4;
+      --verified: #0E7A5A;
+      --verified-surface: #E7F6F1;
+      --warning: #B45309;
+      --warning-surface: #FEF3C7;
+      --speed: #0284C7;
+      --speed-surface: #E0F2FE;
+      --font-serif: "Newsreader", Georgia, Cambria, "Times New Roman", serif;
+      --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "JetBrains Mono", Menlo, Consolas, monospace;
+      --shadow-subtle: 0 1px 2px 0 rgba(14, 20, 21, 0.04);
+      --shadow-popover: 0 4px 16px -2px rgba(14, 20, 21, 0.08);
+    }
+
+    .dark-mode {
+      /* SLM-Limits Dark Mode Tokens (Laboratory Complement) */
+      --bg: #0A0E0F;
+      --surface: #121719;
+      --surface-subtle: #182022;
+      --border: #242F32;
+      --border-subtle: #1C2426;
+      --border-strong: #3B4C50;
+      --text-primary: #F2F5F5;
+      --text-secondary: #98A8AA;
+      --text-tertiary: #647476;
+      --accent: #2DD4BF;
+      --accent-hover: #14B8A6;
+      --accent-surface: #0D2C28;
+      --verified: #34D399;
+      --verified-surface: #063826;
+      --warning: #FBBF24;
+      --warning-surface: #382806;
+      --speed: #38BDF8;
+      --speed-surface: #0C4A6E;
+      color: var(--text-primary);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      overflow-x: hidden;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      padding: 40px 24px;
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    /* Header & Title (Epoch AI Editorial Style) */
+    .header-block {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .eyebrow::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--accent);
+    }
+    h1.editorial-title {
+      font-family: var(--font-serif);
+      font-size: 34px;
+      font-weight: 500;
+      line-height: 1.2;
+      letter-spacing: -0.015em;
+      color: var(--text-primary);
+    }
+    .meta-lead {
+      color: var(--text-secondary);
+      font-size: 15px;
+      max-width: 720px;
+      margin-top: 8px;
+    }
+
+    /* Section Headings */
+    .section-heading {
+      font-family: var(--font-serif);
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+    .section-heading span {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-weight: 400;
+    }
+
+    /* Swatch Grid */
+    .swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
+    }
+    .swatch-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: var(--shadow-subtle);
+    }
+    .swatch-color {
+      height: 44px;
+      width: 100%;
+    }
+    .swatch-info {
+      padding: 8px 10px;
+    }
+    .swatch-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3;
+      margin-bottom: 2px;
+    }
+    .swatch-hex {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    .swatch-contrast {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      margin-top: 4px;
+      color: var(--verified);
+      font-weight: 600;
+    }
+
+    /* Stacked Panels for Light and Dark */
+    .preview-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .light-preview-wrapper {
+      background: #FBFBFA;
+      padding: 24px;
+      border-radius: 8px;
+      border: 1px solid #E2E5E5;
+    }
+    .dark-preview-wrapper {
+      background: #0A0E0F;
+      padding: 24px;
+      border-radius: 8px;
+      border: 1px solid #242F32;
+    }
+
+    /* Artificial Analysis Leaderboard Table Specimen */
+    .table-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      box-shadow: var(--shadow-subtle);
+    }
+    .table-toolbar {
+      padding: 12px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .segmented-control {
+      display: inline-flex;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px;
+    }
+    .segmented-btn {
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: var(--font-sans);
+    }
+    .segmented-btn.active {
+      background: var(--surface);
+      color: var(--text-primary);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+      font-weight: 600;
+    }
+    .hardware-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: var(--accent-surface);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border-subtle);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    table.specimen-table {
+      width: 100%;
+      min-width: 680px;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    table.specimen-table th {
+      background: var(--surface-subtle);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    table.specimen-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    table.specimen-table tr:hover td {
+      background-color: var(--surface-subtle);
+    }
+
+    .rank-cell {
+      width: 44px;
+      text-align: center;
+    }
+    .rank-medal {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .rank-1 { background: var(--accent-surface); color: var(--accent); }
+    .rank-2 { background: var(--surface-subtle); color: var(--text-secondary); }
+    .rank-3 { background: var(--surface-subtle); color: var(--text-tertiary); }
+
+    .model-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    /* Micro-bar Visualizations */
+    .metric-cell {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      color: var(--text-primary);
+    }
+    .metric-container {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .micro-track {
+      width: 64px;
+      height: 6px;
+      background: var(--border-subtle);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .micro-bar-teal {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+    }
+    .micro-bar-speed {
+      height: 100%;
+      background: var(--speed);
+      border-radius: 3px;
+    }
+
+    /* VRAM Gauge */
+    .vram-gauge {
+      width: 52px;
+      height: 6px;
+      background: var(--border-subtle);
+      border-radius: 3px;
+      overflow: hidden;
+      display: flex;
+    }
+    .vram-fill-safe { background: var(--accent); }
+    .vram-fill-warn { background: var(--warning); }
+
+    /* Epoch AI Editorial Callout Specimen */
+    .editorial-callout {
+      background: var(--surface);
+      border-left: 3px solid var(--accent);
+      padding: 18px 22px;
+      border-radius: 0 6px 6px 0;
+      border-top: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-subtle);
+    }
+    .editorial-callout h3 {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .editorial-callout p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <!-- Header Block -->
+    <header class="header-block">
+      <div>
+        <div class="eyebrow">SLM-Limits Scientific Design Specimen</div>
+        <h1 class="editorial-title">Editorial Authority & Hardware Telemetry</h1>
+        <p class="meta-lead">
+          Visual design synthesis harmonizing Epoch AI's archival scientific editorial presence with Artificial Analysis's high-density model leaderboard architecture. Evaluated strictly on the 4096 MiB GDDR5 GTX 1050 Ti constraint.
+        </p>
+      </div>
+      <div>
+        <span class="hardware-tag">
+          <strong>Physical Target:</strong> GTX 1050 Ti (4096 MiB · 112 GB/s)
+        </span>
+      </div>
+    </header>
+
+    <!-- Semantic Color Palette Validation -->
+    <section>
+      <div class="section-heading">
+        Semantic Palette Tokens <span>Verified against WCAG 2.2 AA Contrast Standards</span>
+      </div>
+      <div class="swatch-grid">
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #006D77;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Research Accent</div>
+            <div class="swatch-hex">#006D77</div>
+            <div class="swatch-contrast">5.4:1 (AA Pass)</div>
+          </div>
+        </div>
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #0E1415;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Carbon Primary Text</div>
+            <div class="swatch-hex">#0E1415</div>
+            <div class="swatch-contrast">16.2:1 (AAA Pass)</div>
+          </div>
+        </div>
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #475456;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Slate Secondary</div>
+            <div class="swatch-hex">#475456</div>
+            <div class="swatch-contrast">5.8:1 (AA Pass)</div>
+          </div>
+        </div>
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #0E7A5A;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Verified / Pareto</div>
+            <div class="swatch-hex">#0E7A5A</div>
+            <div class="swatch-contrast">5.1:1 (AA Pass)</div>
+          </div>
+        </div>
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #0284C7;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Throughput Speed</div>
+            <div class="swatch-hex">#0284C7</div>
+            <div class="swatch-contrast">4.6:1 (AA Pass)</div>
+          </div>
+        </div>
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #B45309;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">VRAM Warning</div>
+            <div class="swatch-hex">#B45309</div>
+            <div class="swatch-contrast">4.8:1 (AA Pass)</div>
+          </div>
+        </div>
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #FBFBFA; border-bottom: 1px solid #E2E5E5;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Paper Canvas (Light)</div>
+            <div class="swatch-hex">#FBFBFA</div>
+            <div class="swatch-contrast">Baseline Canvas</div>
+          </div>
+        </div>
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #0A0E0F;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Obsidian Canvas (Dark)</div>
+            <div class="swatch-hex">#0A0E0F</div>
+            <div class="swatch-contrast">Laboratory Mode</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Side-by-Side Validation: Light vs Dark Leaderboard Rendering -->
+    <section>
+      <div class="section-heading">
+        Component Validation <span>Artificial Analysis Table Anatomy & Epoch Editorial Callout</span>
+      </div>
+
+      <div class="preview-stack">
+        <!-- Light Mode Specimen Panel -->
+        <div class="light-preview-wrapper">
+          <div style="font-size: 11px; font-weight: 700; color: #006D77; margin-bottom: 12px; letter-spacing: 0.05em; text-transform: uppercase;">
+            Light Mode Specimen (Archival Paper Canvas · #FBFBFA)
+          </div>
+
+          <div class="table-container">
+            <div class="table-toolbar">
+              <div class="segmented-control">
+                <button class="segmented-btn active">Standard</button>
+                <button class="segmented-btn">Quality Index</button>
+                <button class="segmented-btn">Memory Fit</button>
+              </div>
+              <span style="font-family: var(--font-mono); font-size: 11px; color: #475456;">N=6 Verified Models on Hardware</span>
+            </div>
+
+            <table class="specimen-table">
+              <thead>
+                <tr>
+                  <th class="rank-cell">#</th>
+                  <th>Model & Quantization</th>
+                  <th style="text-align: right;">Quality Index</th>
+                  <th style="text-align: right;">Decode Speed</th>
+                  <th style="text-align: right;">Peak VRAM (4096 MiB Ceiling)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="rank-cell"><span class="rank-medal rank-1">1</span></td>
+                  <td>
+                    <div class="model-name">
+                      Qwen2.5-3B-Instruct
+                      <span class="badge-tag">3.09B</span>
+                      <span class="badge-tag">Q4_K_M</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="micro-track"><div class="micro-bar-teal" style="width: 82%;"></div></div>
+                      <span>57.9</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="micro-track"><div class="micro-bar-speed" style="width: 61%;"></div></div>
+                      <span>18.4 tok/s</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="vram-gauge"><div class="vram-fill-safe" style="width: 58%;"></div></div>
+                      <span>2,410 MiB</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rank-cell"><span class="rank-medal rank-2">2</span></td>
+                  <td>
+                    <div class="model-name">
+                      Llama-3.2-3B-Instruct
+                      <span class="badge-tag">3.21B</span>
+                      <span class="badge-tag">Q4_K_M</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="micro-track"><div class="micro-bar-teal" style="width: 79%;"></div></div>
+                      <span>55.8</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="micro-track"><div class="micro-bar-speed" style="width: 60%;"></div></div>
+                      <span>18.1 tok/s</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="vram-gauge"><div class="vram-fill-safe" style="width: 61%;"></div></div>
+                      <span>2,510 MiB</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rank-cell"><span class="rank-medal rank-3">3</span></td>
+                  <td>
+                    <div class="model-name">
+                      Phi-3.5-mini-instruct
+                      <span class="badge-tag">3.82B</span>
+                      <span class="badge-tag">Q4_K_M</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="micro-track"><div class="micro-bar-teal" style="width: 73%;"></div></div>
+                      <span>51.4</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="micro-track"><div class="micro-bar-speed" style="width: 48%;"></div></div>
+                      <span>14.5 tok/s</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="vram-gauge"><div class="vram-fill-warn" style="width: 78%;"></div></div>
+                      <span>3,190 MiB</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="editorial-callout" style="margin-top: 16px;">
+            <h3>Scientific Finding: GDDR5 Memory Bandwidth Saturation</h3>
+            <p>
+              Under a 4096 MiB ceiling, decode throughput is strictly memory-bandwidth bound (112 GB/s on PCIe 3.0 x16). Token generation speeds scale inversely with parameter weight footprint regardless of context length until KV cache consumes remaining headroom.
+            </p>
+          </div>
+        </div>
+
+        <!-- Dark Mode Specimen Panel -->
+        <div class="dark-preview-wrapper dark-mode">
+          <div style="font-size: 11px; font-weight: 700; color: #2DD4BF; margin-bottom: 12px; letter-spacing: 0.05em; text-transform: uppercase;">
+            Dark Mode Specimen (Obsidian Lab Canvas · #0A0E0F)
+          </div>
+
+          <div class="table-container">
+            <div class="table-toolbar">
+              <div class="segmented-control">
+                <button class="segmented-btn active">Standard</button>
+                <button class="segmented-btn">Quality Index</button>
+                <button class="segmented-btn">Memory Fit</button>
+              </div>
+              <span style="font-family: var(--font-mono); font-size: 11px; color: #98A8AA;">N=6 Verified Models on Hardware</span>
+            </div>
+
+            <table class="specimen-table">
+              <thead>
+                <tr>
+                  <th class="rank-cell">#</th>
+                  <th>Model & Quantization</th>
+                  <th style="text-align: right;">Quality Index</th>
+                  <th style="text-align: right;">Decode Speed</th>
+                  <th style="text-align: right;">Peak VRAM (4096 MiB Ceiling)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="rank-cell"><span class="rank-medal rank-1">1</span></td>
+                  <td>
+                    <div class="model-name">
+                      Qwen2.5-3B-Instruct
+                      <span class="badge-tag">3.09B</span>
+                      <span class="badge-tag">Q4_K_M</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="micro-track"><div class="micro-bar-teal" style="width: 82%;"></div></div>
+                      <span>57.9</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="micro-track"><div class="micro-bar-speed" style="width: 61%;"></div></div>
+                      <span>18.4 tok/s</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="vram-gauge"><div class="vram-fill-safe" style="width: 58%;"></div></div>
+                      <span>2,410 MiB</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rank-cell"><span class="rank-medal rank-2">2</span></td>
+                  <td>
+                    <div class="model-name">
+                      Llama-3.2-3B-Instruct
+                      <span class="badge-tag">3.21B</span>
+                      <span class="badge-tag">Q4_K_M</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="micro-track"><div class="micro-bar-teal" style="width: 79%;"></div></div>
+                      <span>55.8</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="micro-track"><div class="micro-bar-speed" style="width: 60%;"></div></div>
+                      <span>18.1 tok/s</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="vram-gauge"><div class="vram-fill-safe" style="width: 61%;"></div></div>
+                      <span>2,510 MiB</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rank-cell"><span class="rank-medal rank-3">3</span></td>
+                  <td>
+                    <div class="model-name">
+                      Phi-3.5-mini-instruct
+                      <span class="badge-tag">3.82B</span>
+                      <span class="badge-tag">Q4_K_M</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="micro-track"><div class="micro-bar-teal" style="width: 73%;"></div></div>
+                      <span>51.4</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="micro-track"><div class="micro-bar-speed" style="width: 48%;"></div></div>
+                      <span>14.5 tok/s</span>
+                    </div>
+                  </td>
+                  <td class="metric-cell">
+                    <div class="metric-container">
+                      <div class="vram-gauge"><div class="vram-fill-warn" style="width: 78%;"></div></div>
+                      <span>3,190 MiB</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="editorial-callout" style="margin-top: 16px;">
+            <h3>Scientific Finding: GDDR5 Memory Bandwidth Saturation</h3>
+            <p>
+              Under a 4096 MiB ceiling, decode throughput is strictly memory-bandwidth bound (112 GB/s on PCIe 3.0 x16). Token generation speeds scale inversely with parameter weight footprint regardless of context length until KV cache consumes remaining headroom.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

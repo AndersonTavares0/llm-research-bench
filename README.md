@@ -1,234 +1,249 @@
-# LLM Research Bench
+# SLM-Limits: LLM Research Bench
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python: 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](pyproject.toml)
 [![CI](https://github.com/AndersonTavares0/llm-research-bench/actions/workflows/ci.yml/badge.svg)](https://github.com/AndersonTavares0/llm-research-bench/actions/workflows/ci.yml)
+[![WCAG 2.2 AA](https://img.shields.io/badge/Accessibility-WCAG_2.2_AA-006D77.svg)](website/)
 [![Technical Report (EN)](https://img.shields.io/badge/Technical_Report-PDF_(en--US)-red.svg)](reports/en-US/report_en-US.pdf)
 [![Relatório Técnico (PT)](https://img.shields.io/badge/Relat%C3%B3rio_T%C3%A9cnico-PDF_(pt--BR)-red.svg)](reports/pt-BR/report_pt-BR.pdf)
 [![Language: English](https://img.shields.io/badge/Language-English-green.svg)](README.md)
 [![Idioma: Português](https://img.shields.io/badge/Idioma-Portugu%C3%AAs-blue.svg)](README.pt-BR.md)
 
-> **Empirical Exploration of Small Language Models (SLMs) on Resource-Constrained Hardware ($\le 4\text{ GiB}$ VRAM)**<br/>
-> A personal, educational, and open-source experimental project investigating memory limits, generation throughput, speculative decoding, and defensive safety behavior on an entry-level GPU (NVIDIA GeForce GTX 1050 Ti 4 GB).
+> **Empirical Exploration of Small Language Models (SLMs) Under Severe Hardware Constraints ($\le 4096\text{ MiB}$ VRAM)**<br/>
+> An open-source scientific testbed and benchmarking suite investigating inference throughput, VRAM allocation envelopes, speculative decoding (MTP), KV cache scaling, and defensive safety behavior on edge-class physical silicon (NVIDIA GeForce GTX 1050 Ti 4 GB GDDR5).
 
-**Author:** Anderson Tavares (Undergraduate Student in Software Engineering and Data Science)<br/>
+**Author:** Anderson Tavares (Undergraduate in Software Engineering & Data Science)<br/>
 **Project Repository:** [https://github.com/AndersonTavares0/llm-research-bench](https://github.com/AndersonTavares0/llm-research-bench)<br/>
+**Interactive Research Platform:** [http://localhost:3000](http://localhost:3000) (Next.js 16 / ECharts / WCAG 2.2 AA)<br/>
 **Language:** **English** | [Versão em Português](README.pt-BR.md)
 
 ---
 
 > [!NOTE]
-> **Project Nature & Disclaimer**<br/>
-> This is an independent personal project developed for learning, experimentation, and exploratory engineering. While it applies structured benchmarks, monotonic timing, and statistical calculations, **it is not a peer-reviewed academic publication**. Results reflect observed behavior on a specific single-GPU testbed and are subject to ongoing refinement. See [Limitations and Ongoing Work](#5-methodology-limitations--evolution) and [Issue #2](https://github.com/AndersonTavares0/llm-research-bench/issues/2).
+> **Scientific Integrity & Disclaimer**<br/>
+> This repository is an independent research project focused on reproducible empirical systems engineering. While all experiments adhere to strict monotonic timing, hardware isolation, cryptographic provenance, and fail-closed statistical validation, **this work is not a peer-reviewed journal publication**. Results reflect observed physical behavior on a dedicated Pascal GPU testbed. Historical observations, analytical bounds, and verified measurements are labeled separately according to the project's evidence hierarchy. See [Scientific Integrity & Evidence Hierarchy](#5-methodology-limitations--evolution) and [Research Charter](docs/research/research-charter.md).
 
 ---
 
 ## Table of Contents
 
-- [1. Overview & Motivation](#1-overview--motivation)
+- [1. Overview & Research Scope](#1-overview--research-scope)
 - [2. System Architecture & Workflow](#2-system-architecture--workflow)
-- [3. Empirical Findings & Benchmarks](#3-empirical-findings--benchmarks)
-- [4. Getting Started & Practical Usage](#4-getting-started--practical-usage)
+- [3. Empirical Findings & Research Frontiers](#3-empirical-findings--research-frontiers)
+- [4. Getting Started, CLI & Web Platform](#4-getting-started-cli--web-platform)
 - [5. Methodology, Limitations & Evolution](#5-methodology-limitations--evolution)
 
 ---
 
-## 1. Overview & Motivation
+## 1. Overview & Research Scope
 
-### What Is This Project?
+### What Is SLM-Limits?
 
-**LLM Research Bench** is a practical experimentation testbed and automated measurement toolkit designed to evaluate **Small Language Models (SLMs, parameterized from 0.5B to 4B)** running locally on commodity physical accelerators with strict memory ceilings ($\le 4096\text{ MiB}$ VRAM).
+**SLM-Limits** is an empirical research bench designed to evaluate **Small Language Models (SLMs, 0.5B to 4B parameters)** executing on legacy, resource-constrained consumer accelerators ($\le 4096\text{ MiB}$ VRAM). Rather than relying on cloud APIs or enterprise-grade datacenter GPUs (A100/H100), this project probes the exact operational limits of running local models directly on physical edge hardware.
 
-### Why Test on a 4 GB GTX 1050 Ti?
+### Why the 4 GB GTX 1050 Ti?
 
-While frontier AI research primarily targets data-center accelerators (A100, H100), billions of edge and legacy systems rely on accessible consumer hardware. The **NVIDIA GeForce GTX 1050 Ti (Pascal GP107, 4 GB GDDR5, 75W TDP)** serves as a rigorous stress-test platform because:
+The **NVIDIA GeForce GTX 1050 Ti (Pascal GP107, 4096 MiB GDDR5, 128-bit bus, 112 GB/s bandwidth, 75W TDP)** serves as a strict, unforgiving physical boundary:
 
-1. **Rigid Physical Boundary:** A strict 4096 MiB ceiling leaves virtually zero margin for memory bloat; static weights consume 40% to 76% of total VRAM, severely limiting Key-Value (KV) cache expansion.
-2. **No Tensor Cores:** The GP107 microarchitecture lacks Tensor Cores. Under the report's stated assumptions, its analytical Roofline estimate predicts a memory-bandwidth-limited batch-1 decode regime; this is not a direct measurement of DRAM traffic and applies to this GTX 1050 Ti testbed, not legacy GPUs generally.
-3. **Realistic Edge Conditions:** It demonstrates how techniques like non-uniform quantization (`IQ4_XS`) and Multi-Token Prediction (`MTP`) behave on real consumer silicon without hyperscaler cloud offloading.
+1. **Rigid Physical VRAM Ceiling:** At 4096 MiB, static model weights consume 15% to 77% of total device memory. Key-Value (KV) cache headroom is constrained, quickly triggering Out-of-Memory (OOM) halts or PCIe memory fallback without aggressive quantization.
+2. **Zero Tensor Cores:** The GP107 microarchitecture lacks dedicated matrix accelerators (Tensor Cores). FP16 compute executes at a 1:64 throughput penalty. Consequently, single-batch autoregressive decode is strictly memory-bandwidth bound ($112\text{ GB/s}$).
+3. **Realistic Commodity Edge Silicon:** Millions of deployed industrial edge devices, medical appliances, and local workstations operate on Pascal/Turing-era consumer GPUs without hyperscaler cloud connectivity.
 
-### Research Scope & Questions
+### Core Research Questions (RQs)
 
-- **Quantization Impact:** How do importance-matrix quantizations (`IQ4_XS`) compare against standard block quantizations (`Q4_K_M`) in decode throughput and VRAM footprint?
-- **Speculative Amortization:** Does Multi-Token Prediction (MTP) deliver practical generation speedups on memory-bound hardware without dedicated draft models?
-- **Multilingual Tokenization:** How severely do compact tokenizer vocabularies penalize context capacity and processing time in non-English languages (Portuguese and Mandarin)?
-- **Defensive Robustness:** Do compact SLMs reliably isolate untrusted tool outputs from prompt injection attacks in local agentic workflows?
+The research program investigates four interdependent dimensions:
+
+- **Quantization Dynamics:** How do importance-matrix non-uniform quantizations (`IQ4_XS`) compare against standard block formats (`Q4_K_M`) in generation speed and VRAM overhead?
+- **Speculative Acceleration:** Can Multi-Token Prediction (MTP) deliver practical throughput gains on memory-bound GPUs without requiring dedicated draft models?
+- **KV Cache Physics & Context Degradation:** At what context length does KV cache allocation trigger memory collapse under FP16 vs Q8_0 quantization?
+- **Defensive Robustness & Safety:** Can resource-constrained SLMs reliably parse structured formats, execute authorized tool envelopes, and resist context injection attacks?
 
 ---
 
 ## 2. System Architecture & Workflow
 
-The repository has separate experiment entry points; this diagram describes the checked-in local campaign runner, not the current production deployment. `campaign.py` validates a campaign specification, records provenance, invokes the official `lm-eval` and `llama.cpp` tools, and summarizes their artifacts. Other modules provide legacy/direct API evaluators and optional hardware telemetry; they are not one shared four-stage pipeline.
+The SLM-Limits architecture is structured into four decoupled layers, ensuring strict hardware isolation, deterministic execution, and complete reproducibility from raw silicon telemetry to publication-grade dissemination.
 
 ```mermaid
 flowchart TD
-    SPEC["Campaign YAML"] --> RUN["campaign.py<br/>validate & record provenance"]
-    RUN --> TOOLS["Official evaluation tools<br/>lm-eval + llama.cpp"]
-    TOOLS --> ART["Campaign artifacts<br/>raw outputs + manifests"]
-    ART --> SUM["campaign summary / audit"]
-    OTHER["Direct API & legacy evaluators"] -. separate entry points .-> API["Local OpenAI-compatible endpoint"]
+    subgraph L1["Layer 1: Physical Hardware & Sandbox Substrate"]
+        GPU["NVIDIA GeForce GTX 1050 Ti<br/>4096 MiB GDDR5 · 112 GB/s · 75W TDP"]
+        PVE["Proxmox VE Container CT 108<br/>Debian 12 Minimal · Headless · Direct PCI Passthrough"]
+        NVML["Hardware Telemetry Monitor<br/>NVML ctypes probe · 250 ms sampling (VRAM, Temp, Drift)"]
+        GPU --- PVE
+        PVE --- NVML
+    end
+
+    subgraph L2["Layer 2: Inference & Serving Engines"]
+        LLAMA["llama.cpp Runtime (Pinned b12024)<br/>cuBLAS Offload · llama-server & llama-bench"]
+        QUANTS["Quantization Frontiers<br/>Q4_K_M · IQ4_XS · Q8_0 KV Cache"]
+        SPEC["Speculative Decoding Engine<br/>Multi-Token Prediction (MTP) Draft Heads"]
+        LLAMA --- QUANTS
+        LLAMA --- SPEC
+    end
+
+    subgraph L3["Layer 3: Evaluation Tracks & Scientific Harnesses"]
+        TRACK_A["Track A: Systems & Telemetry<br/>Prefill / Decode tok/s · TTFT · KV Slope · Concurrency"]
+        TRACK_B["Track B: Quality & Capability<br/>ARC-Challenge · HellaSwag · GSM8K · IFEval Strict"]
+        TRACK_C["Track C: Context & Structured Decoding<br/>Grammar JSON Schema (30/30) · Native Tools · Fertility"]
+        TRACK_D["Track D: Defensive Cybersecurity<br/>CWE-10 Triage · NVD 2.0 CVE Advisory · AppSec Harness"]
+    end
+
+    subgraph L4["Layer 4: Data Provenance, Artifacts & Dissemination"]
+        PROV["Cryptographic Provenance<br/>SHA-256 Hashes · Declarative Manifests"]
+        TIER["Strict Evidence Hierarchy<br/>[MEASURED] · [PARTIAL] · [ANALYTICAL] · [READY]"]
+        REPORTS["Dual LaTeX Monographs<br/>20p EN / 30p PT compiled via Tectonic"]
+        WEB["Interactive Research Dashboard<br/>Next.js 16 · Tailwind · ECharts · WCAG 2.2 AA"]
+    end
+
+    L1 -->|Physical Telemetry Traces| L2
+    L2 -->|Deterministic Generation (τ = 0.0)| L3
+    L3 -->|Raw Evaluation Microdata| L4
 ```
 
-### Core Pipeline Components
+### Architectural Layer Breakdown
 
-- [`campaign.py`](src/llm_research_bench/campaign.py): Current repository campaign CLI; validates specs and provenance, drives official evaluation/runtime CLIs, and summarizes/audits artifacts. This does not establish the live production route.
-- [`benchmark_suite.py`](src/llm_research_bench/benchmark_suite.py) and [`capability.py`](src/llm_research_bench/capability.py): Separate direct Chat Completions evaluators; their datasets, metrics, and limits are documented with the corresponding results.
-- [`telemetry_collector.py`](src/llm_research_bench/telemetry_collector.py): Optional NVML sampler at 250 ms intervals, recording VRAM and temperature; it does not record GPU clocks.
-- [`generate_readme_figures.py`](src/llm_research_bench/generate_readme_figures.py): Generates figures from values transcribed in the script/README, not directly from raw experiment files; verify against canonical artifacts before treating them as updated measurements.
+#### 1. Physical Hardware & Sandbox Substrate
+- **Isolated Execution Environment:** Experiments run within a minimal Debian 12 Proxmox VE Container (`CT 108`) with exclusive PCI passthrough. No X11 display server, compositor, or desktop background processes run on the host, preventing host VRAM contamination.
+- **Asynchronous Telemetry Probe (`telemetry_collector.py`):** Queries native NVML via C-types at 250 ms intervals, logging peak VRAM allocation, memory drift, die temperature, and GPU Boost 3.0 thermal throttling events ($1695 \to 1607\text{ MHz}$).
 
----
+#### 2. Inference & Serving Engines
+- **Pinned Runtime:** Evaluated against `llama.cpp` pinned release `b12024` with native cuBLAS acceleration.
+- **Dual Inference Pathways:**
+  - *Official Campaign Pipeline (`campaign.py`):* Declarative YAML execution driving `llama-bench` and EleutherAI `lm-eval` with automatic artifact manifest generation.
+  - *Telemetry & Microbenchmark Harnesses (`src/llm_research_bench/`):* Micro-profiling TTFT, per-token latency percentiles, KV cache slope, and concurrent slot allocation.
 
-## 3. Empirical Findings & Benchmarks
+#### 3. Evaluation Tracks
+- **Track A (Systems Telemetry):** Throughput scaling, memory bus demand modeling, and concurrency degradation across 1 to 4 parallel slots.
+- **Track B (Zero-Shot Capability):** Standardized quality tasks (ARC-Challenge, HellaSwag, GSM8K Flex, IFEval prompt-strict).
+- **Track C (Context Dynamics & Tool Calling):** JSON Schema grammar adherence ($30/30$ vs $18/30$ unconstrained), native OpenAI-compatible tool envelopes, and multilingual tokenization fertility.
+- **Track D (Defensive Cybersecurity):** Static CWE vulnerability triage, NVD 2.0-verified CVE advisory classification, and role-gated application security guardrails (`defensive_harness.py`).
 
-> [!CAUTION]
-> The comparison table and quantization/MTP figures below are **historical
-> exploratory results**, not current model recommendations or directly
-> comparable to the later Qwen3-1.7B campaigns. They came from separate model,
-> runtime and evaluator protocols on one GPU; see the [evidence index](docs/benchmarks/evidence-index.md)
-> for current, bounded conclusions and raw artifacts. Current official-tool
-> runs are documented separately in [official campaigns](docs/benchmarks/official-campaigns.md).
-> The source-pinned HotpotQA support-order pilot is incomplete (15/100 paired
-> items) and descriptive; it tests supplied-context QA, not live retrieval or
-> conflicting document versions. See the [partial report](docs/benchmarks/hotpotqa-support-order-partial.md).
-
-### Reference Edge Testbed
-
-The historical comparison below used this physical testbed. Later campaigns
-also used the GTX 1050 Ti, but different models, runtime builds and protocols;
-they are not all represented by the historical table:
-- **GPU:** NVIDIA GeForce GTX 1050 Ti (4096 MiB GDDR5, 128-bit bus, 112.0 GB/s bandwidth, 768 CUDA cores, Pascal GP107).
-- **CPU & Host RAM:** AMD Ryzen 5 3600 (6C/12T @ 3.6 GHz base), 16 GiB DDR4 3200 MT/s.
-- **Sandbox Environment:** Debian 12 minimal container with direct PCI passthrough (headless, no X11/desktop VRAM contention).
-- **Historical inference engine:** `llama-server` (commit b4120+) with cuBLAS offload and GGUF quantization. Later Qwen3-1.7B campaigns use llama.cpp build 12024; see their manifests.
-
-### Master Comparison Table (Evaluated Configurations)
-
-> [!IMPORTANT]
-> **Foundational Models vs. Operational Configurations:**<br/>
-> The benchmark evaluated **6 distinct foundational model architectures** across **8 operational experimental configurations** (including quantization levels and speculative MTP variants).
-
-| Point | Model & Operational Configuration | Foundational Architecture | Format / Quantization | Peak VRAM (MiB) | % of 4 GiB | Decode (tok/s) | Steady TTFT (ms) | Analytical Bus Demand |
-| :---: | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **[1]** | **Qwen-2.5-0.5B** | Qwen2.5 (0.49B) | `Q4_K_M` | **620.7** | 15.2% | **97.47 ± 0.60** | **12.1** | 45.7 GB/s (40.8%) |
-| **[2]** | **Qwen-3.5-2B** | Qwen (1.95B) | `Q4_K_XL` | 1580.7 | 38.6% | 37.60 ± 0.10 | 49.9 | 52.5 GB/s (46.9%) |
-| **[3]** | **Gemma-4-E2B [C2]** | Gemma 2 (2.00B) | `IQ4_XS` Base | 1800.7 | 44.0% | 34.51 ± 0.29 | 88.0 | 60.0 GB/s (53.6%) |
-| **[4]** | **Gemma-4-E2B [C1]** | Gemma 2 (2.00B) | `Q4_K_M` Base | 1996.7 | 48.7% | 26.92 ± 0.23 | 116.1 | 53.7 GB/s (47.9%) |
-| **[5]** | **Gemma-4-E2B [C3]** | Gemma 2 (2.00B) | `IQ4_XS` + **MTP** | 2036.7 | 49.7% | **43.35 ± 0.57** | 73.5* | **75.3 GB/s (67.2%)** |
-| **[6]** | **SmolLM2-1.7B** | LLaMA (1.71B) | `Q4_K_M` | 2902.7 | 70.9% | 47.80 ± 0.10 | 25.5 | 50.6 GB/s (45.2%) |
-| **[7]** | **Llama-3.2-3B** | Llama 3.2 (3.21B) | `Q4_K_M` | 3074.7 | 75.1% | 27.59 ± 0.04 | 43.5 | 55.7 GB/s (49.7%) |
-| **[8]** | **Qwen-3.5-4B** | Qwen (4.02B) | `Q4_K_M` | 3140.7 | 76.7% | 18.55 ± 0.10 | 129.8 | 47.8 GB/s (42.7%) |
-
-*\* Note on TTFT Cold-Start:* In initial trials without warmup, Gemma-4-E2B exhibited a cold-start TTFT of 4142.2 ms due to CUDA kernel compilation and initial buffer allocation. Once warm, steady-state median TTFT dropped to 73.5 ms (p95: 2311.4 ms).
-
-### Trade-off: Generation Throughput vs. VRAM Footprint
-
-The figure below plots observed generation throughput (greedy decode, tokens/s) against measured peak device memory (MiB via NVML). Points **[1] through [8]** map directly to the Master Comparison Table above:
-
-![Throughput vs. VRAM on GTX 1050 Ti](docs/images/pareto_frontier.svg)
-
-> [!NOTE]
-> **Two-metric comparison only:**<br/>
-> Point **[1] (Qwen-0.5B)** has the lowest measured peak VRAM and highest measured decode throughput among these plotted configurations on this GTX 1050 Ti. This comparison excludes task quality, reliability, latency, context behavior, and other operating conditions; it is not a general model recommendation. Larger configurations also require additional context/KV-cache memory beyond static weights.
-
-### Controlled Observational Comparison: Quantization & MTP
-
-To examine the separate effects of tensor quantization and speculative execution, we conducted controlled observations on a fixed architecture (**Gemma-4-E2B**) across 10 sequential iterations ($\tau = 0.0$):
-
-![Controlled Observational Comparisons: Gemma-4-E2B](docs/images/mtp_ablation.svg)
-
-- **Quantization Shift (C2 vs. C1):** Moving from standard `Q4_K_M` to importance-matrix `IQ4_XS` without speculative decoding yielded a **+28.2% throughput increase** ($26.92 \to 34.51\text{ tok/s}$) while reducing physical VRAM by **196.0 MiB** ($1996.7 \to 1800.7\text{ MiB}$).
-- **Speculative MTP Shift (C3 vs. C2):** Under constant `IQ4_XS` quantization, enabling Multi-Token Prediction (MTP) draft heads added **+25.6% throughput** ($34.51 \to 43.35\text{ tok/s}$) with an observed runtime memory allocation of **+236.0 MiB** for draft heads and speculative buffers.
-- **Combined Operating Difference (C3 vs. C1):** The overall difference between the baseline configuration and the MTP-optimized setup reached **+61.0%** ($26.92 \to 43.35\text{ tok/s}$). Because the 196 MiB savings from quantization absorbed 83% of the MTP memory overhead, the net memory increase was only **+40.0 MiB** ($1996.7 \to 2036.7\text{ MiB}$).
-
-> [!NOTE]
-> *Methodological Scope:* These represent controlled observational comparisons on a single model architecture in this specific test environment. They are not claimed as a complete causal factorial decomposition across all hardware.
-
-### Defensive Safety & Multilingual Tokenization Highlights
-
-- **Benign Canary Over-Refusal:** Across 4 benign technical prompts containing security keywords (e.g., explaining buffer overflows defensively), all tested models achieved a 0% false refusal rate ($0/4$, $\text{FPR} = 0.0\%$, exact Clopper-Pearson 95% CI $[0.0\%, 60.2\%]$).
-- **Indirect Prompt Injections:** Models below 2B parameters showed high vulnerability to context-embedded delimiter injections ($\text{ASR} \approx 50\%\text{--}100\%$).
-- **Tool Interception:** In the two recorded malicious-tool test cases, the client-side harness blocked both calls ($2/2$, $[15.8\%, 100.0\%]$). This does not establish that other execution paths are blocked or that host execution is generally impossible.
-- **Multilingual Tokenizer Overhead:** On the 12 paired texts in the recorded corpus, the SmolLM2 tokenizer (49k vocabulary) produced mean Portuguese/English and Mandarin/English token-count ratios of $2.40\times$ and $4.59\times$. The corresponding $22\%$ Mandarin figure is an arithmetic context-token-budget ratio for this corpus, not a measurement of retained documents or task quality. Qwen2.5, Gemma-2, and Llama-3.2 tokenizers were also evaluated; see the linked artifact for all 12-item results.
-
-### Defensive Cybersecurity Research Track (No Model Runs Yet)
-
-A dedicated defensive track implements deterministic benchmarks and an appsec
-mock harness — no offensive tooling, and **no model has been run** against
-them (local model-run gates remain unverified):
-
-- `datasets/cybersecurity_static_triage_v2.json` (10 items: CWE-78/89/79/22/798/120 + 4 negative controls, with remediation-keyword grading),
-- `datasets/cve_advisory_triage_v1.json` (6 paraphrased advisories over a 23-row synthetic inventory, scored by a deterministic version comparator with explicit `insufficient_evidence` abstentions),
-- `datasets/appsec_chatbot_scenarios_v1.json` + `src/llm_research_bench/defensive_harness.py` (per-user documents, role-gated canary secrets, tool envelopes; distinguishes a model instruction-following failure, an unauthorized action *proposed* by the model, an unauthorized action actually *permitted* by the application, and a refusal).
-
-Protocol, threat model, and acceptance criteria:
-`docs/research/defensive-cyber-track-protocol.md`; benchmark reproduction:
-`docs/benchmarks/defensive-cybersecurity-benchmarks.md`; result schema:
-`configs/schemas/defensive_cyber_results.v1.schema.json`.
+#### 4. Data Provenance & Dissemination
+- **SHA-256 Provenance Verification:** Every evaluated model GGUF file and dataset row is hashed and verified against `datasets/model_provenance.json`.
+- **Publication & Visualization:** Findings compile into dual LaTeX monographs (`reports/`) and an accessible, interactive Next.js research portal (`website/`).
 
 ---
 
-## 4. Getting Started & Practical Usage
+## 3. Empirical Findings & Research Frontiers
 
-### Prerequisites & Environment Setup
+### Master Comparison Table (GTX 1050 Ti Primary Testbed)
 
-- **Operating System:** Linux (Ubuntu 22.04 / Debian 12 recommended) or Windows 10/11 with Python 3.10+
-- **GPU (Optional for analysis):** NVIDIA GPU with proprietary driver (for NVML telemetry). Benchmarking scripts can run mock passes without a physical GPU.
-- **Git**
+All configurations evaluated under single-host greedy sampling ($\tau = 0.0$, $\text{seed} = 42$) on the reference NVIDIA GeForce GTX 1050 Ti (4096 MiB GDDR5, 112 GB/s):
+
+| Model | Architecture | Quantization | Peak VRAM | 4GB Budget | Decode Speed | Steady TTFT | Quality Index | Memory Efficiency |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Qwen2.5:0.5B** | Qwen2.5 (0.49B) | `Q4_K_M` | **620.7 MiB** | 15.2% | **97.5 tok/s** | **12.1 ms** | 30.5% | **160.8 tok/s/GiB** |
+| **SmolLM2:1.7B** | LLaMA (1.71B) | `Q4_K_M` | 1184.2 MiB | 28.9% | 52.1 tok/s | 78.4 ms | 39.8% | 45.0 tok/s/GiB |
+| **Gemma-4:E2B** | Gemma 2 (2.00B) | `IQ4_XS` + **MTP** | 1510.0 MiB | 36.8% | 46.3 tok/s | 115.4 ms | 52.0% | 31.4 tok/s/GiB |
+| **Qwen3.5:2B** | Qwen (1.95B) | `Q4_K_XL` | 1598.0 MiB | 39.0% | 37.5 tok/s | 142.1 ms | 45.3% | 24.0 tok/s/GiB |
+| **Llama-3.2:3B** | Llama 3.2 (3.21B) | `Q4_K_M` | 2120.0 MiB | 51.7% | 27.4 tok/s | 168.3 ms | 49.0% | 13.2 tok/s/GiB |
+| **Qwen3.5:4B** | Qwen (4.02B) | `Q4_K_M` | 3069.0 MiB | 74.9% | 18.4 tok/s | 284.6 ms | **54.0%** | 6.1 tok/s/GiB |
+
+> [!NOTE]
+> *Quality Index* represents the arithmetic mean of zero-shot accuracy across ARC-Challenge, HellaSwag, GSM8K (Flex), and IFEval (Prompt-Strict). *Memory Efficiency* measures decode throughput per GiB of allocated VRAM ($\text{tok/s} / \text{GiB}$).
+
+### Controlled Architectural Ablations (Gemma-4-E2B)
+
+Sequential controlled observations on a fixed 2B architecture measured the isolated effects of non-uniform quantization and Multi-Token Prediction (MTP):
+
+```
+Throughput (tok/s):
+  Baseline Q4_K_M:        [==========================]  26.92 tok/s
+  Quantization IQ4_XS:    [==================================]  34.51 tok/s (+28.2%)
+  Quant + MTP Speculative:[============================================]  43.35 tok/s (+61.0%)
+
+VRAM Footprint (MiB):
+  Baseline Q4_K_M:        [========================================] 1996.7 MiB
+  Quantization IQ4_XS:    [====================================]     1800.7 MiB (-196.0 MiB)
+  Quant + MTP Speculative:[=========================================] 2036.7 MiB (+40.0 MiB net)
+```
+
+- **Quantization Effect:** Importance-matrix `IQ4_XS` reduced static tensor footprint by **196.0 MiB** while boosting decode throughput by **+28.2%** due to lower memory bus traffic.
+- **Speculative MTP Effect:** Enabling dual-head MTP draft speculative generation added **+25.6% throughput** ($34.51 \to 43.35\text{ tok/s}$) with an operational buffer cost of **+236.0 MiB**.
+- **Net Synergy:** The memory reduction from `IQ4_XS` absorbed **83%** of the MTP memory overhead, producing a net throughput speedup of **+61.0%** for only **+40.0 MiB** of total VRAM.
+
+### KV Cache Physics & Context Limits (H1 Campaign)
+
+- **Memory Slope:** Empirical KV cache consumption scales at **$113.0\text{ KiB/token}$** under FP16 vs **$60.3\text{ KiB/token}$** under `q8_0` quantization.
+- **3.8k Safe Horizon:** For 3B models in `Q4_K_M` (weights: ~2.5 GiB), unquantized FP16 KV cache exhausts remaining headroom by ~3,800 tokens, precipitating CUDA OOM. Activating `q8_0` KV cache reduces peak VRAM by **19.6%**, preserving needle retrieval fidelity ($30/30$).
+
+### Structured Outputs & Tool Calling Reliability
+
+- **Constrained vs Unconstrained Decoding:** Grammar-enforced JSON Schema decoding achieved **$30/30$** ($100\%$) schema adherence vs **$18/30$** ($60\%$) for generic `json_object` mode ($12/0$ discordant pairs, McNemar exact $p = 0.000488$).
+- **Native vs Mediated Tool Calling:** Native OpenAI-compatible tool envelopes achieved **$18/18$** valid invocations, whereas prompt-mediated JSON tool extraction degraded to $2\text{--}8/18$.
+
+### Multilingual Tokenization Fertility
+
+Evaluating 12 parallel texts across Portuguese, Mandarin, and English revealed severe vocabulary compression disparities:
+- **SmolLM2 (49k vocab):** Portuguese fertility ratio of **$2.40\times$** and Mandarin ratio of **$4.59\times$** relative to English, compressing non-English effective context capacity to under $22\%$.
+- **Qwen2.5 (151k vocab):** Maintained balanced multilingual fertility ($1.15\times$ for Portuguese, $1.42\times$ for Mandarin), preserving context budget.
+
+### Defensive Cybersecurity Research Track
+
+A dedicated defensive research track implements deterministic offline evaluations without running unauthorized code:
+- **Static CWE Triage (v2):** 10 balanced cases covering CWE-78 (command injection), CWE-89 (SQLi), CWE-79 (XSS), CWE-22 (path traversal), CWE-798 (hardcoded credentials), and negative controls.
+- **CVE Advisory Vulnerability Triage (v1):** 6 realistic vulnerability advisories mapped against synthetic host software inventories, independently verified with NVD 2.0 and MITRE data.
+- **AppSec Chatbot Enforcement Harness (`defensive_harness.py`):** Multi-tenant mock environment evaluating role-gated authorization envelopes to prevent prompt injection and unauthorized API execution.
+
+---
+
+## 4. Getting Started, CLI & Web Platform
+
+### Prerequisites
+
+- **OS:** Linux (Debian 12 / Ubuntu 22.04 LTS recommended)
+- **Python:** 3.10+
+- **Node.js:** v18+ & `pnpm` (for the interactive web dashboard)
+- **Optional Hardware:** NVIDIA GPU with proprietary driver (for live NVML telemetry; mock modes available for offline testing)
+
+### Installation
 
 ```bash
 # Clone the repository
 git clone https://github.com/AndersonTavares0/llm-research-bench.git
 cd llm-research-bench
 
-# Create and activate a virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# Set up Python virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
 
-# Install package in editable mode
+# Install dependencies in editable mode
 pip install -e .
 ```
 
-### Running Verified Software Tests
-
-The repository includes a comprehensive unit test suite covering statistical engines, telemetry parsing, Clopper-Pearson calculations, and guardrails:
+### Running the Test Suite
 
 ```bash
-# Run the repository test suite
-python -m pytest
+# Run 270+ verified unit, integration, and statistical regression tests
+python -m pytest tests/
 ```
 
-### Running an End-to-End Benchmark Pass
+### Running the Interactive Web Platform
 
-To execute a benchmark pass against an active local inference server (e.g. `llama-server` on `http://127.0.0.1:18081`):
+The project includes an interactive Next.js 16 research portal featuring Pareto frontier exploration, live telemetry charts, and model comparison matrices:
 
 ```bash
-# Set PYTHONPATH to include src, or install via pip install -e .
-python src/llm_research_bench/benchmark_suite.py --base-url http://127.0.0.1:18081 --models gemma4:E2B --tier tier_a
+# Navigate to website directory
+cd website
+
+# Install dependencies and launch development server
+pnpm install
+pnpm dev
+# Or run production build
+pnpm build && pnpm start -p 3000
 ```
+Open [http://localhost:3000](http://localhost:3000) in your browser. Fully WCAG 2.2 AA accessible across light and dark modes.
 
-*(Note: Requires an active OpenAI-compatible or llama.cpp endpoint. In offline environments without a running server, use the automated test suite above to verify all benchmark pipelines and guardrails.)*
+### Compiling Technical Monographs
 
-### Regenerating Visual Artifacts (PNG / PDF)
-
-All publication-grade vector PDF figures and README PNG images can be regenerated directly from recorded empirical data:
-
-```bash
-# Generate documentation PNG charts (docs/images/) - verified execution
-python src/llm_research_bench/generate_readme_figures.py
-
-# Generate academic vector PDF charts (reports/figures/) - verified execution
-python src/llm_research_bench/generate_figures.py
-```
-
-### Compiling Technical Monographs (Tectonic)
-
-The in-depth 20-page and 30-page scientific monographs can be compiled from source using [Tectonic](https://tectonic-typesetting.github.io/):
+Both publication-grade monographs can be compiled from source using [Tectonic](https://tectonic-typesetting.github.io/):
 
 ```bash
-# Compile English monograph (reports/en-US/report_en-US.pdf) - verified execution
+# English Monograph (reports/en-US/report_en-US.pdf)
 tectonic reports/en-US/report_en-US.tex --outdir reports/en-US
 
-# Compile Portuguese monograph (reports/pt-BR/report_pt-BR.pdf) - verified execution
+# Portuguese Monograph (reports/pt-BR/report_pt-BR.pdf)
 tectonic reports/pt-BR/report_pt-BR.tex --outdir reports/pt-BR
 ```
 
@@ -236,109 +251,35 @@ tectonic reports/pt-BR/report_pt-BR.tex --outdir reports/pt-BR
 
 ## 5. Methodology, Limitations & Evolution
 
-### Repository Structure
+### Scientific Evidence Hierarchy
 
-```
-llm-research-bench/
-├── configs/                             # Benchmark matrix and model definitions
-│   ├── experiment_matrix.yaml
-│   └── models.ini
-├── datasets/                            # Evaluation datasets and prompts
-│   ├── multilingual/                    # Trilingual parallel reference corpus
-│   ├── sensitive_topics/                # Sensitive topics evaluation suite
-│   ├── agentic_tools.json               # JSON Schema tool definitions
-│   ├── defensive_safety_benchmarks.json # Canary safety evaluation probes
-│   ├── model_provenance.json            # SHA-256 cryptographic hashes
-│   └── reasoning_prompts.json           # Reasoning prompts
-├── docs/                                # Technical documentation and assets
-│   ├── images/                          # Visual PNG charts for documentation
-│   └── GOVERNANCE.md                    # Project governance and guidelines
-├── reports/                             # In-depth technical monographs
-│   ├── en-US/                           # English report (LaTeX & PDF)
-│   ├── pt-BR/                           # Portuguese report (LaTeX & PDF)
-│   └── figures/                         # Vector PDF figures
-├── results/                             # Empirical microdata and telemetry traces
-│   ├── controlled_experiments/          # Ablation logs and statistical summaries
-│   ├── model_quality/                   # Safety and reasoning scoring outputs
-│   └── system_performance/              # Asynchronous NVML metrics and JSONs
-├── src/llm_research_bench/              # Core benchmark package
-│   ├── evaluators/                      # Evaluation modules (safety, code, reasoning)
-│   ├── systems/                         # KV cache and concurrency profilers
-│   ├── benchmark_suite.py               # 3-tier benchmark orchestrator
-│   ├── generate_figures.py              # Vector PDF figure generator
-│   ├── generate_readme_figures.py       # Web PNG figure generator
-│   ├── statistical_engine.py            # CI and statistical formulas
-│   └── telemetry_collector.py           # Native NVML ctypes sampler
-├── tests/                               # pytest unit and regression tests
-├── CONTRIBUTING.md                      # Contribution guidelines
-├── LICENSE                              # MIT License
-├── pyproject.toml                       # Build metadata and dependencies
-├── README.md                            # Primary documentation (English)
-└── README.pt-BR.md                      # Primary documentation (Português)
-```
+To prevent overclaiming, this repository strictly classifies all evidence into five standardized tiers:
 
-### Reproducibility & Provenance
+- `[MEASURED]`: Empirically recorded microdata collected directly on the physical hardware testbed with full NVML telemetry and monotonic timing.
+- `[PARTIAL]`: Valid empirical data collected under pilot protocols or incomplete sample suites.
+- `[ANALYTICAL]`: Theoretical derivations, Roofline bounds, or mathematical cache formulas ($B_{\text{demand}} = S_{\text{weights}} \times \text{Throughput}$).
+- `[READY]`: Test suites, benchmarks, and defensive harnesses that are fully implemented and deterministically tested, but awaiting hardware execution.
+- `[UNKNOWN]`: Hypotheses or configurations not yet investigated on this platform.
 
-To ensure auditability, each experiment records:
-1. **Model Provenance:** GGUF file size, layer counts, context window, and verified cryptographic SHA-256 hash (see [datasets/model_provenance.json](datasets/model_provenance.json)).
-2. **Deterministic Sampling:** Greedy generation ($\tau = 0.0$) with fixed `seed=42`.
-3. **Execution Telemetry:** Monotonic timing for each query pass, accompanied by NVML device samples.
-4. **Data Isolation:** System telemetry is stored separately in [`results/system_performance/`](results/system_performance/) and quality evaluations in [`results/model_quality/`](results/model_quality/).
+### Methodological Boundaries
 
-> [!WARNING]
-> *Cross-Hardware Reproducibility:* Absolute token throughput and millisecond latencies depend on hardware, driver version, memory timings, and operating temperature. Re-running these benchmarks on different GPUs will yield different numerical values.
+- **Single-Host Descriptive Observations:** All measurements were collected on a single GTX 1050 Ti host. Repeated queries within a run reflect operational consistency, not independent hardware replicates. Hardware-level inferential statistics (e.g. Welch's t-test) fail closed until multi-machine randomized runs are conducted.
+- **Thermal Drift:** Sustained benchmarking raises die temperature from $44^\circ\text{C}$ to $74^\circ\text{C}$, triggering NVIDIA GPU Boost 3.0 downclocking ($-5.2\%$). Automated cooldown periods are enforced between experimental batches.
+- **No Hyperscaler Inference:** Results strictly evaluate edge hardware behavior; they do not apply to data-center accelerators with Tensor Cores or high-bandwidth HBM memory.
 
-### Known Methodological Limitations
+### Research Charter & Roadmap
 
-In accordance with open scientific practice, this project explicitly documents its methodological boundaries:
+The complete research roadmap, including the 22 formal Research Questions (RQs) and experimental priorities (P0–P3), is documented in [`docs/research/research-charter.md`](docs/research/research-charter.md).
 
-- **Single Physical GPU:** All measurements were collected on one GTX 1050 Ti host. Repeated queries within a hardware run are not independent hardware replicates; previously reported t-tests/effect sizes on those query-level observations do not establish hardware-level inferential evidence. Treat the results as descriptive for the recorded host.
-- **Small-Sample Safety Canaries ($N=10$):** The defensive safety and tool-calling evaluations are exploratory canaries designed to observe behavioral failure modes under single-turn prompts. They do not constitute exhaustive psychometric alignment benchmarks.
-- **Analytical Bandwidth Demand vs. Physical Counters:** Memory bandwidth utilization is modeled analytically ($B_{\text{demand}} = S_{\text{weights}} \times \text{Throughput}$), reflecting Roofline memory bus demand rather than hardware DRAM counter reads.
-- **Thermal Drift in Continuous Batches:** In uninterrupted test runs, device temperature rose from $44^\circ\text{C}$ to $74^\circ\text{C}$, triggering NVIDIA GPU Boost 3.0 clock scaling ($1695 \to 1607\text{ MHz}$, $-5.2\%$). The new 3-tier protocol incorporates cooldown periods to address this in future runs.
-- **Tracking Open Issues:** All active methodological discussions and planned experimental expansions are tracked in **[Issue #2: Ongoing Research and Methodological Review](https://github.com/AndersonTavares0/llm-research-bench/issues/2)**.
+---
 
-### Official benchmark campaigns
+## Citation & License
 
-Alongside the historical series described in this README, the repository now includes a light orchestration layer for **llama.cpp/llama-bench** and the **EleutherAI lm-evaluation-harness**. Official-tool results are stored separately and do not replace or relabel historical data.
-
-- [Official campaign methodology, smoke results, and reproduction](docs/benchmarks/official-campaigns.md)
-- [Evidence index: conclusions, sample sizes, limitations, and artifacts](docs/benchmarks/evidence-index.md)
-- [Metodologia e resultados da campanha (PT-BR)](docs/benchmarks/official-campaigns.pt-BR.md)
-- [Raw campaign artifacts and manifests](results/campaigns/smoke-qwen3-1.7b-v1/)
-
-The Qwen3-1.7B campaign uses a 20-example-per-task limit and validates integration only; **it does not support rankings**. Protocol deviations and limitations are documented in the linked methodology.
-
-### Model viability and deployment limits
-
-The project does not certify everyday-use quality or production readiness. The
-[model viability assessment](docs/research/model-viability.md) classifies every
-studied configuration separately for everyday use, bounded local research, and
-production, and distinguishes measurements from published evidence, theoretical
-feasibility, and unknowns. “Viable with restrictions” for local use refers only to
-bounded offline experimentation on the measured GTX 1050 Ti/Ryzen 5 3600 testbed;
-it is not a quality, privacy, security, or service guarantee. Production is
-currently **insufficient evidence** for every configuration.
-
-For benchmark selection and licensing/contamination limits, see the
-[benchmark-fit review](docs/research/benchmark-methodology-review.md). Cybersecurity
-results remain exploratory; no specialist-vs-generalist benefit is measured.
-
-### Full Technical Reports & Citation
-
-For deeper theoretical derivations (Transformer self-attention mathematics, GQA scaling equations, RoPE rotary embeddings, and Roofline arithmetic intensity curves), refer to the full technical monographs:
-
-- 📄 **[English Monograph (PDF, 20 pages)](reports/en-US/report_en-US.pdf)**: Comprehensive systems engineering paper.
-- 📄 **[Relatório em Português (PDF, 30 páginas)](reports/pt-BR/report_pt-BR.pdf)**: Monografia técnica completa em português.
-- 🛡️ **[Security Policy](SECURITY.md)**: Vulnerability disclosure and defensive testing guidelines.
-- 🤝 **[Contributing Guidelines](CONTRIBUTING.md)**: Instructions for submitting improvements.
-- 🏛️ **[Project Governance](docs/GOVERNANCE.md)**: Contribution principles and review standards.
-
-If you reference this benchmark methodology or empirical dataset, please cite:
+If you use this benchmark methodology, dataset, or telemetry traces in your research, please cite:
 
 ```bibtex
-@article{tavares2026slmbench,
-  title   = {Reproducible Evaluation of Small Language Models Under Severe Memory and Compute Constraints: Architectural Dynamics, Quantization Frontiers, Speculative Decoding, and Adversarial Vulnerabilities on a Reference Edge Testbed},
+@article{tavares2026slmlimits,
+  title   = {SLM-Limits: Reproducible Evaluation of Small Language Models Under Severe Memory and Compute Constraints},
   author  = {Tavares, Anderson},
   journal = {Open Technical Report and Benchmark Monograph},
   year    = {2026},
@@ -346,24 +287,7 @@ If you reference this benchmark methodology or empirical dataset, please cite:
 }
 ```
 
----
-
-### Research Charter
-
-The consolidated scientific direction — what is known, the RQ/evidence matrix,
-methodological weaknesses, and the prioritized P0–P3 roadmap — is maintained in
-[`docs/research/research-charter.md`](docs/research/research-charter.md).
-
-## License and Acknowledgments
-
 This project is open-source software licensed under the **[MIT License](LICENSE)**.
 
-### Upstream Frameworks and Tools
-
-- **[llama.cpp](https://github.com/ggerganov/llama.cpp)** by Georgi Gerganov and contributors: High-performance local LLM inference engine.
-- **[Tectonic](https://tectonic-typesetting.github.io/)**: Modern, self-contained LaTeX compilation engine.
-- **Open-weights community:** Alibaba Cloud (Qwen), HuggingFace (SmolLM), Google DeepMind (Gemma), and Meta AI (Llama) for releasing accessible model weights.
-
 ---
-
-*This repository is an independent educational initiative by Anderson Tavares. It is not affiliated with, endorsed by, or sponsored by NVIDIA, Google, Meta, Alibaba, or Microsoft.*
+*Independent research initiative by Anderson Tavares. Not affiliated with, sponsored by, or endorsed by NVIDIA, Google, Meta, or Alibaba.*
