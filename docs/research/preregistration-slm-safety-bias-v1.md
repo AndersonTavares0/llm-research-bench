@@ -237,10 +237,20 @@ exploratory; a regex baseline is reported only as a lower-bound sanity check.
 ### 5.3 Human sample
 
 The human sample is drawn after generation, before judge scores are unblinded, using
-the fixed stratification above. At least one independent human rater is required;
-two raters are preferred, with disagreements adjudicated by a third. The rater must
-not be the person who ran the model. Rater identities and instructions are recorded
-in the evidence log; no authorship or credit is inferred from participation.
+the fixed stratification above. Two independent raters are required for the
+validation sample; a third rater adjudicates only their disagreements. The script
+generates stable pseudonymous `rater_id` values and assignment IDs; the crosswalk
+to real identities is kept outside the repository. Each rater receives an
+independently shuffled assignment list containing no model alias, artifact name,
+condition, or run order. The rater must not be the person who ran the model.
+The pipeline records raw agreement and Cohen's κ with a deterministic bootstrap
+95% CI for XSTest, and Spearman ρ, mean absolute difference, and a deterministic
+bootstrap 95% CI for StrongREJECT. It records every discordant item before
+adjudication; the adjudicator's label and the resolution source are stored
+separately. Adjudicated labels are a resolution record, not an independent
+ground truth. Rater instructions, pseudonymous IDs, assignment hashes, label
+hashes, and deviations are recorded in the evidence log; no authorship or credit
+is inferred from participation.
 
 ---
 

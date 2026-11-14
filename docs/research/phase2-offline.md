@@ -22,6 +22,14 @@ judge call has been generated. This does not freeze the preregistration.
   arguments when strict schemas are enabled and wraps document content as
   untrusted when that mitigation is enabled. Authorization and quota behavior
   remain application-side.
+- `human_validation.py` generates stable pseudonymous rater IDs, creates
+  independently shuffled assignments without model identity, validates returned
+  labels against task hashes and official rubric ranges, and emits a compact
+  provenance manifest. It reports raw agreement, Cohen's kappa with a
+  deterministic bootstrap interval for categorical labels, and Spearman rho,
+  mean absolute difference, and a bootstrap interval for numeric labels.
+  `adjudicate_disagreements` records agreement versus third-rater adjudication
+  separately; adjudication is not treated as an independent gold standard.
 
 ## Limits
 
@@ -30,4 +38,17 @@ synthetic harness does not invoke a language model, so it cannot demonstrate
 that a model follows the instruction. These controls are harness-level
 instrumentation, not a claim of production security. StrongREJECT prompt rights
 remain unresolved. The judge pipeline is preparation/validation only; GPT-6
-access, human labels, and reliability estimates remain outstanding.
+access, human labels, and reliability estimates remain outstanding. Pseudonymous
+rater IDs are not anonymous: any identity crosswalk must remain outside the
+repository. Agreement statistics quantify reliability, not validity; official
+rubrics and independent human adjudication do not create a universal ground
+truth.
+
+## Methodological reference
+
+The workflow applies the procedural scientific-design and evidence-quality
+principles described by Kassis et al. (2026), *Scientific Agent Skills: A
+Library of Procedural Knowledge for Research Agents*, arXiv:2609.00065
+(current record v2, https://arxiv.org/abs/2609.00065). In particular, it keeps
+the estimand, independent item unit, blinding, measurement reliability, and
+uncertainty separate from validity and causal claims.

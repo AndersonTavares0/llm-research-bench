@@ -16,6 +16,15 @@ from src.llm_research_bench.defensive_harness import (
     default_environment,
     system_instruction,
 )
+from src.llm_research_bench.human_validation import (
+    adjudicate_disagreements,
+    categorical_agreement,
+    generate_rater_ids,
+    numeric_agreement,
+    prepare_rater_assignments,
+    validate_human_label,
+    validation_manifest,
+)
 from src.llm_research_bench.safety_scoring import (
     bbq_bias_score,
     normalize_xstest_label,
@@ -146,6 +155,87 @@ class TestMitigationEnforcement(unittest.TestCase):
         self.assertEqual(
             session.execute_tool("read_document", {"doc_id": 1})["denial_reason"],
             "VALIDATION",
+        )
+
+
+class TestHumanValidationProtocol(unittest.TestCase):
+    def test_two_blinded_rater_assignments_and_label_provenance(self):
+        source = [{
+            "id": "source-1",
+            "benchmark": "xstest",
+            "prompt": "benign synthetic prompt",
+            "response": "synthetic response",
+        }]
+        tasks, _ = prepare_blind_tasks(source, "rubric-v1", seed=9)
+        raters = generate_rater_ids(2, seed=9)
+        assignments, sealed = prepare_rater_assignments(tasks, raters, seed=9)
+        self.assertEqual(len(assignments), 2)
+        self.assertEqual({entry["rater_id"] for entry in assignments}, set(raters))
+        self.assertEqual(
+            {entry["task_id"] for entry in sealed.values()},
+            {tasks[0]["task_id"]},
+        )
+        labels = [
+            validate_human_label(
+                assignment,
+                {
+                    "assignment_id": assignment["assignment_id"],
+                    "rater_id": assignment["rater_id"],
+                    "label": "1_full_compliance",
+                },
+            )
+            for assignment in assignments
+        ]
+        self.assertEqual({label["prompt_sha256"] for label in labels}, {
+            tasks[0]["provenance"]["prompt_sha256"]
+        })
+        self.assertRaises(
+            ValueError,
+            validate_human_label,
+            assignments[0],
+            {
+                "assignment_id": assignments[0]["assignment_id"],
+                "rater_id": "wrong-rater",
+                "label": "1_full_compliance",
+            },
+        )
+
+    def test_agreement_ci_and_adjudication_are_separate(self):
+        ratings = {
+            "rater-a": {"i1": "yes", "i2": "no", "i3": "yes"},
+            "rater-b": {"i1": "yes", "i2": "yes", "i3": "yes"},
+        }
+        result = categorical_agreement(ratings, seed=4, bootstrap=100)
+        self.assertEqual(result["n"], 3)
+        self.assertEqual(result["raw_agreement"], 2 / 3)
+        self.assertEqual(result["discordances"], ["i2"])
+        self.assertEqual(len(result["cohen_kappa_ci95"]), 2)
+        consensus = adjudicate_disagreements(ratings, {"i2": "no"})
+        self.assertEqual(consensus["i1"]["resolution"], "agreement")
+        self.assertEqual(consensus["i2"]["resolution"], "adjudication")
+        self.assertEqual(consensus["i2"]["adjudicator_label"], "no")
+        with self.assertRaises(ValueError):
+            adjudicate_disagreements(ratings, {})
+
+    def test_numeric_agreement_reports_spearman_mad_and_manifest(self):
+        ratings = {
+            "rater-a": {"i1": 1, "i2": 3, "i3": 5},
+            "rater-b": {"i1": 1, "i2": 4, "i3": 5},
+        }
+        result = numeric_agreement(ratings, seed=4, bootstrap=100)
+        self.assertAlmostEqual(result["spearman_rho"], 1.0)
+        self.assertAlmostEqual(result["mean_absolute_difference"], 1 / 3)
+        assignments = [
+            {"assignment_id": "a1", "rater_id": "r1", "provenance": {"response_sha256": "x"}}
+        ]
+        manifest = validation_manifest(assignments, [{"label": "yes"}])
+        self.assertEqual(manifest["label_count"], 1)
+        self.assertEqual(len(manifest["labels_sha256"]), 64)
+        self.assertNotEqual(
+            manifest["assignment_ids_sha256"],
+            validation_manifest(
+                [{**assignments[0], "rater_id": "r2"}], [{"label": "yes"}]
+            )["assignment_ids_sha256"],
         )
 
 
