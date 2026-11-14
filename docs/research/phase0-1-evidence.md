@@ -9,8 +9,15 @@ production model was modified.
 ## 1. Gateway route and model mapping (read-only)
 
 - `curl http://192.168.1.23:18081/health` → HTTP 200, body `{"status":"ok"}`.
-- `curl http://192.168.1.23:18081/v1/models` → HTTP 200, 12,598-byte JSON
-  (SHA-256 `c15a16914b40a2c26c231627d213136ee0ea65315ee964513d57f2d176e28cc5`).
+- `curl http://192.168.1.23:18081/props` → HTTP 200, saved as
+  `/tmp/opencode/gpu-props.json`, SHA-256
+  `dedb24b7f8eed9703c7a36800c4af5e75306b0632b3349d567c867a917bd5bac`.
+  Reported `role=router`, `max_instances=1`, `models_autoload=true`,
+  `build_info=b12033-785322d17`. `/version` returns 404; the build string above is
+  the available version evidence.
+- `curl http://192.168.1.23:18081/v1/models` → HTTP 200, 12,598-byte JSON saved as
+  `/tmp/opencode/gpu-models.json`, SHA-256
+  `b451a1783d94fe1849880321216cb6df72aa5b9e8e719187bb9e56bf98ac2030`.
 - Reported loaded model: `qwen3.5:4B` with
   `/models/Qwen3.5-4B-Q4_K_M-MTP.gguf`.
 - Reported lab aliases include `qwen3.5:UNCESORED` with
@@ -30,6 +37,23 @@ watchdog/deadline behavior, production cleanup/restoration, model-file SHA-256,
 license/provenance of the GGUF artifacts, or that the aliases are served from
 the scratch copies rather than production. Those require an authorized lease
 and owner-side evidence.
+
+### 1.1 Reported runtime flags (read-only)
+
+The gateway reports these `llama-server` arguments:
+
+| Alias | Context | KV | GPU layers | Parallel | Speculative decoding |
+|---|---|---|---|---|---|
+| `qwen3.5:4B` | 32768 | q4_0/q4_0 | 99 | 1 | `--spec-type draft-mtp --spec-draft-n-max 2` |
+| `qwen3.5:UNCESORED` | 32768 | q4_0/q4_0 | 99 | 1 | `--spec-type ngram-simple --spec-draft-n-max 3` |
+
+Both use `--chat-template-kwargs {"enable_thinking": false}`, batch 512,
+ubatch 256, threads 4, `--fit-target 256`, `--cache-ram 0`.
+
+**Confound:** speculative decoding differs between the two aliases. A matched
+comparison requires identical speculative-decoding settings (preferably
+`--spec-type none` for both) before P1/P2 can be confirmatory. Until then, a
+model comparison is a vendor-default artifact comparison and is exploratory.
 
 ## 2. Benchmark assets (pinned clones, access date 2026-11-13)
 
@@ -98,4 +122,8 @@ source; component-level terms remain unaudited.
 - **GGUF hashes/licenses/provenance unverified.** The gateway reports paths,
   not file digests; the model repositories and license terms still need to be
   recorded.
+- **Runtime flags are not matched.** The aligned alias uses `draft-mtp`
+  speculative decoding and the abliterated alias uses `ngram-simple`. The pilot
+  comparison is confounded until both run with identical speculative-decoding
+  settings; otherwise it is exploratory only.
 - **No GPU/model run has been performed in this phase.**
