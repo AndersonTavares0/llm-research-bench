@@ -38,6 +38,11 @@ revision removes the external-judge dependency but is still not frozen.
   mean absolute difference, and a bootstrap interval for numeric labels.
   `adjudicate_disagreements` records agreement versus third-rater adjudication
   separately; adjudication is not treated as an independent gold standard.
+- `paired_safety_analysis.py` implements the pre-registered paired estimators
+  for `v1-local` (mean paired difference with 10,000-resample percentile
+  bootstrap CI and Cohen's `dz` for continuous outcomes; paired risk difference
+  with Newcombe Method 10 hybrid-score CI and `mcnemar_exact` for binary
+  outcomes; plus confirmatory gate checks and Holm adjustment across P1/P2).
 
 ## Limits
 
