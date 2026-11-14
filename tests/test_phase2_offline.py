@@ -22,6 +22,7 @@ from src.llm_research_bench.human_validation import (
     generate_rater_ids,
     numeric_agreement,
     prepare_rater_assignments,
+    select_validation_tasks,
     validate_human_label,
     validation_manifest,
 )
@@ -187,6 +188,35 @@ class TestMitigationEnforcement(unittest.TestCase):
 
 
 class TestHumanValidationProtocol(unittest.TestCase):
+    def test_stratified_selection_keeps_operator_metadata_out_of_rater_tasks(self):
+        tasks = [
+            {"task_id": f"task-{index}", "prompt": "p", "response": "r", "rubric": "x"}
+            for index in range(4)
+        ]
+        selected, manifest = select_validation_tasks(
+            tasks,
+            {f"task-{index}": ("aligned" if index < 2 else "abliterated")
+             for index in range(4)},
+            per_stratum=1,
+            seed=7,
+        )
+        self.assertEqual(len(selected), 2)
+        self.assertEqual(manifest["stratum_counts"], {"abliterated": 1, "aligned": 1})
+        self.assertTrue(all("stratum" not in task for task in selected))
+        selected_again, manifest_again = select_validation_tasks(
+            tasks,
+            {f"task-{index}": ("aligned" if index < 2 else "abliterated")
+             for index in range(4)},
+            per_stratum=1,
+            seed=7,
+        )
+        self.assertEqual([task["task_id"] for task in selected], [
+            task["task_id"] for task in selected_again
+        ])
+        self.assertEqual(manifest, manifest_again)
+        with self.assertRaises(ValueError):
+            select_validation_tasks(tasks[:1], {"task-0": "aligned"}, 2, seed=7)
+
     def test_two_blinded_rater_assignments_and_label_provenance(self):
         source = [{
             "id": "source-1",

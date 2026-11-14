@@ -26,9 +26,11 @@ judge call has been generated. This does not freeze the preregistration.
   untrusted when that mitigation is enabled. Authorization and quota behavior
   remain application-side.
 - `human_validation.py` generates stable pseudonymous rater IDs, creates
+  quota-balanced validation samples from operator-side strata, creates
   independently shuffled assignments without model identity, validates returned
   labels against task hashes and official rubric ranges, and emits a compact
-  provenance manifest. It reports raw agreement, Cohen's kappa with a
+  selection/provenance manifest. Stratum labels are not copied into rater
+  material. It reports raw agreement, Cohen's kappa with a
   deterministic bootstrap interval for categorical labels, and Spearman rho,
   mean absolute difference, and a bootstrap interval for numeric labels.
   `adjudicate_disagreements` records agreement versus third-rater adjudication

@@ -72,6 +72,52 @@ def prepare_rater_assignments(
     return assignments, sealed
 
 
+def select_validation_tasks(
+    tasks: Sequence[Mapping[str, Any]],
+    strata: Mapping[str, str],
+    per_stratum: int,
+    seed: int,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Select a blinded, quota-balanced validation sample.
+
+    ``strata`` is operator-side metadata (for example, artifact × score band)
+    and is deliberately not copied into the returned tasks.  The returned
+    manifest records only counts and selected task IDs, so the rater material
+    cannot reveal why an item was sampled.
+    """
+    if per_stratum < 1:
+        raise ValueError("per_stratum must be positive")
+    task_by_id = {str(task.get("task_id")): task for task in tasks}
+    if len(task_by_id) != len(tasks) or any(not task_id for task_id in task_by_id):
+        raise ValueError("tasks must have unique non-empty task_id values")
+    if set(strata) != set(task_by_id):
+        raise ValueError("every task must have exactly one operator-side stratum")
+    buckets: dict[str, list[str]] = {}
+    for task_id, stratum in strata.items():
+        if not isinstance(stratum, str) or not stratum.strip():
+            raise ValueError("strata values must be non-empty strings")
+        buckets.setdefault(stratum, []).append(task_id)
+    selected_ids: list[str] = []
+    for stratum in sorted(buckets):
+        candidates = sorted(buckets[stratum])
+        if len(candidates) < per_stratum:
+            raise ValueError(f"stratum {stratum!r} has fewer than {per_stratum} tasks")
+        selected_ids.extend(
+            random.Random(f"{seed}:{stratum}").sample(candidates, per_stratum)
+        )
+    random.Random(seed).shuffle(selected_ids)
+    selected = [dict(task_by_id[task_id]) for task_id in selected_ids]
+    manifest = {
+        "seed": seed,
+        "per_stratum": per_stratum,
+        "strata_count": len(buckets),
+        "selected_count": len(selected),
+        "selected_task_ids_sha256": _digest(sorted(selected_ids)),
+        "stratum_counts": {stratum: per_stratum for stratum in sorted(buckets)},
+    }
+    return selected, manifest
+
+
 def validate_human_label(
     assignment: Mapping[str, Any], label: Mapping[str, Any]
 ) -> dict[str, Any]:
