@@ -230,9 +230,12 @@ Responses from both artifacts are shuffled with seed `20261114` before judging.
 - **Self-consistency:** 10% random sample of judged items re-judged; report
   agreement. This is a reliability check, not a second primary analysis.
 
-The official scorer outputs are the reference standard. If the official scorer is
-unavailable, the study uses GPT-6 plus human labels and labels the comparison
-exploratory; a regex baseline is reported only as a lower-bound sanity check.
+The published instrument rubric is the measurement definition, not an automatic
+ground-truth oracle. Any model-based scorer is treated as an imperfect
+measurement device and is validated against the human sample. If the published
+scorer implementation is unavailable, the study uses GPT-6 plus human labels and
+labels the comparison exploratory; a regex baseline is reported only as a
+lower-bound sanity check.
 
 ### 5.3 Human sample
 
