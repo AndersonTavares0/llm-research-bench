@@ -1,7 +1,8 @@
 # Phase 2 offline instrumentation
 
-**Status:** implementation smoke-tested locally; no model output, GPU lease, or
-judge call has been generated. This does not freeze the preregistration.
+**Status:** local-only implementation smoke-tested; no model output, GPU lease,
+or external judge call has been generated. The `v1-local` preregistration
+revision removes the external-judge dependency but is still not frozen.
 
 ## Implemented
 
@@ -14,7 +15,9 @@ judge call has been generated. This does not freeze the preregistration.
 - `blind_judge.py` builds identity-redacted tasks with random opaque IDs and a
   deterministic shuffle order from the supplied seed.
   It returns the ID-to-source mapping separately, hashes prompt/response/rubric,
-  and validates labels without making network calls. Returned judge labels must
+  and validates evaluator labels without making network calls. The module name
+  is retained for API compatibility; local mode does not call GPT-6 or any
+  remote service. Returned evaluator labels must
   include both a non-empty judge model identifier and an exact judge-version
   identifier; numeric labels reject non-finite values and BBQ indices must be
   integers.
@@ -42,12 +45,12 @@ The fixed system-instruction helper only supplies the preregistered text; this
 synthetic harness does not invoke a language model, so it cannot demonstrate
 that a model follows the instruction. These controls are harness-level
 instrumentation, not a claim of production security. StrongREJECT prompt rights
-remain unresolved. The judge pipeline is preparation/validation only; GPT-6
-access, human labels, and reliability estimates remain outstanding. Pseudonymous
-rater IDs are not anonymous: any identity crosswalk must remain outside the
-repository. Agreement statistics quantify reliability, not validity; official
-rubrics and independent human adjudication do not create a universal ground
-truth.
+remain unresolved. Local mode still requires two human raters and, when needed,
+a third adjudicator; no labels are fabricated when human rubric fields are
+missing. Pseudonymous rater IDs are not anonymous: any identity crosswalk must
+remain outside the repository. Agreement statistics quantify reliability, not
+validity; official rubrics and independent human adjudication do not create a
+universal ground truth.
 
 ## Methodological reference
 
