@@ -60,7 +60,7 @@ jobs:
           tectonic reports/en-US/report_en-US.tex --outdir reports/en-US
 
       - name: Upload PDF Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: scientific-reports
           path: |
