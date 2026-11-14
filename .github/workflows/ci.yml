@@ -92,4 +92,5 @@ jobs:
           cd website
           pnpm install --frozen-lockfile
           pnpm build
+          pnpm exec playwright install --with-deps chromium
           node scripts/validate_accessibility.mjs

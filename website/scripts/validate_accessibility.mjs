@@ -11,11 +11,26 @@ const __dirname = path.dirname(__filename);
 const PORT = 3457;
 const BASE_URL = `http://localhost:${PORT}`;
 
+function stopServer(server) {
+  if (!server.pid) return;
+  try {
+    // detached:true puts npx and its next-server grandchild in one process
+    // group; killing only the npx wrapper leaves next-server holding the
+    // stdio pipes and the CI step never exits.
+    process.kill(-server.pid, 'SIGKILL');
+  } catch {
+    server.kill('SIGKILL');
+  }
+  server.stdout?.destroy();
+  server.stderr?.destroy();
+}
+
 async function run() {
   console.log('🚀 Launching Next.js server for WCAG 2.2 AA automated audit...');
   const server = spawn('npx', ['next', 'start', '-p', String(PORT)], {
     cwd: path.join(__dirname, '..'),
-    stdio: 'pipe'
+    stdio: 'pipe',
+    detached: true
   });
 
   // Wait for server to be responsive
@@ -34,7 +49,7 @@ async function run() {
   }
 
   if (!serverReady) {
-    server.kill();
+    stopServer(server);
     throw new Error('Server failed to start within 15 seconds');
   }
 
@@ -108,7 +123,7 @@ async function run() {
     console.log('🎉 ALL 6 ROUTES PASSED WCAG 2.2 LEVEL AA AUDIT WITH 0 VIOLATIONS!');
   } finally {
     await browser.close();
-    server.kill();
+    stopServer(server);
   }
 }
 
