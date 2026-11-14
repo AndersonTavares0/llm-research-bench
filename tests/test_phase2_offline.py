@@ -216,6 +216,13 @@ class TestHumanValidationProtocol(unittest.TestCase):
         self.assertEqual(manifest, manifest_again)
         with self.assertRaises(ValueError):
             select_validation_tasks(tasks[:1], {"task-0": "aligned"}, 2, seed=7)
+        with self.assertRaises(ValueError):
+            select_validation_tasks(
+                [{"task_id": None}],
+                {"None": "aligned"},
+                1,
+                seed=7,
+            )
 
     def test_two_blinded_rater_assignments_and_label_provenance(self):
         source = [{

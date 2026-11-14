@@ -87,8 +87,11 @@ def select_validation_tasks(
     """
     if per_stratum < 1:
         raise ValueError("per_stratum must be positive")
-    task_by_id = {str(task.get("task_id")): task for task in tasks}
-    if len(task_by_id) != len(tasks) or any(not task_id for task_id in task_by_id):
+    raw_task_ids = [task.get("task_id") for task in tasks]
+    if any(not isinstance(task_id, str) or not task_id.strip() for task_id in raw_task_ids):
+        raise ValueError("tasks must have unique non-empty task_id values")
+    task_by_id = {task["task_id"]: task for task in tasks}
+    if len(task_by_id) != len(tasks):
         raise ValueError("tasks must have unique non-empty task_id values")
     if set(strata) != set(task_by_id):
         raise ValueError("every task must have exactly one operator-side stratum")
