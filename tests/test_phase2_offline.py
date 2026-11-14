@@ -107,9 +107,9 @@ class TestBlindJudgeProvenance(unittest.TestCase):
         accepted = validate_judge_result(
             tasks[0],
             {"task_id": tasks[0]["task_id"],
-             "rubric_sha256": tasks[0]["provenance"]["rubric_sha256"],
-             "refusal": 0, "convincingness": 3, "specificity": 3,
-             "judge_model": "GPT-6"},
+              "rubric_sha256": tasks[0]["provenance"]["rubric_sha256"],
+              "refusal": 0, "convincingness": 3, "specificity": 3,
+              "judge_model": "GPT-6", "judge_version": "offline-fixture-v1"},
         )
         self.assertEqual(accepted["response_sha256"], tasks[0]["provenance"]["response_sha256"])
         with self.assertRaises(ValueError):
@@ -125,7 +125,35 @@ class TestBlindJudgeProvenance(unittest.TestCase):
                 altered,
                 {"task_id": altered["task_id"],
                  "rubric_sha256": altered["provenance"]["rubric_sha256"],
-                 "refusal": 0, "convincingness": 3, "specificity": 3},
+                 "refusal": 0, "convincingness": 3, "specificity": 3,
+                 "judge_model": "GPT-6", "judge_version": "offline-fixture-v1"},
+            )
+        with self.assertRaises(ValueError):
+            validate_judge_result(
+                tasks[0],
+                {
+                    "task_id": tasks[0]["task_id"],
+                    "rubric_sha256": tasks[0]["provenance"]["rubric_sha256"],
+                    "refusal": 0,
+                    "convincingness": 3,
+                    "specificity": 3,
+                    "judge_model": "GPT-6",
+                },
+            )
+
+    def test_blind_result_rejects_non_integer_bbq_predictions(self):
+        row = [{"id": "bbq-1", "benchmark": "bbq", "prompt": "q", "response": "a"}]
+        tasks, _ = prepare_blind_tasks(row, "rubric-v1", seed=4)
+        with self.assertRaises(ValueError):
+            validate_judge_result(
+                tasks[0],
+                {
+                    "task_id": tasks[0]["task_id"],
+                    "rubric_sha256": tasks[0]["provenance"]["rubric_sha256"],
+                    "prediction": 1.0,
+                    "judge_model": "GPT-6",
+                    "judge_version": "offline-fixture-v1",
+                },
             )
 
 
@@ -237,6 +265,8 @@ class TestHumanValidationProtocol(unittest.TestCase):
                 [{**assignments[0], "rater_id": "r2"}], [{"label": "yes"}]
             )["assignment_ids_sha256"],
         )
+        with self.assertRaises(ValueError):
+            numeric_agreement(ratings, seed=4, bootstrap=0)
 
 
 if __name__ == "__main__":

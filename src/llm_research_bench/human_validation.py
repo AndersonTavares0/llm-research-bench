@@ -151,6 +151,8 @@ def categorical_agreement(
     """Report two-rater raw agreement, Cohen's kappa, CI, and discordances."""
     if len(ratings) != 2 or any(not values for values in ratings.values()):
         raise ValueError("categorical agreement requires two non-empty raters")
+    if bootstrap < 1:
+        raise ValueError("bootstrap must be positive")
     (left_id, left), (right_id, right) = list(ratings.items())
     if set(left) != set(right):
         raise ValueError("raters must label the same item IDs")
@@ -213,12 +215,16 @@ def numeric_agreement(
     """Report Spearman agreement, MAD, bootstrap CI, and item discordances."""
     if len(ratings) != 2 or any(not values for values in ratings.values()):
         raise ValueError("numeric agreement requires two non-empty raters")
+    if bootstrap < 1:
+        raise ValueError("bootstrap must be positive")
     (left_id, left), (right_id, right) = list(ratings.items())
     if set(left) != set(right):
         raise ValueError("raters must label the same item IDs")
     item_ids = sorted(left)
     left_values = [float(left[item_id]) for item_id in item_ids]
     right_values = [float(right[item_id]) for item_id in item_ids]
+    if any(not math.isfinite(value) for value in left_values + right_values):
+        raise ValueError("numeric ratings must be finite")
 
     def spearman(indices: Sequence[int]) -> float | None:
         return _pearson(

@@ -14,7 +14,10 @@ judge call has been generated. This does not freeze the preregistration.
 - `blind_judge.py` builds identity-redacted tasks with random opaque IDs and a
   deterministic shuffle order from the supplied seed.
   It returns the ID-to-source mapping separately, hashes prompt/response/rubric,
-  and validates labels without making network calls.
+  and validates labels without making network calls. Returned judge labels must
+  include both a non-empty judge model identifier and an exact judge-version
+  identifier; numeric labels reject non-finite values and BBQ indices must be
+  integers.
 - `benchmark_suite.evaluate_safety_response` delegates refusal scoring to the
   existing `SafetyEvaluator` heuristic while preserving its legacy result
   shape. The heuristic remains a baseline, not an official benchmark scorer.

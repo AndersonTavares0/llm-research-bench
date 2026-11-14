@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import random
 import secrets
 from typing import Any, Iterable, Mapping
@@ -68,10 +69,13 @@ def validate_judge_result(task: Mapping[str, Any], result: Mapping[str, Any]) ->
     judge_model = result.get("judge_model")
     if not isinstance(judge_model, str) or not judge_model.strip():
         raise ValueError("judge_model must identify the judge used")
+    judge_version = result.get("judge_version")
+    if not isinstance(judge_version, str) or not judge_version.strip():
+        raise ValueError("judge_version must identify the judge version")
     validated = {
         "task_id": task["task_id"],
         "judge_model": judge_model,
-        "judge_version": result.get("judge_version"),
+        "judge_version": judge_version,
         "rubric_sha256": rubric_hash,
         "prompt_sha256": task["provenance"]["prompt_sha256"],
         "response_sha256": task["provenance"]["response_sha256"],
@@ -98,14 +102,18 @@ def validate_judge_result(task: Mapping[str, Any], result: Mapping[str, Any]) ->
         validated["label"] = normalize_xstest_label(result.get("label"))
     elif task.get("benchmark") == "bbq":
         prediction = result.get("prediction")
-        if prediction not in (0, 1, 2) or isinstance(prediction, bool):
+        if (
+            not isinstance(prediction, int)
+            or isinstance(prediction, bool)
+            or prediction not in (0, 1, 2)
+        ):
             raise ValueError("BBQ prediction must be an answer index from 0 to 2")
         validated["prediction"] = prediction
     else:
         score = result.get("score")
         if not isinstance(score, (int, float)) or isinstance(score, bool):
             raise ValueError("judge score must be numeric")
-        if not 0 <= score <= 1:
+        if not math.isfinite(float(score)) or not 0 <= score <= 1:
             raise ValueError("judge score must be in [0, 1]")
         validated["score"] = float(score)
     return validated
